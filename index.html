@@ -1517,9 +1517,7 @@ function Nav() {
     <nav data-nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 40, padding: scrolled ? "12px 0" : "18px 0", backdropFilter: "blur(14px)", background: scrolled ? "rgba(7,7,10,0.78)" : "transparent", borderBottom: scrolled ? "1px solid var(--line-soft)" : "1px solid transparent", transition: "all 260ms ease" }}>
       <div className="wrap" style={{ display: "flex", alignItems: "center", gap: 28 }}>
         <a href="#" style={{ display: "flex", alignItems: "center", gap: 12, paddingRight: 20, borderRight: "1px solid var(--line-soft)", marginRight: 8 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 8, background: "linear-gradient(135deg, var(--accent), var(--accent-deep))", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px -2px color-mix(in srgb, var(--accent) 50%, transparent)" }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 4 L12 12 L4 20 M20 4 L12 12 L20 20" stroke="#fff" strokeWidth="2" strokeLinecap="round" /><circle cx="12" cy="12" r="1.8" fill="#fff" /></svg>
-          </div>
+          <img src="logo.png" alt="Aivamax" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover" }} />
           <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.1 }}>
             <span style={{ fontFamily: "var(--sans)", fontSize: 20, letterSpacing: "-0.02em", display: "inline-flex", alignItems: "baseline" }}><span style={{ fontWeight: 300 }}>Aiva</span><span style={{ fontWeight: 700, color: "var(--accent)" }}>max</span></span>
             <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-3)", letterSpacing: "0.14em", marginTop: 2 }}>{t(S.nav_tag)}</span>
@@ -1629,11 +1627,11 @@ function MatrixViz() {
 
 function DataPanelImage({ isMobile }) {
   const { open } = useLightbox();
-  const galleryImages = ["data-panel.png"];
+  const galleryImages = ["dashboard.png"];
   return (
     <div style={{ position: "relative", order: isMobile ? -1 : 0, cursor: "pointer" }}
       onClick={() => open(galleryImages, 0)}>
-      <img src="data-panel.png" alt="Aivamax 智能体实时数据面板" style={{
+      <img src="dashboard.png" alt="Aivamax 智能体实时数据面板" style={{
         width: "100%", height: "auto", borderRadius: isMobile ? 10 : 12,
         border: "1px solid var(--line)", display: "block",
         boxShadow: "0 20px 50px rgba(0,0,0,0.4)",
@@ -1919,9 +1917,14 @@ function Agents() {
   const t = useT();
   const cats = t(S.ag_cats);
   const list = t(S.ag_list);
-  const [tab, setTab] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => { const c = () => setIsMobile(window.innerWidth < 768); c(); window.addEventListener('resize', c); return () => window.removeEventListener('resize', c); }, []);
+
+  // 将全部 20 个智能体扁平化，保留所属分类名
+  const allAgents = list.flatMap((group, catIdx) =>
+    group.map(a => ({ ...a, role: cats[catIdx] }))
+  );
+
   return (
     <section id="agents">
       <div className="wrap">
@@ -1930,17 +1933,16 @@ function Agents() {
           <h2 className="h-title" style={{ marginTop: 16 }}>{t(S.ag_title)}</h2>
           <p style={{ color: "var(--text-2)", fontSize: 16, lineHeight: 1.7, marginTop: 16 }}>{t(S.ag_sub)}</p>
         </div>
-        <div style={{ display: "flex", gap: 0, borderBottom: "1px solid var(--line)", marginBottom: 28, flexWrap: "wrap" }}>
-          {cats.map((c, i) =>
-          <button key={i} onClick={() => setTab(i)} style={{ padding: "14px 22px", fontFamily: "var(--mono)", fontSize: 14, letterSpacing: "0.08em", color: tab === i ? "var(--accent)" : "var(--text-2)", borderBottom: tab === i ? "1px solid var(--accent)" : "1px solid transparent", marginBottom: -1 }}>{c} · {list[i].length}</button>
-          )}
-          <div style={{ marginLeft: "auto", padding: "14px 0", fontFamily: "var(--mono)", fontSize: 12.5, color: "var(--text-3)" }}>
-            {list.reduce((a, c) => a + c.length, 0)} {t(S.ag_total)}
+
+        {/* 总数展示 */}
+        <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginBottom: 28, borderBottom: "1px solid var(--line)", paddingBottom: 14 }}>
+          <div style={{ fontFamily: "var(--mono)", fontSize: 12.5, color: "var(--text-3)" }}>
+            {allAgents.length} {t(S.ag_total)}
           </div>
         </div>
+
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? (window.innerWidth < 480 ? "1fr" : "repeat(2, 1fr)") : "repeat(5, 1fr)", gap: isMobile ? 14 : 20 }}>
-          {list[tab].map((a, i) => {
-            const role = cats[tab];
+          {allAgents.map((a, i) => {
             const code = `ID · ${String(i + 1).padStart(3, "0")}`;
             return (
             /* ===== 工牌卡片 ===== */
@@ -1975,7 +1977,7 @@ function Agents() {
               {/* 部门标签 */}
               <div className="label-mono" style={{
                 color: "var(--text-3)", fontSize: 11, letterSpacing: "0.12em", marginBottom: 6
-              }}>{role}</div>
+              }}>{a.role}</div>
               {/* 姓名 */}
               <div className="serif" style={{
                 fontFamily: "var(--serif-cjk)", fontSize: isMobile ? 19 : 21,
@@ -2577,7 +2579,7 @@ function Footer() {
         <div style={{ display: "grid", gridTemplateColumns: "1.5fr repeat(4, 1fr)", gap: 40 }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: "var(--sans)", fontSize: 24, letterSpacing: "-0.02em" }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 4 L12 12 L4 20 M20 4 L12 12 L20 20" stroke="var(--accent)" strokeWidth="1.6" strokeLinecap="round" /><circle cx="12" cy="12" r="1.8" fill="var(--accent)" /></svg>
+              <img src="logo.png" alt="Aivamax" style={{ width: 22, height: 22, borderRadius: 4, objectFit: "cover" }} />
               <span style={{ display: "inline-flex", alignItems: "baseline" }}><span style={{ fontWeight: 300 }}>Aiva</span><span style={{ fontWeight: 700, color: "var(--accent)" }}>max</span></span>
             </div>
             <div className="label-mono" style={{ marginTop: 6 }}>{t(S.ft_tagline)}</div>
