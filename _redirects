@@ -1,0 +1,3 @@
+# Cloudflare Pages redirects
+# www -> non-www
+https://www.aivamax.com/* https://aivamax.com/:splat 301!
