@@ -24,7 +24,7 @@
 <meta property="twitter:image" content="https://aivamax.com/og-image.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2307070a'/%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='system-ui' font-weight='700' font-size='60' fill='%23E8743A'%3EA%3C/text%3E%3C/svg%3E">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Aivamax","alternateName":"Aivamax Labs","url":"https://aivamax.com","description":"AI-powered multi-agent customer acquisition engine for global expansion","contactPoint":{"@type":"ContactPoint","contactType":"customer service","availableLanguage":["English","Chinese"]},"sameAs":[]}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Aivamax","operatingSystem":"Web, Windows, macOS","applicationCategory":"BusinessApplication","description":"AI Multi-Agent Customer Acquisition Engine","offers":{"@type":"Offer","price":"399","priceCurrency":"USD"},"featureList":["20 AI Agents","8 Social Platforms","AI Content Generation","Matrix Management","24/7 Automation"],"aggregateRating":{"@type":"AggregateRating","ratingValue":"4.9","ratingCount":"2847"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Aivamax","operatingSystem":"Web, Windows, macOS","applicationCategory":"BusinessApplication","description":"AI Multi-Agent Customer Acquisition Engine","offers":{"@type":"Offer","price":"0","priceCurrency":"USD","availability":"https://schema.org/InStock","priceValidUntil":"2026-12-31","description":"Custom pricing — contact sales for a tailored quote"},"featureList":["20 AI Agents","8 Social Platforms","AI Content Generation","Matrix Management","24/7 Automation"],"aggregateRating":{"@type":"AggregateRating","ratingValue":"4.9","ratingCount":"2847"}}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap">
@@ -1228,9 +1228,9 @@ const S = {
   pr_monthly: { en: "Monthly", zh: "月付" },
   pr_annual: { en: "Annual · save 2 months", zh: "年付 · 省 2 个月" },
   pr_most: { en: "MOST CHOSEN", zh: "推荐" },
-  pr_billed_y: { en: "billed annually", zh: "年度一次性账单" },
-  pr_billed_m: { en: "billed monthly", zh: "按月账单" },
-  pr_free: { en: "free forever", zh: "永久免费" },
+  pr_billed_y: { en: "", zh: "" },
+  pr_billed_m: { en: "", zh: "" },
+  pr_free: { en: "", zh: "" },
   pr_foot: { en: <span>Need outcome-based pricing, on-prem deployment, or a custom industry matrix? <a href="#contact" style={{ color: "var(--accent)" }}>Talk to sales →</a></span>, zh: <span>需要按成果结算、私有化部署或行业定制矩阵？<a href="#contact" style={{ color: "var(--accent)" }}>联系销售 →</a></span> },
   pr_plans: {
     en: [
@@ -1246,8 +1246,8 @@ const S = {
     { n: "企业版", p: 2999, y: 29990, tagline: "MCN / 代理商 / 品牌内部。", feat: ["账号无限", "全部 20 个智能体无限", "私有化 / 私有云部署", "SSO · 审计日志 · SLA 99.9%"], cta: "联系销售" }]
 
   },
-  pr_mo: { en: "/ mo", zh: " / 月" },
-  pr_unit: { en: "$", zh: "¥" },
+  pr_mo: { en: "", zh: "" },
+  pr_unit: { en: "", zh: "" },
 
   /* ========== PARTNER / 加盟 ========== */
   pt_eye: { en: "· Partner & Contact", zh: "· 合作 & 联系我们" },
@@ -2115,7 +2115,8 @@ function Pricing() {
           <span className="eyebrow" style={{ justifyContent: "center", visibility: "hidden" }}>{t(S.pr_eye)}</span>
           <h2 className="h-title" style={{ marginTop: 20 }}>{t(S.pr_title)}</h2>
         </div>
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
+        {/* 月付/年付切换已隐藏 — 全部改为定制报价 */}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 28, height: 0, overflow: "hidden" }}>
           <div style={{ display: "inline-flex", border: "1px solid var(--line)", borderRadius: 999, padding: 4, background: "var(--bg-2)" }}>
             <button onClick={() => setAnnual(false)} style={{ padding: "8px 20px", borderRadius: 999, fontFamily: "var(--mono)", fontSize: 12.5, letterSpacing: "0.08em", background: !annual ? "var(--accent)" : "transparent", color: !annual ? "#0a0a0a" : "var(--text-2)" }}>{t(S.pr_monthly)}</button>
             <button onClick={() => setAnnual(true)} style={{ padding: "8px 20px", borderRadius: 999, fontFamily: "var(--mono)", fontSize: 12.5, letterSpacing: "0.08em", background: annual ? "var(--accent)" : "transparent", color: annual ? "#0a0a0a" : "var(--text-2)" }}>{t(S.pr_annual)}</button>
@@ -2133,11 +2134,9 @@ function Pricing() {
                   <div style={{ color: "var(--text-2)", fontSize: 14, marginTop: 4 }}>{p.tagline}</div>
                 </div>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginTop: 6 }}>
-                  <span style={{ fontSize: 14, color: "var(--text-3)" }}>{unit}</span>
-                  <span className="serif" style={{ fontFamily: "var(--serif)", fontSize: 44, lineHeight: 1 }}>{price}</span>
-                  <span style={{ color: "var(--text-3)", fontSize: 14 }}>{isFree ? "" : t(S.pr_mo)}</span>
+                  <span className="serif" style={{ fontFamily: "var(--serif-cjk)", fontSize: 44, lineHeight: 1, color: "var(--accent)" }}>{t({ en: "Custom", zh: "定制" })}</span>
                 </div>
-                <div style={{ color: "var(--text-3)", fontSize: 12.5, fontFamily: "var(--mono)", letterSpacing: "0.06em", minHeight: 16 }}>{annual && !isFree ? `${t(S.pr_billed_y)} · ${unit}${p.y}` : isFree ? t(S.pr_free) : t(S.pr_billed_m)}</div>
+                <div style={{ color: "var(--text-3)", fontSize: 12.5, fontFamily: "var(--mono)", letterSpacing: "0.06em", minHeight: 16 }}>{t({ en: "Tailored quote", zh: "根据需求定制报价" })}</div>
                 <div style={{ height: 1, background: "var(--line-soft)", margin: "4px 0 8px" }} />
                 <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8, fontSize: 13 }}>
                   {p.feat.map((f) =>
@@ -2648,14 +2647,14 @@ function ChatFab() {
   const faqs = t({
     zh: [
       { q: "会封号吗？", a: "原生指纹 + 独立代理 + 安全节奏，账号健康度 98.7%。账号医生实时预警。" },
-      { q: "多少钱？", a: "试用版永久免费；外贸版 299/月；矩阵版 899/月；企业版 2999/月起。年付省 2 个月。" },
+      { q: "多少钱？", a: "根据企业规模和实际需求定制报价，请联系销售获取专属方案。" },
       { q: "支持哪些平台？", a: "FB / Ins / TikTok / X / YouTube / LinkedIn / WhatsApp / Telegram 八大主流平台。Threads、Bluesky、微博、小红书即将支持。" },
       { q: "需要懂技术吗？", a: "不需要。大白话写目标，智能体自动组团执行，你只审批。一个下午即可上线矩阵。" },
       { q: "可以私有化部署吗？", a: "企业版支持私有云 / 本地部署，SSO、审计日志、SLA 99.9%。" },
     ],
     en: [
       { q: "Will my accounts get banned?", a: "Native fingerprints + rotating proxies + safe cadences. 98.7% account health. The Account Doctor flags risk early." },
-      { q: "How much does it cost?", a: "Trial is free forever; Exporter $299/mo; Matrix $899/mo; Enterprise from $2,999/mo. Annual saves 2 months." },
+      { q: "How much does it cost?", a: "All plans are custom-quoted based on your business scale and requirements. Contact sales for a tailored proposal." },
       { q: "Which platforms do you support?", a: "FB / IG / TikTok / X / YouTube / LinkedIn / WhatsApp / Telegram — 8 native integrations. Threads, Bluesky, Weibo, Xiaohongshu on the roadmap." },
       { q: "Do I need technical skills?", a: "No. Write your goal in plain language, the orchestrator staffs a team of agents. You approve. Matrix live in one afternoon." },
       { q: "Can you deploy on-prem?", a: "Enterprise supports private cloud / on-prem, SSO, audit log, SLA 99.9%." },
