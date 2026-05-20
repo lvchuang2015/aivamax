@@ -1,0 +1,26 @@
+name: Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    name: Deploy to Cloudflare Pages
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Publish to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          accountId: d089b244ba4abc3db883d496691dad3f
+          projectName: aivamax
+          directory: .
+          branch: main
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
