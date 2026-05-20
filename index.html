@@ -1,30 +1,9 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="zh">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Aivamax — AI 全渠道自动化获客系统 · 企业出海引流解决方案</title>
-<meta name="description" content="Aivamax — AI 全渠道自动化获客系统。20 个 AI 智能体 × 8 大全球社媒平台 × 7×24 小时自动化运营。原生指纹环境、零封号，询盘自动躺进后台。">
-<meta name="keywords" content="AI 社媒营销, 自动化获客, 多智能体, 跨境电商, 企业出海, 引流系统, Aivamax">
-<meta name="author" content="Aivamax Labs">
-<meta name="robots" content="index, follow">
-<link rel="canonical" href="https://aivamax.com/">
-<link rel="alternate" hreflang="en" href="https://aivamax.com/en/">
-<link rel="alternate" hreflang="zh" href="https://aivamax.com/">
-<link rel="alternate" hreflang="x-default" href="https://aivamax.com/">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://aivamax.com/">
-<meta property="og:title" content="Aivamax — AI 全渠道自动化获客系统">
-<meta property="og:description" content="20 个 AI 智能体 × 8 大全球社媒平台 × 7×24 小时自动化运营。企业出海引流解决方案。">
-<meta property="og:image" content="https://aivamax.com/og-image.png">
-<meta property="twitter:card" content="summary_large_image">
-<meta property="twitter:url" content="https://aivamax.com/">
-<meta property="twitter:title" content="Aivamax — AI 全渠道自动化获客系统">
-<meta property="twitter:description" content="20 个 AI 智能体 × 8 大全球社媒平台 × 7×24 小时自动化运营。">
-<meta property="twitter:image" content="https://aivamax.com/og-image.png">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2307070a'/%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='system-ui' font-weight='700' font-size='60' fill='%23E8743A'%3EA%3C/text%3E%3C/svg%3E">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Aivamax","alternateName":"Aivamax Labs","url":"https://aivamax.com","description":"AI-powered multi-agent customer acquisition engine for global expansion","contactPoint":{"@type":"ContactPoint","contactType":"customer service","availableLanguage":["English","Chinese"]},"sameAs":[]}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Aivamax","operatingSystem":"Web, Windows, macOS","applicationCategory":"BusinessApplication","description":"AI Multi-Agent Customer Acquisition Engine","offers":{"@type":"Offer","price":"0","priceCurrency":"USD","availability":"https://schema.org/InStock","priceValidUntil":"2026-12-31","description":"Custom pricing — contact sales for a tailored quote"},"featureList":["20 AI Agents","8 Social Platforms","AI Content Generation","Matrix Management","24/7 Automation"],"aggregateRating":{"@type":"AggregateRating","ratingValue":"4.9","ratingCount":"2847"}}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap">
@@ -222,51 +201,194 @@
 
   /* employee badge card */
   .badge-card {
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 4%, var(--bg-2)), var(--bg-2) 70%);
+    border: 1px solid rgba(232, 116, 58, 0.25);
+    border-radius: 16px;
+    background: linear-gradient(165deg, rgba(20, 18, 16, 0.95) 0%, rgba(12, 10, 8, 0.98) 50%, rgba(8, 6, 4, 1) 100%);
     padding: 0;
     overflow: hidden;
     position: relative;
     transition: transform 240ms ease, box-shadow 240ms ease, border-color 240ms ease;
-  }
-  .badge-card::before {
-    content: "";
-    position: absolute;
-    top: 12px; left: 50%;
-    transform: translateX(-50%);
-    width: 44px; height: 6px;
-    border-radius: 3px;
-    background: color-mix(in srgb, var(--accent) 50%, var(--line));
-  }
-  .badge-card::after {
-    content: "";
-    position: absolute;
-    top: 22px; left: 50%;
-    transform: translateX(-50%);
-    width: 1px; height: 10px;
-    background: color-mix(in srgb, var(--accent) 50%, var(--line));
+    box-shadow: 0 0 0 1px rgba(232, 116, 58, 0.08), 0 8px 32px -8px rgba(0, 0, 0, 0.5);
   }
   .badge-card:hover {
     transform: translateY(-6px);
-    border-color: var(--accent);
-    box-shadow: 0 24px 50px -20px color-mix(in srgb, var(--accent) 50%, transparent);
+    border-color: rgba(232, 116, 58, 0.5);
+    box-shadow: 0 0 0 1px rgba(232, 116, 58, 0.15), 0 0 40px -8px rgba(232, 116, 58, 0.15), 0 24px 50px -20px rgba(0, 0, 0, 0.6);
   }
-  .badge-hole {
-    width: 14px; height: 14px;
+  .badge-card .agent-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 20px 0;
+  }
+  .badge-card .agent-avatar {
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    background: var(--bg);
-    border: 1px solid var(--line);
-    position: absolute;
-    top: 42px; left: 50%;
-    transform: translateX(-50%);
+    background: linear-gradient(135deg, rgba(40, 30, 20, 1), rgba(20, 15, 10, 1));
+    border: 1px solid rgba(232, 116, 58, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--serif-cjk);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--accent);
+    flex-shrink: 0;
   }
+  .badge-card .agent-name-tag {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .badge-card .agent-name-tag .name {
+    font-family: var(--serif-cjk);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.3;
+  }
+  .badge-card .agent-name-tag .role {
+    font-size: 11px;
+    color: var(--text-3);
+    letter-spacing: 0.06em;
+  }
+  .badge-card .agent-body {
+    padding: 16px 20px 0;
+  }
+  .badge-card .agent-body .title {
+    font-family: var(--serif-cjk);
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.3;
+    margin-bottom: 8px;
+  }
+  .badge-card .agent-body .desc {
+    font-size: 14px;
+    color: var(--text-2);
+    line-height: 1.7;
+  }
+  .badge-card .agent-action {
+    padding: 16px 20px;
+  }
+  .badge-card .agent-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(180deg, rgba(60, 55, 50, 0.6), rgba(40, 35, 30, 0.8));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--text-2);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .badge-card .agent-action-btn:hover {
+    background: linear-gradient(180deg, rgba(80, 70, 60, 0.7), rgba(50, 45, 40, 0.9));
+    border-color: rgba(232, 116, 58, 0.25);
+    color: var(--text);
+  }
+  .badge-card .agent-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .badge-card .agent-footer .id {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-3);
+    letter-spacing: 0.1em;
+  }
+  .badge-card .agent-footer .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-3);
+  }
+  .badge-card .agent-footer .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #6fe29a;
+    box-shadow: 0 0 6px #6fe29a;
+  }
+
+  /* Light theme agent cards */
+  html[data-theme="light"] .badge-card {
+    background: linear-gradient(165deg, #ffffff 0%, #faf7f1 50%, #f5f0e6 100%);
+    border-color: rgba(232, 116, 58, 0.2);
+    box-shadow: 0 0 0 1px rgba(232, 116, 58, 0.06), 0 8px 32px -8px rgba(0, 0, 0, 0.08);
+  }
+  html[data-theme="light"] .badge-card:hover {
+    border-color: rgba(232, 116, 58, 0.4);
+    box-shadow: 0 0 0 1px rgba(232, 116, 58, 0.12), 0 0 40px -8px rgba(232, 116, 58, 0.1), 0 24px 50px -20px rgba(0, 0, 0, 0.12);
+  }
+  html[data-theme="light"] .badge-card .agent-avatar {
+    background: linear-gradient(135deg, #fff5eb, #ffe8d6);
+    border-color: rgba(232, 116, 58, 0.25);
+  }
+  html[data-theme="light"] .badge-card .agent-action-btn {
+    background: linear-gradient(180deg, rgba(250, 245, 235, 0.8), rgba(240, 230, 215, 0.9));
+    border-color: rgba(0, 0, 0, 0.06);
+    color: var(--text-2);
+  }
+  html[data-theme="light"] .badge-card .agent-action-btn:hover {
+    background: linear-gradient(180deg, rgba(255, 240, 225, 0.9), rgba(250, 235, 215, 1));
+    border-color: rgba(232, 116, 58, 0.2);
+    color: var(--text);
+  }
+  html[data-theme="light"] .badge-card .agent-footer {
+    border-top-color: rgba(0, 0, 0, 0.06);
+  }
+
+  /* carousel styles */
+  .carousel-wrap { position: relative; overflow: hidden; border-radius: 12px; border: 1px solid var(--line); box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
+  .carousel-track { display: flex; transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+  .carousel-track > img { width: 100%; flex-shrink: 0; height: auto; display: block; }
+  .carousel-btn { position: absolute; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.45); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.12); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; z-index: 3; }
+  .carousel-btn:hover { background: rgba(0,0,0,0.65); border-color: rgba(232,116,58,0.4); }
+  .carousel-btn.prev { left: 12px; }
+  .carousel-btn.next { right: 12px; }
+  .carousel-dots { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 3; }
+  .carousel-dots button { width: 8px; height: 8px; border-radius: 50%; border: none; background: rgba(255,255,255,0.25); cursor: pointer; transition: all 0.2s ease; padding: 0; }
+  .carousel-dots button.active { background: var(--accent); box-shadow: 0 0 8px var(--accent); width: 24px; border-radius: 4px; }
+  .carousel-zoom { position: absolute; bottom: 12px; right: 12px; width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.45); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16; pointer-events: none; opacity: 0.7; z-index: 3; }
+  .carousel-wrap:hover .carousel-zoom { opacity: 1; }
 
   /* enlarge sign-in / free-trial */
   nav .btn-text { font-size: 16px !important; }
 
   /* nav all-text scale-up on wide screens */
   nav .status-pill, nav .lang-switch button, nav .btn { font-size: 14.5px; }
+
+  /* ---- FAQ widget ---- */
+  .faq-widget-trigger { position: fixed; right: 24px; bottom: 24px; z-index: 45; width: 56px; height: 56px; border-radius: 50%; background: var(--accent); border: none; color: #0a0a0a; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 6px 24px rgba(232,116,58,0.35); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+  .faq-widget-trigger:hover { transform: scale(1.08); box-shadow: 0 8px 32px rgba(232,116,58,0.5); }
+  .faq-widget-trigger svg { width: 24px; height: 24px; }
+  .faq-widget-panel { position: fixed; right: 24px; bottom: 92px; z-index: 45; width: 360px; max-width: calc(100vw - 48px); max-height: calc(100vh - 120px); background: var(--bg-2); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+  .faq-widget-header { display: flex; align-items: center; justify-content: flex-end; padding: 12px 14px 8px; }
+  .faq-widget-header h4 { margin: 0; font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+  .faq-widget-header h4::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .faq-widget-header button { background: none; border: none; color: var(--text-2); cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: color 0.2s; }
+  .faq-widget-header button:hover { color: var(--text); }
+  .faq-widget-welcome { display: none; }
+  .faq-widget-list { overflow-y: auto; padding: 6px 0; }
+  .faq-item { border-bottom: 1px solid var(--line-soft); }
+  .faq-item:last-child { border-bottom: none; }
+  .faq-item-q { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; font-size: 14px; font-weight: 500; color: var(--text); cursor: pointer; transition: background 0.15s; user-select: none; }
+  .faq-item-q:hover { background: rgba(255,255,255,0.02); }
+  .faq-item-q .icon { color: var(--accent); font-size: 18px; line-height: 1; transition: transform 0.2s ease; }
+  .faq-item.open .faq-item-q .icon { transform: rotate(45deg); }
+  .faq-item-a { max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; padding: 0 20px; font-size: 13px; color: var(--text-2); line-height: 1.7; }
+  .faq-item.open .faq-item-a { max-height: 200px; padding: 0 20px 14px; }
+  .faq-widget-cta { padding: 14px 20px 18px; border-top: 1px solid var(--line-soft); }
+  .faq-widget-cta button { width: 100%; padding: 12px; border-radius: 8px; background: var(--accent); color: #0a0a0a; font-size: 14px; font-weight: 500; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: background 0.2s; }
+  .faq-widget-cta button:hover { background: var(--accent-soft); }
 
   /* ==================== RESPONSIVE DESIGN ==================== */
 
@@ -1019,19 +1141,18 @@ function LightboxProvider({ children }) {
 }
 
 const S = {
-  nav_items: { en: ["Home", "About", "Products", "Pricing", "Contact"], zh: ["首页", "关于", "产品", "定价", "联系"] },
-  nav_sign_in: { en: "Sign in", zh: "登录" },
-  nav_cta: { en: "Free trial", zh: "免费试用" },
+  nav_items: { en: ["Platform", "Why us", "Modules", "Solutions", "Partners"], zh: ["解决方案", "为什么选我们", "功能模块", "产品方案", "合作加盟"] },
+  nav_cta: { en: "Download", zh: "下载" },
   nav_live: { en: "v2.0 LIVE", zh: "v2.0 已上线" },
   nav_tag: { en: "Aivamax", zh: "Aivamax" },
 
   hero_chip: { en: "", zh: "" },
-  hero_h1_1: { en: "AI Acquisition · Global Expansion", zh: "AI自动化获客 · 企业出海解决方案" },
+  hero_h1_1: { en: "AI Global Acquisition System", zh: <span>AI 自动化出海获客系统<br />企业出海解决方案</span> },
   hero_h1_2: { en: "1 >", zh: "1人 >" },
   hero_h1_3: { en: "50-person team", zh: "50人团队" },
   hero_sub: {
-    en: "Aivamax turns your overseas strategy into a 24/7 digital sales department. Run hundreds of accounts across 8 global platforms — one operator, one console, zero bans.",
-    zh: "Aivamax 把你的出海战略变成一支 7×24 小时不眠不休的数字销售部。一个运营同时操盘 8 大平台数百个账号——原生指纹环境、零封号，询盘自动躺进后台。"
+    en: <span>Aivamax turns your overseas strategy into a 24/7 digital sales department. Run hundreds of accounts across 8 global platforms — one operator, one console, zero bans.</span>,
+    zh: <span>Aivamax 把你的出海战略变成一支 7×24 小时不眠不休的数字销售部。一个运营同时操盘 8 大平台数百个账号——原生指纹环境、零封号，询盘自动躺进后台。</span>
   },
   hero_btn1: { en: "Start 14-day free trial", zh: "免费试用 14 天" },
   hero_btn2: { en: "Watch 2-min demo", zh: "观看 2 分钟演示" },
@@ -1053,13 +1174,13 @@ const S = {
 
   /* ========== PAIN ========== */
   pain_eye: { en: "01 · Why foreign trade is stuck", zh: "01 · 外贸人为何越做越累" },
-  pain_title: { en: <span>Paid ads keep rising.<br />Inquiries keep <em>falling</em>.</span>, zh: <span>广告费越投越贵，<br />询盘却越来越<em>难</em>。</span> },
-  pain_sub: { en: "The old playbook —展会 + Google Ads + 外贸 B2B 平台 — is getting more expensive every quarter. Meanwhile your competitors in Shenzhen are already running 200-account matrices quietly harvesting buyers on Facebook, TikTok and Telegram.", zh: "老三样——展会 + Google Ads + B2B 平台——每个季度都在变贵。与此同时你的深圳同行已经在 FB / TikTok / Telegram 上悄悄跑起 200 个账号的矩阵，默默把买家截走。" },
+  pain_title: { en: <span>Paid ads keep rising.<br />Inquiries keep <em>falling</em>.</span>, zh: <span>广告费越投越<em>贵</em><br />询盘却越来越<em>难</em></span> },
+  pain_sub: { en: "The old playbook —展会 + Google Ads + 外贸 B2B 平台 — is getting more expensive every quarter. Meanwhile your competitors in Shenzhen are already running 200-account matrices quietly harvesting buyers on Facebook and TikTok.", zh: "老三样——展会 + Google Ads + B2B 平台——每个季度都在变贵。与此同时你的深圳同行已经在 FB / TikTok 上悄悄跑起 200 个账号的矩阵，默默把买家截走。" },
   pain_items: {
     en: [
     { k: "01", t: "Exhibition & B2B platforms", p: "$3-5 per lead, low quality, and half the buyers are ghost accounts.", s: "Our matrix: $0.2–$0.8 / validated lead." },
     { k: "02", t: "Cold email & cold LinkedIn", p: "Open rates under 10%. Accounts blocked within 48 hours.", s: "Our matrix: 60%+ open, native fingerprinted accounts, months of stable lifetime." },
-    { k: "03", t: "Google / Meta paid ads", p: "CPC doubled in 3 years. Creative fatigue kills ROAS within a week.", s: "Our matrix: free organic reach across 8 platforms, 24 / 7, no blown ad budget." },
+    { k: "03", t: "Google / Meta paid ads", p: "CPC doubled in 3 years. Creative fatigue kills ROAS within a week.", s: "Our matrix: free organic reach across 9 platforms, 24 / 7, no blown ad budget." },
     { k: "04", t: "Hire 10-person overseas team", p: "Payroll, benefits, language barrier, turnover — before a single deal closes.", s: "Our matrix: 1 operator + system = output of 50-person team." }],
 
     zh: [
@@ -1072,10 +1193,10 @@ const S = {
 
   /* ========== CAPABILITIES ========== */
   cap_eye: { en: "· Product Matrix", zh: "· 核心产品矩阵" },
-  cap_title: { en: <span>Five products.<br /><em>One operating system.</em></span>, zh: <span>五大产品线，<br /><em>同一套运营中枢。</em></span> },
+  cap_title: { en: <span>Five products.<br /><em>One operating system.</em></span>, zh: <span>五大产品线<br /><em>同一套运营中枢</em></span> },
   cap_list: {
     en: [
-    { k: "P1", t: "Social Traffic Engine", d: "Run 10–500 accounts across 8 platforms from one dashboard — with native fingerprints, rotating proxies and safe posting cadences built in.", tags: ["Account matrix", "Fingerprint isolation", "Proxy pool"] },
+    { k: "P1", t: "Social Traffic Engine", d: "Run 10–500 accounts across 9 platforms from one dashboard — with native fingerprints, rotating proxies and safe posting cadences built in.", tags: ["Account matrix", "Fingerprint isolation", "Proxy pool"] },
     { k: "P2", t: "SEO Blog Matrix", d: "AI writes, publishes and interlinks hundreds of long-tail articles across site-groups — dominate Google for the keywords your buyers search.", tags: ["Site groups", "Auto-interlink", "Schema markup"] },
     { k: "P3", t: "Orchestrator Console", d: "One console to brief, staff and approve. Agents hand off work: post → warm → intercept → close. You review the trail, not every task.", tags: ["Event bus", "Agent handoffs", "Audit log"] },
     { k: "P4", t: "Data Insights", d: "Real-time rollups across every account and platform. Forecast inquiries, CAC and ROI 7 / 30 / 90 days ahead. Attribute every lead to its first touch.", tags: ["Live dashboards", "Forecasting", "Attribution"] },
@@ -1084,7 +1205,7 @@ const S = {
     zh: [
     { k: "P1", t: "社媒引流矩阵", d: "单控制台驱动 10–500 个账号、8 大平台。原生指纹、代理轮换、安全发布节奏开箱即用。", tags: ["账号矩阵", "指纹隔离", "代理池"] },
     { k: "P2", t: "SEO 博客矩阵", d: "AI 批量撰写、发布、互链成百上千篇长尾文章，站群部署——让产品关键词霸屏 Google 前排。", tags: ["站群", "自动互链", "Schema"] },
-    { k: "P3", t: "总控编排台", d: "一个控制台接单、组团、审批。智能体自动接力：发帖 → 暖评 → 截流 → 成交，你只审结果。", tags: ["事件总线", "智能接力", "审计日志"] },
+    { k: "P3", t: "总控编排台", d: "一个控制台接单、组团、审批。功能模块自动接力：发帖 → 暖评 → 截流 → 成交，你只审结果。", tags: ["事件总线", "自动接力", "审计日志"] },
     { k: "P4", t: "数据洞察", d: "跨账号、跨平台实时汇总，7 / 30 / 90 天询盘、CAC、ROI 预测；每条线索追溯到最早触点。", tags: ["实时看板", "趋势预测", "归因追踪"] },
     { k: "P5", t: "内容工厂", d: "行业化 B2B 文案、品牌调性图片与短视频，覆盖 20+ 语种，按平台自动适配尺寸。", tags: ["GPT-5 级", "20+ 语种", "品牌护栏"] }]
 
@@ -1092,7 +1213,7 @@ const S = {
 
   /* ========== HOW ========== */
   how_eye: { en: "03 · Workflow", zh: "03 · 四步上线" },
-  how_title: { en: <span>From zero to a matrix in<br /><em>one afternoon.</em></span>, zh: <span>一个下午，<br /><em>你的海外矩阵就上线。</em></span> },
+  how_title: { en: <span>From zero to a matrix in<br /><em>one afternoon.</em></span>, zh: <span>一个下午<br /><em>你的海外矩阵就上线</em></span> },
   how_steps: {
     en: [
     { t: "Onboard accounts", d: "Import or buy fingerprinted accounts. Bind proxies, verify, warm up. The Account Doctor monitors health.", time: "Day 1" },
@@ -1110,99 +1231,100 @@ const S = {
   step_label: { en: "STEP", zh: "步骤" },
 
   /* ========== AGENTS ========== */
-  ag_eye: { en: "04 · The roster", zh: "04 · 智能体花名册" },
-  ag_title: { en: <span>Twenty agents.<br />One digital sales department.</span>, zh: <span>二十位智能体，<br />一支数字销售部。</span> },
-  ag_sub: { en: "Each agent is a specialist — narrow, tunable, auditable. Staff them like a team; replace them like contractors.", zh: "每个智能体都是专才——职责清晰、可调、可审。像组团一样配置，像承包商一样随时替换。" },
+  ag_eye: { en: "04 · Modules", zh: "04 · 功能模块" },
+  ag_title: { en: <span>Smart Modules.<br />Full automation.</span>, zh: <span>核心功能模块<br />全链路自动化</span> },
+  ag_sub: { en: "Covering content publishing, engagement, community ops and profile optimization — all on autopilot.", zh: "覆盖内容发布、互动引流、社群运营、账号优化四大板块，繁琐操作自动化执行" },
   ag_total: { en: "total · all tiers", zh: "个 · 全部套餐开放" },
   ag_ready: { en: "READY", zh: "就绪" },
-  ag_hire: { en: "+ Hire", zh: "+ 聘用" },
+  ag_assign: { en: "Assign task", zh: "分配任务" },
+  ag_hire: { en: "+ Hire", zh: "+ 启用" },
   ag_cats: {
-    en: ["Create", "Matrix Ops", "Acquire", "Analyse"],
-    zh: ["内容创作", "矩阵运营", "截流获客", "数据分析"]
+    en: ["Publish", "Engage", "Community", "Optimize"],
+    zh: ["内容发布", "互动引流", "社群运营", "账号优化"]
   },
   ag_list: {
     en: [
     [
-    { n: "Copywriter", d: "Drafts industry-specific B2B copy and ad creative across 20 languages.", e: "※" },
-    { n: "Art Director", d: "Generates on-palette images, carousels and product shots.", e: "◇" },
-    { n: "Video Editor", d: "Cuts short-form video with captions, auto-resized per platform.", e: "▶" },
-    { n: "Localiser", d: "Translates and transcreates for 20+ export markets.", e: "◈" },
-    { n: "Strategist", d: "Spots industry trends, proposes weekly campaign angles.", e: "✧" }],
+    { n: "Post", d: "Personal feed posting with multi-format support for long-term conversion.", e: "📝" },
+    { n: "Group Post", d: "Publish product info to target groups for precise exposure and traffic.", e: "👥" },
+    { n: "Page Post", d: "Official page publishing to build brand authority and engagement.", e: "🏢" },
+    { n: "Share", d: "Share quality posts to timeline for rapid content distribution.", e: "🔄" },
+    { n: "Profile SEO", d: "Embed keywords in bio to build automated traffic funnels.", e: "🔍" }],
 
     [
-    { n: "Scheduler", d: "Finds each account's best-performing time windows per market.", e: "◐" },
-    { n: "Engagement", d: "Likes, replies, keeps comment sections warm with safe cadences.", e: "◉" },
-    { n: "Account Doctor", d: "Monitors fingerprints & health; flags risk before bans.", e: "⊕" },
-    { n: "Proxy Router", d: "Rotates residential proxies per account, per region.", e: "⟲" },
-    { n: "Compliance", d: "Policy check before anything leaves the building.", e: "▣" }],
+    { n: "Like Boost", d: "Smart liking to increase real engagement and algorithm visibility.", e: "👍" },
+    { n: "Comment", d: "Post personalised comments on trending posts to attract buyers.", e: "💬" },
+    { n: "Link Reply", d: "Locate posts via link and batch-interact to build presence.", e: "🔗" },
+    { n: "Search Intercept", d: "Search by keyword and engage to capture buying intent.", e: "🎯" },
+    { n: "Page Like", d: "Auto-like target pages to establish connection and presence.", e: "❤️" }],
 
     [
-    { n: "Interceptor", d: "Mines competitor comments & hashtags for buying intent.", e: "⇌" },
-    { n: "DM Closer", d: "Runs personalised DM, WhatsApp & Telegram outreach.", e: "✉" },
-    { n: "SEO Blogger", d: "Writes & interlinks long-tail articles; dominates Google.", e: "◎" },
-    { n: "Community", d: "Joins Reddit / Telegram / Discord and seeds conversations.", e: "◆" },
-    { n: "Handoff", d: "Routes hot leads to your sales in real time, with full history.", e: "↷" }],
+    { n: "Accept Friends", d: "Auto-accept qualified friend requests to expand network.", e: "🤝" },
+    { n: "Add Friends", d: "Add target users by interest, groups or mutual connections.", e: "➕" },
+    { n: "Smart Join", d: "Auto-join industry groups to reserve slots for targeted traffic.", e: "🚪" },
+    { n: "Follow", d: "Auto-follow target pages/users to build ties and gain follow-backs.", e: "👁️" },
+    { n: "DM Nurture", d: "Send personalised DMs to prospects and schedule follow-ups.", e: "✉️" }],
 
     [
-    { n: "Analyst", d: "Real-time rollups across every account and platform.", e: "Σ" },
-    { n: "Forecaster", d: "Projects inquiries, CAC and revenue 7/30/90 days.", e: "∆" },
-    { n: "Spy", d: "Watches competitor cadence, creatives and engagement.", e: "◔" },
-    { n: "Attribution", d: "Traces every lead back to its originating touch.", e: "↯" },
-    { n: "ROI Auditor", d: "Allocates spend per agent and per market.", e: "◪" }]],
+    { n: "Localise", d: "Adapt language settings to target markets for local immersion.", e: "🌍" },
+    { n: "Cover Photo", d: "Upload professional cover images to enhance visual appeal.", e: "🖼️" },
+    { n: "Profile Pic", d: "Update profile pictures regularly to keep accounts fresh.", e: "📸" },
+    { n: "Video Growth", d: "Auto-watch industry videos to boost activity and recommendations.", e: "▶️" },
+    { n: "SEO Rank", d: "Embed keywords in account name to capture search traffic.", e: "📈" }]],
 
 
     zh: [
     [
-    { n: "笔杆子 · 阿墨", d: "按行业特征生成专业 B2B 文案与广告素材，支持 20 语种。", e: "墨" },
-    { n: "美术总监 · 图图", d: "统一调色板下生成配图、轮播、产品主图。", e: "图" },
-    { n: "剪刀手 · 小快", d: "短视频自动剪辑带字幕，按平台自动适配尺寸。", e: "快" },
-    { n: "翻译官 · 环环", d: "覆盖 20+ 出口市场的翻译与创意转译。", e: "环" },
-    { n: "军师 · 策策", d: "捕捉行业热点，每周提案营销切入点。", e: "策" }],
+    { n: "帖子", d: "个人主页发帖，支持图文视频，打造专业形象实现长期转化", e: "📝" },
+    { n: "群组发帖", d: "将产品信息精准发布到目标群组，实现曝光式精准引流", e: "👥" },
+    { n: "页面发帖", d: "通过官方身份发布内容，沉淀品牌影响力提升互动率", e: "🏢" },
+    { n: "分享帖子", d: "将优质帖子快速分享至时间线，扩大内容传播半径", e: "🔄" },
+    { n: "简介SEO", d: "个人资料嵌入行业关键词，构建自动流量通道转化为询盘", e: "🔍" }],
 
     [
-    { n: "排期官 · 钟钟", d: "为每个账号找到目标市场的最佳发布时段。", e: "钟" },
-    { n: "养号员 · 暖暖", d: "点赞、评论、热度维护，安全节奏。", e: "暖" },
-    { n: "账号医生 · 安安", d: "实时监控指纹与健康度，封号前预警。", e: "安" },
-    { n: "代理管家 · 路路", d: "按账号、按地区动态轮换住宅代理。", e: "路" },
-    { n: "合规官 · 守守", d: "出门前政策与合规检查。", e: "守" }],
+    { n: "点赞助推", d: "智能点赞提高真实互动率，提升帖子算法推荐权重", e: "👍" },
+    { n: "评论互动", d: "在热门帖子下发布个性化评论，以真实互动吸引目标客户", e: "💬" },
+    { n: "链接回评", d: "通过链接定位帖子批量互动，高效建立品牌存在感", e: "🔗" },
+    { n: "搜索截流", d: "按关键词搜索目标帖子并评论，精准拦截购买意向用户", e: "🎯" },
+    { n: "页面点赞", d: "自动点赞目标页面参与互动，建立联系增强存在感", e: "❤️" }],
 
     [
-    { n: "截流猎手 · 钩钩", d: "竞品评论、话题标签下挖掘购买意图。", e: "钩" },
-    { n: "私信成交 · 信信", d: "DM / WhatsApp / Telegram 个性化触达。", e: "信" },
-    { n: "SEO 博主 · 阿谷", d: "批量长尾文章互链部署，霸屏 Google。", e: "谷" },
-    { n: "社群特工 · 潜潜", d: "入驻 Reddit / Telegram / Discord 并播种话题。", e: "潜" },
-    { n: "线索交付 · 递递", d: "热线索带上下文实时分发销售接手。", e: "递" }],
+    { n: "接受好友", d: "自动接受符合条件的好友请求，快速扩展人脉网络", e: "🤝" },
+    { n: "添加好友", d: "根据兴趣群组共同联系精准添加目标用户，扩大受众", e: "➕" },
+    { n: "智能加群", d: "自动加入行业相关群组，为精准流量占位和获客铺路", e: "🚪" },
+    { n: "关注引流", d: "自动关注目标页面/用户，建立联系并获取回关流量", e: "👁️" },
+    { n: "私信沉淀", d: "自动发送个性化私信触达潜在客户，安排沟通促进转化", e: "✉️" }],
 
     [
-    { n: "数据官 · 洞洞", d: "跨账号、跨平台实时汇总。", e: "洞" },
-    { n: "预言家 · 未未", d: "7 / 30 / 90 天询盘、CAC 与营收预测。", e: "未" },
-    { n: "竞品侦察 · 瞄瞄", d: "盯紧竞品的发布节奏、素材与互动。", e: "瞄" },
-    { n: "追踪师 · 溯溯", d: "每一条线索追溯到最早的触点。", e: "溯" },
-    { n: "ROI 审计 · 算算", d: "按智能体、按市场分配预算。", e: "算" }]]
+    { n: "本地化", d: "修改语言设置适配目标市场，让账号融入当地社交环境", e: "🌍" },
+    { n: "封面照片", d: "上传专业封面照片，增强个人资料视觉吸引力", e: "🖼️" },
+    { n: "资料图片", d: "定期更新个人资料图片，保持账号新鲜度和专业感", e: "📸" },
+    { n: "视频增长", d: "自动观看行业相关视频提高活跃度，增加推荐权重", e: "▶️" },
+    { n: "SEO占位", d: "修改账户名称嵌入关键词，抢占搜索流量入口提升排名", e: "📈" }]]
 
 
   },
 
   /* ========== PLATFORMS ========== */
   pf_eye: { en: "05 · Coverage", zh: "05 · 平台覆盖" },
-  pf_title: { en: <span>Eight platforms.<br />One deploy.</span>, zh: <span>八大主流平台，<br />一次部署。</span> },
+  pf_title: { en: <span>Eight platforms.<br />One deploy.</span>, zh: <span>八大主流平台<br />一次部署</span> },
   pf_supp: { en: "SUPPORTED", zh: "已支持" },
   pf_road: { en: "· THREADS · BLUESKY · 微博 · 小红书 — ON THE ROADMAP ·", zh: "· Threads · Bluesky · 微博 · 小红书 — 即将支持 ·" },
 
   /* ========== CASES ========== */
   case_eye: { en: "06 · Field reports", zh: "06 · 客户案例" },
-  case_title: { en: <span>Exporters who stopped<br />buying展会 booths.</span>, zh: <span>这些外贸老板，<br />今年没再订展位。</span> },
+  case_title: { en: <span>Exporters who stopped<br />buying展会 booths.</span>, zh: <span>这些外贸老板<br />今年没再订展位</span> },
   case_all: { en: "All case studies →", zh: "查看全部案例 →" },
   case_list: {
     en: [
     { q: "We ran 120 TikTok accounts for our HVAC brand. Before: 20 leads/month from Alibaba. Now: 300+ qualified leads/month, Mexico and GCC combined.", n: "Wang, Foshan", r: "HVAC exporter · 50-person factory", k: "Leads ×15 · CAC –82%" },
     { q: "The SEO blog matrix got us to page 1 for 400+ long-tail industrial valve keywords in 90 days. Inbounds from Europe finally exceed展会 ROI.", n: "Liu, Ningbo", r: "Industrial valves · DTC", k: "400+ keywords · Page 1" },
-    { q: "For our Web3 launch we ran 80 X accounts + 40 Telegram groups. Got to 120k organic followers in six weeks. Zero ad spend.", n: "Kenji, Singapore studio", r: "Web3 growth studio", k: "120k followers · $0 ad" }],
+    { q: "For our Web3 launch we ran 80 X accounts. Got to 120k organic followers in six weeks. Zero ad spend.", n: "Kenji, Singapore studio", r: "Web3 growth studio", k: "120k followers · $0 ad" }],
 
     zh: [
     { q: "我们用 120 个 TikTok 账号跑暖通空调品牌。以前阿里巴巴每月 20 条询盘，现在墨西哥 + 海湾合起来月 300+ 条合格询盘。", n: "王总，佛山", r: "暖通空调外贸厂 · 50 人规模", k: "询盘 ×15 · CAC 下降 82%" },
     { q: "SEO 博客矩阵让我们 90 天内 400+ 个工业阀门长尾词冲到 Google 第一页。欧洲自然询盘终于超过了展位 ROI。", n: "刘总，宁波", r: "工业阀门 · 独立站", k: "400+ 词 · 首页" },
-    { q: "Web3 首发阶段跑了 80 个 X 账号 + 40 个 Telegram 群。六周自然涨粉 12 万。广告费为零。", n: "Kenji，新加坡工作室", r: "Web3 增长工作室", k: "12 万粉丝 · $0 广告" }]
+    { q: "Web3 首发阶段跑了 80 个 X 账号。六周自然涨粉 12 万。广告费为零。", n: "Kenji，新加坡工作室", r: "Web3 增长工作室", k: "12 万粉丝 · $0 广告" }]
 
   },
 
@@ -1224,34 +1346,26 @@ const S = {
 
   /* ========== PRICING ========== */
   pr_eye: { en: "07 · Pricing", zh: "07 · 价格方案" },
-  pr_title: { en: <span>Priced per matrix,<br />not per seat.</span>, zh: <span>按矩阵计费，<br />不按席位。</span> },
-  pr_monthly: { en: "Monthly", zh: "月付" },
-  pr_annual: { en: "Annual · save 2 months", zh: "年付 · 省 2 个月" },
-  pr_most: { en: "MOST CHOSEN", zh: "推荐" },
-  pr_billed_y: { en: "", zh: "" },
-  pr_billed_m: { en: "", zh: "" },
-  pr_free: { en: "", zh: "" },
-  pr_foot: { en: <span>Need outcome-based pricing, on-prem deployment, or a custom industry matrix? <a href="#contact" style={{ color: "var(--accent)" }}>Talk to sales →</a></span>, zh: <span>需要按成果结算、私有化部署或行业定制矩阵？<a href="#contact" style={{ color: "var(--accent)" }}>联系销售 →</a></span> },
+  pr_title: { en: <span>Product<br />Solutions.</span>, zh: <span>产品方案</span> },
+  pr_foot: { en: <span>Need on-prem deployment or a custom industry matrix? <a href="#partners" style={{ color: "var(--accent)" }}>Talk to sales →</a></span>, zh: <span>需要私有化部署或行业定制矩阵？<a href="#partners" style={{ color: "var(--accent)" }}>联系销售 →</a></span> },
   pr_plans: {
     en: [
-    { n: "Trial", p: 0, y: 0, tagline: "Test the waters.", feat: ["3 accounts", "1 platform", "14-day sandbox", "Community support"], cta: "Start free" },
-    { n: "Exporter", p: 299, y: 2990, tagline: "Small factory / DTC brand.", feat: ["30 accounts · 3 platforms", "5 agents · 800 tasks/mo", "SEO blog: 50 articles/mo", "Email + WeChat support"], cta: "Start Exporter" },
-    { n: "Matrix", p: 899, y: 8990, tagline: "Serious operators & studios.", feat: ["150 accounts · 8 platforms", "12 agents · 8k tasks/mo", "SEO blog: 500 articles/mo", "5 seats · dedicated CSM"], cta: "Start Matrix", featured: true },
-    { n: "Enterprise", p: 2999, y: 29990, tagline: "MCNs, agencies, in-house.", feat: ["Unlimited accounts", "All 20 agents, unlimited", "On-prem or private cloud", "SSO, audit log, SLA 99.9%"], cta: "Talk to sales" }],
+    { n: "Standard", desc: "Single license, single device.", feat: ["Software (1 license · 1 device)", "Software + AI content generation training"], cta: "Contact Sales" },
+    { n: "Team", desc: "Team license, multi-device.", feat: ["Software (1 license · 3 devices)", "Software + AI content generation training"], cta: "Contact Sales" },
+    { n: "Flagship", desc: "Full AI suite with API access.", feat: ["Software (1 license · 1 device)", "AI content generation (text, image, video)", "Enterprise system API integration", "AI automation workflows"], cta: "Contact Sales" },
+    { n: "Super Flagship", desc: "Everything + standalone site service.", feat: ["Software (1 license · 1 device)", "AI content generation (text, image, video)", "Enterprise system API integration", "AI automation workflows", "Standalone site service"], cta: "Contact Sales" }],
 
     zh: [
-    { n: "试用版", p: 0, y: 0, tagline: "先跑通流程。", feat: ["3 个账号", "1 个平台", "14 天沙箱", "社区支持"], cta: "免费开始" },
-    { n: "外贸版", p: 299, y: 2990, tagline: "中小工厂 / 独立站品牌。", feat: ["30 个账号 · 3 个平台", "5 个智能体 · 800 任务/月", "SEO 博客：50 篇/月", "邮件 + 企微支持"], cta: "开通外贸版" },
-    { n: "矩阵版", p: 899, y: 8990, tagline: "资深操盘手 / 工作室。", feat: ["150 个账号 · 8 个平台", "12 个智能体 · 8000 任务/月", "SEO 博客：500 篇/月", "5 席位 · 专属 CSM"], cta: "开通矩阵版", featured: true },
-    { n: "企业版", p: 2999, y: 29990, tagline: "MCN / 代理商 / 品牌内部。", feat: ["账号无限", "全部 20 个智能体无限", "私有化 / 私有云部署", "SSO · 审计日志 · SLA 99.9%"], cta: "联系销售" }]
+    { n: "标准版", desc: "单码单机，入门首选", feat: ["软件（一码一机）", "软件 + AI 内容生成培训"], cta: "联系销售" },
+    { n: "团队版", desc: "一码三机，小团队协作", feat: ["软件（一码三机）", "软件 + AI 内容生成培训"], cta: "联系销售" },
+    { n: "旗舰版", desc: "全套 AI 能力 + API 接入", feat: ["软件（一码一机）", "AI 内容生成（文字、图片、视频）", "企业系统 API 接入", "AI 自动化流程"], cta: "联系销售" },
+    { n: "超级旗舰版", desc: "全能力 + 独立站服务", feat: ["软件（一码一机）", "AI 内容生成（文字、图片、视频）", "企业系统 API 接入", "AI 自动化流程", "独立站服务"], cta: "联系销售" }]
 
   },
-  pr_mo: { en: "", zh: "" },
-  pr_unit: { en: "", zh: "" },
 
   /* ========== PARTNER / 加盟 ========== */
   pt_eye: { en: "· Partner & Contact", zh: "· 合作 & 联系我们" },
-  pt_title: { en: <span>Let's build your<br /><em>overseas matrix — together.</em></span>, zh: <span>一起，<br /><em>把你的出海矩阵搭起来。</em></span> },
+  pt_title: { en: <span>Let's build your<br /><em>overseas matrix — together.</em></span>, zh: <span>一起<br /><em>把你的出海矩阵搭起来</em></span> },
   pt_sub: { en: "Whether you're ready to start a trial, want to become a partner, or just have questions — reach out. A real human replies within 2 hours, Beijing working time.", zh: "无论你想试用产品、成为合作伙伴，还是只是有疑问——直接联系我们。北京工作时间 2 小时内真人回复。" },
   pt_items: {
     en: [
@@ -1271,10 +1385,10 @@ const S = {
   pt_qr_title: { en: "Scan · WeChat", zh: "扫一扫 · 添加企业微信" },
   pt_qr_sub: { en: "Add our solutions consultant on WeChat.", zh: "添加解决方案顾问，备注「咨询」。" },
   pt_contact_label: { en: "Or reach us directly", zh: "或直接联系我们" },
-  pt_email: { en: "hello@aivamax.com", zh: "hello@aivamax.com" },
-  pt_phone: { en: "+86 400-880-Aivamax", zh: "+86 400-880-Aivamax" },
+  pt_email: { en: "15523827183", zh: "15523827183" },
+  pt_phone: { en: "+86 400-880-ExpandX", zh: "+86 400-880-ExpandX" },
   pt_hours: { en: "Mon–Fri · 9:00–21:00 (GMT+8)", zh: "周一至周五 · 9:00–21:00" },
-  pt_closing: { en: "See you inside Aivamax.", zh: "我们 Aivamax 后台见。" },
+  pt_closing: { en: <span>See you inside Aivamax.</span>, zh: <span>我们 Aivamax 后台见。</span> },
 
   /* ========== SCENARIOS ========== */
   sc_eye: { en: "05 · Who it's for", zh: "05 · 适用场景" },
@@ -1385,41 +1499,41 @@ const S = {
   pm_cta2: { en: "Free trial", zh: "免费试用" },
 
   /* ========== WHY US ========== */
-  wu_eye: { en: "07 · Why Aivamax", zh: "07 · 为什么选 Aivamax" },
-  wu_title: { en: <span>Why exporters pick us<br />over DIY and SaaS tools.</span>, zh: <span>为什么选 Aivamax<br />出海获客系统？</span> },
+  wu_eye: { en: <span>07 · Why Aivamax</span>, zh: <span>07 · 为什么选 Aivamax</span> },
+  wu_title: { en: <span>Why exporters pick us<br />over DIY and SaaS tools.</span>, zh: <span>为什么选 <em style={{color:"var(--accent)",fontStyle:"normal"}}>Aivamax</em><br />出海获客系统？</span> },
   wu_items: {
     en: [
-    { k: "18 yr", t: "Software R&D heritage", d: "Deep investment in foreign-trade and overseas customer-acquisition scenarios." },
-    { k: "Multi", t: "Cross-industry coverage", d: "Manufacturing, export, cross-border e-commerce — one operating system across industries." },
-    { k: "Anti-control", t: "Beyond scheduling tools", d: "A durable, self-running acquisition system — not just another scheduler." },
-    { k: "Native", t: "Native-fingerprint environment", d: "Independent IP, fingerprinted devices, strict platform risk control." }],
+    { k: "18 yr", t: <span>Software <em style={{color:"var(--accent)",fontStyle:"normal"}}>R&D</em> heritage</span>, d: "Deep investment in foreign-trade and overseas customer-acquisition scenarios." },
+    { k: "Multi", t: <span>Cross-industry <em style={{color:"var(--accent)",fontStyle:"normal"}}>coverage</em></span>, d: "Manufacturing, export, cross-border e-commerce — one operating system across industries." },
+    { k: "Anti-control", t: <span><em style={{color:"var(--accent)",fontStyle:"normal"}}>Beyond</em> scheduling tools</span>, d: "A durable, self-running acquisition system — not just another scheduler." },
+    { k: "Native", t: <span>Native-<em style={{color:"var(--accent)",fontStyle:"normal"}}>fingerprint</em> environment</span>, d: "Independent IP, fingerprinted devices, strict platform risk control." }],
 
     zh: [
-    { k: "18 年", t: "软件研发沉淀", d: "深耕外贸营销与海外获客全场景。" },
-    { k: "多行业", t: "多行业覆盖", d: "覆盖外贸、制造、跨境电商等多行业，一站式赋能企业出海。" },
-    { k: "反群控", t: "区别于传统群控工具", d: "打造可靠、可长效运转的获客系统。" },
-    { k: "原生", t: "底层模拟真人操作环境", d: "独立 IP 指纹账号，严控平台风险。" }]
+    { k: "18 年", t: <span>软件<em style={{color:"var(--accent)",fontStyle:"normal"}}>研发</em>沉淀</span>, d: "深耕外贸营销与海外获客全场景。" },
+    { k: "多行业", t: <span>多行业<em style={{color:"var(--accent)",fontStyle:"normal"}}>覆盖</em></span>, d: "覆盖外贸、制造、跨境电商等多行业，一站式赋能企业出海。" },
+    { k: "反群控", t: <span><em style={{color:"var(--accent)",fontStyle:"normal"}}>区别于</em>传统群控工具</span>, d: "打造可靠、可长效运转的获客系统。" },
+    { k: "原生", t: <span>底层模拟<em style={{color:"var(--accent)",fontStyle:"normal"}}>真人</em>操作环境</span>, d: "独立 IP 指纹账号，严控平台风险。" }]
 
   },
-  wu_quote: { en: "We don't teach you \"how to run more accounts.\" We help you build a self-running overseas acquisition machine.", zh: "我们不教你「怎么熬夜运营账号」，而是帮你搭建一套长期运转的出海获客机器。" },
+  wu_quote: { en: "We don't teach you \"how to run more accounts.\" We help you build a self-running overseas acquisition machine.", zh: <span>我们不教你「怎么熬夜运营账号」，而是帮你搭建一套<em style={{color:"var(--accent)",fontStyle:"normal"}}>长期运转</em>的<em style={{color:"var(--accent)",fontStyle:"normal"}}>出海获客机器</em>。</span> },
 
   /* ========== FAQ ========== */
   faq_eye: { en: "09 · FAQ", zh: "09 · 常见问题" },
   faq_title: { en: "Straight answers.", zh: "直接回答。" },
   faq_list: {
     en: [
-    { q: "Is matrix marketing a grey-area / black-hat tactic?", a: "No. Matrix is what every serious DTC brand, MCN and Web3 studio already does — Shenzhen operators have been running it for years. The only difference: Aivamax gives you the tooling to do it safely, at scale, from a single console. We enforce per-account rate limits and compliance checks so your accounts stay healthy." },
-    { q: "Will my accounts get banned?", a: "Every account runs in an isolated native fingerprint environment with its own residential proxy. The Account Doctor monitors health signals (device, network, behavioral) and auto-adjusts cadence before any platform flags you. Customer data: 98.7% account health, quarter average." },
-    { q: "I don't know English / industry copy. Can the AI really write for my niche?", a: "Yes. Give it your product spec, target market, and a few sample messages — the AI adapts tone and produces industry-specific B2B copy in 20+ languages. You can approve or reject anything before it goes live." },
-    { q: "How is this different from Hootsuite / Buffer / Later?", a: "Those are scheduling tools — they wait for you to click. Aivamax is a digital workforce. Agents think, post, reply, mine leads, and hand off to each other on events. One operator can do the work of a 50-person team." },
+      { q: "Is matrix marketing a grey-area / black-hat tactic?", a: <span>No. Matrix is what every serious DTC brand, MCN and Web3 studio already does — Shenzhen operators have been running it for years. The only difference: Aivamax gives you the tooling to do it safely, at scale, from a single console. We enforce per-account rate limits and compliance checks so your accounts stay healthy.</span> },
+      { q: "Will my accounts get banned?", a: "Every account runs in an isolated native fingerprint environment with its own residential proxy. The Account Doctor monitors health signals (device, network, behavioral) and auto-adjusts cadence before any platform flags you. Customer data: 98.7% account health, quarter average." },
+      { q: "I don't know English / industry copy. Can the AI really write for my niche?", a: "Yes. Give it your product spec, target market, and a few sample messages — the AI adapts tone and produces industry-specific B2B copy in 20+ languages. You can approve or reject anything before it goes live." },
+      { q: "How is this different from Hootsuite / Buffer / Later?", a: <span>Those are scheduling tools — they wait for you to click. Aivamax is a digital workforce. Agents think, post, reply, mine leads, and hand off to each other on events. One operator can do the work of a 50-person team.</span> },
     { q: "What if I don't have overseas accounts yet?", a: "We can provide warmed, fingerprinted accounts, or guide you through buying them from trusted channels. Onboarding includes account warm-up and proxy binding — you go from zero to matrix in about a week." },
     { q: "Where are my data and accounts stored?", a: "Public cloud (Singapore / Frankfurt) by default. Enterprise plans support private cloud and fully on-prem deployment." }],
 
     zh: [
-    { q: "矩阵营销是不是灰产 / 黑产？", a: "不是。矩阵打法是所有一线 DTC 品牌、MCN、Web3 工作室都在用的公开秘密——深圳操盘手已经跑了好几年。区别在于：Aivamax 提供了让你在单个控制台里安全、规模化做这件事的全套工具。我们对每个账号实施频控与合规检查，确保账号健康。" },
-    { q: "我的账号会不会被封？", a: "每个账号都运行在独立的原生指纹环境里，配独立住宅代理。账号医生会监控设备、网络、行为信号，在平台标记你之前自动调整节奏。客户实测数据：账号健康度季度均值 98.7%。" },
-    { q: "我不会英语 / 不懂行业话术，AI 真能替我写专业内容？", a: "可以。给它产品规格、目标市场、几条样例信息——AI 自动拟合语气，生成 20+ 语种的行业专业 B2B 文案。发布前你可以一条条审批。" },
-    { q: "这和 Hootsuite / Buffer / 各种排期工具有啥区别？", a: "那些都是排期工具——等你去点。Aivamax 是数字员工队伍：智能体会思考、发帖、互动、挖线索，彼此在事件驱动下接力。一个运营干 50 人的活。" },
+      { q: "矩阵营销是不是灰产 / 黑产？", a: <span>不是。矩阵打法是所有一线 DTC 品牌、MCN、Web3 工作室都在用的公开秘密——深圳操盘手已经跑了好几年。区别在于：Aivamax 提供了让你在单个控制台里安全、规模化做这件事的全套工具。我们对每个账号实施频控与合规检查，确保账号健康。</span> },
+      { q: "我的账号会不会被封？", a: "每个账号都运行在独立的原生指纹环境里，配独立住宅代理。账号医生会监控设备、网络、行为信号，在平台标记你之前自动调整节奏。客户实测数据：账号健康度季度均值 98.7%。" },
+      { q: "我不会英语 / 不懂行业话术，AI 真能替我写专业内容？", a: "可以。给它产品规格、目标市场、几条样例信息——AI 自动拟合语气，生成 20+ 语种的行业专业 B2B 文案。发布前你可以一条条审批。" },
+      { q: "这和 Hootsuite / Buffer / 各种排期工具有啥区别？", a: <span>那些都是排期工具——等你去点。Aivamax 是数字员工队伍：智能体会思考、发帖、互动、挖线索，彼此在事件驱动下接力。一个运营干 50 人的活。</span> },
     { q: "我现在还没有海外账号怎么办？", a: "我们可以提供已养好的原生指纹账号，或带你走正规渠道购买。上线流程包括养号与代理绑定——从零到矩阵大约一周。" },
     { q: "我的数据和账号存在哪里？", a: "默认公有云（新加坡 / 法兰克福）。企业版支持私有云与完全私有化部署。" }]
 
@@ -1437,7 +1551,7 @@ const S = {
   ct_title: { en: <span>Scan to chat with<br />a human, now.</span>, zh: <span>扫码 1v1 咨询，<br />即刻对接专属顾问。</span> },
   ct_sub: { en: "WeChat our customer success team for a 1:1 demo, a custom matrix proposal, or pricing for your industry.", zh: "添加专属顾问微信，获取 1:1 演示、行业定制方案、专属优惠。" },
   ct_wechat_label: { en: "WeChat · Customer Success", zh: "专属客服微信" },
-  ct_email: { en: "hi@aivamax.com", zh: "hi@aivamax.com" },
+  ct_email: { en: "hi@expandx.io", zh: "hi@expandx.io" },
   ct_hours: { en: "Mon–Sat · 9:00–21:00 (GMT+8)", zh: "周一至周六 · 9:00–21:00" },
 
   /* ========== FOOTER ========== */
@@ -1457,7 +1571,7 @@ const S = {
     { t: "公司", l: ["关于我们", "合作加盟", "招聘", "安全合规", "联系我们"] }]
 
   },
-  ft_rights: { en: "© 2026 Aivamax Labs · All rights reserved", zh: "© 2026 Aivamax 实验室 · 保留所有权利" },
+  ft_rights: { en: <span>© 2026 Aivamax Labs · All rights reserved</span>, zh: "© 2026 Aivamax 实验室 · 保留所有权利" },
   ft_legal: { en: "PRIVACY · TERMS · DPA · ICP备 xxxxx号", zh: "隐私 · 条款 · DPA · ICP备 xxxxx号" }
 };
 
@@ -1476,7 +1590,7 @@ function Nav() {
     window.dispatchEvent(new CustomEvent("exp-theme-change", { detail: theme }));
   }, [theme]);
   const toggleTheme = () => setTheme(t => t === "dark" ? "light" : "dark");
-  const anchors = ["platform", "why", "agents", "pricing", "contact"];
+  const anchors = ["platform", "why", "agents", "pricing", "partners"];
   const [activeAnchor, setActiveAnchor] = useState("platform");
   // Flag to disable scroll-spy during programmatic navigation
   const navigatingRef = useRef(false);
@@ -1504,10 +1618,21 @@ function Nav() {
       setScrolled(window.scrollY > 20);
       // Skip scroll-spy during programmatic navigation
       if (navigatingRef.current) return;
+      const offset = 200;
+      const scrollBottom = window.innerHeight + window.scrollY;
+      const pageHeight = document.documentElement.scrollHeight;
+      // If scrolled to bottom (within 80px), force activate last section
+      if (scrollBottom >= pageHeight - 80) {
+        setActiveAnchor(anchors[anchors.length - 1]);
+        return;
+      }
       let current = anchors[0];
-      for (const a of anchors) {
-        const el = document.getElementById(a);
-        if (el && el.getBoundingClientRect().top <= 140) current = a;
+      for (let i = anchors.length - 1; i >= 0; i--) {
+        const el = document.getElementById(anchors[i]);
+        if (el && el.getBoundingClientRect().top <= offset) {
+          current = anchors[i];
+          break;
+        }
       }
       setActiveAnchor(current);
     };
@@ -1516,16 +1641,13 @@ function Nav() {
   return (
     <nav data-nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 40, padding: scrolled ? "12px 0" : "18px 0", backdropFilter: "blur(14px)", background: scrolled ? "rgba(7,7,10,0.78)" : "transparent", borderBottom: scrolled ? "1px solid var(--line-soft)" : "1px solid transparent", transition: "all 260ms ease" }}>
       <div className="wrap" style={{ display: "flex", alignItems: "center", gap: 28 }}>
-        <a href="#" style={{ display: "flex", alignItems: "center", gap: 12, paddingRight: 20, borderRight: "1px solid var(--line-soft)", marginRight: 8 }}>
-          <img src="logo.png" alt="Aivamax" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover" }} />
-          <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.1 }}>
-            <span style={{ fontFamily: "var(--sans)", fontSize: 20, letterSpacing: "-0.02em", display: "inline-flex", alignItems: "baseline" }}><span style={{ fontWeight: 300 }}>Aiva</span><span style={{ fontWeight: 700, color: "var(--accent)" }}>max</span></span>
-            <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-3)", letterSpacing: "0.14em", marginTop: 2 }}>{t(S.nav_tag)}</span>
-          </div>
+        <a href="#" style={{ display: "flex", alignItems: "center", gap: 10, paddingRight: 20, borderRight: "1px solid var(--line-soft)", marginRight: 8 }}>
+          <img src="logo.png" alt="Logo" style={{ height: 44, width: "auto", display: "block" }} />
+          <img src="brand-name.png" alt="Aivamax" style={{ height: 38, width: "auto", display: "block" }} />
         </a>
         <div className="nav-links" style={{ display: "flex", gap: 28, marginLeft: 16, fontSize: 16, whiteSpace: "nowrap" }}>
           {t(S.nav_items).map((x, i) =>
-          <a key={i} className={"nav-link" + (activeAnchor === anchors[i] ? " active" : "")} style={{ whiteSpace: "nowrap", fontFamily: "var(--sans-cjk)", cursor: "pointer" }} onPointerDown={(e) => { e.preventDefault(); }} onClick={() => scrollToAnchor(anchors[i])}>{x}</a>
+          <a key={i} href={`#${anchors[i]}`} className={"nav-link" + (activeAnchor === anchors[i] ? " active" : "")} style={{ whiteSpace: "nowrap", fontFamily: "var(--sans-cjk)", cursor: "pointer" }} onClick={(e) => { e.preventDefault(); scrollToAnchor(anchors[i]); }}>{x}</a>
           )}
         </div>
         {/* Mobile hamburger button */}
@@ -1552,22 +1674,21 @@ function Nav() {
             <button className={lang === "en" ? "active" : ""} onClick={() => setLang("en")}>EN</button>
             <button className={lang === "zh" ? "active" : ""} onClick={() => setLang("zh")}>中文</button>
           </div>
-          <a className="btn-text" style={{ fontSize: 14 }} onClick={() => scrollToAnchor('signin')}>{t(S.nav_sign_in)}</a>
-          <a className="btn btn-primary" onClick={() => scrollToAnchor('trial')}>{t(S.nav_cta)}
+          <a className="btn btn-primary" href="AIvamax-Installer.exe" download style={{ borderRadius: 999, padding: "6px 14px", fontSize: 13, fontFamily: "var(--mono)", letterSpacing: "0.08em" }}>{t(S.nav_cta)}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </a>
         </div>
       </div>
       {/* Mobile menu dropdown */}
       {mobileMenuOpen && (
-        <div style={{ display: "none", borderTop: "1px solid var(--line-soft)", background: "var(--bg-2)", padding: "12px 20px 16px", flexDirection: "column", gap: 4 }} className="mobile-menu-dropdown">
+        <div style={{ borderTop: "1px solid var(--line-soft)", background: "var(--bg-2)", padding: "12px 20px 16px", flexDirection: "column", gap: 4 }} className="mobile-menu-dropdown">
           {t(S.nav_items).map((x, i) => (
-            <a key={i} onPointerDown={(e) => e.preventDefault()} onClick={() => scrollToAnchor(anchors[i])} style={{ display: "block", padding: "10px 0", fontSize: 15, color: activeAnchor === anchors[i] ? "var(--accent)" : "var(--text-2)", fontFamily: "var(--sans-cjk)", borderBottom: i < anchors.length - 1 ? "1px solid var(--line-soft)" : "none", transition: "color 160ms", cursor: "pointer" }}>
+            <a key={i} href={`#${anchors[i]}`} onClick={(e) => { e.preventDefault(); scrollToAnchor(anchors[i]); }} style={{ display: "block", padding: "10px 0", fontSize: 15, color: activeAnchor === anchors[i] ? "var(--accent)" : "var(--text-2)", fontFamily: "var(--sans-cjk)", borderBottom: i < anchors.length - 1 ? "1px solid var(--line-soft)" : "none", transition: "color 160ms", cursor: "pointer" }}>
               {x}
             </a>
           ))}
           <div style={{ display: "flex", gap: 10, marginTop: 8, paddingTop: 10, borderTop: "1px solid var(--line-soft)" }}>
-            <a className="btn btn-primary" onPointerDown={(e) => e.preventDefault()} onClick={() => scrollToAnchor('trial')} style={{ flex: 1, justifyContent: "center", fontSize: 13 }}>{t(S.nav_cta)}</a>
+            <a className="btn btn-primary" href="AIvamax-Installer.exe" download onPointerDown={(e) => e.preventDefault()} style={{ flex: 1, justifyContent: "center", fontSize: 13, borderRadius: 999, fontFamily: "var(--mono)", letterSpacing: "0.08em" }}>{t(S.nav_cta)}</a>
           </div>
         </div>
       )}
@@ -1627,32 +1748,66 @@ function MatrixViz() {
 
 function DataPanelImage({ isMobile }) {
   const { open } = useLightbox();
-  const galleryImages = ["dashboard.png"];
+  const galleryImages = ["data-panel.png", "data-panel-2.png", "data-panel-3.png"];
+  const galleryMeta = [
+    { title: "全平台数据仪表盘", desc: "实时追踪增长、活动洞察与账户概览" },
+    { title: "营销任务管理中心", desc: "可视化调度自动化流程与执行状态" },
+    { title: "账户矩阵分类列表", desc: "统一管理多平台账号与类别汇总" },
+  ];
+  const alts = ["Aivamax 全平台数据仪表盘，实时展示增长追踪、活动洞察、活动分析及账户概览", "Aivamax 营销任务管理中心，展示任务调度、自动化流程与执行状态", "Aivamax 账户矩阵分类列表，展示多平台账号管理与类别汇总"];
+  const [current, setCurrent] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const total = galleryImages.length;
+
+  useEffect(() => {
+    if (paused) return;
+    const id = setInterval(() => setCurrent(c => (c + 1) % total), 5000);
+    return () => clearInterval(id);
+  }, [paused, total]);
+
+  const go = (dir) => setCurrent(c => (c + dir + total) % total);
+
   return (
-    <div style={{ position: "relative", order: isMobile ? -1 : 0, cursor: "pointer" }}
-      onClick={() => open(galleryImages, 0)}>
-      <img src="dashboard.png" alt="Aivamax 智能体实时数据面板" style={{
-        width: "100%", height: "auto", borderRadius: isMobile ? 10 : 12,
-        border: "1px solid var(--line)", display: "block",
-        boxShadow: "0 20px 50px rgba(0,0,0,0.4)",
-        transition: "transform 0.3s ease, box-shadow 0.3s ease"
-      }}
-      onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.01)"; e.currentTarget.style.boxShadow = "0 24px 60px rgba(0,0,0,0.5)"; }}
-      onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 20px 50px rgba(0,0,0,0.4)"; }}
-      />
-      {/* 放大图标提示 */}
-      <div style={{
-        position: "absolute", bottom: 12, right: 12,
-        width: 36, height: 36, borderRadius: "50%",
-        background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)",
-        border: "1px solid rgba(255,255,255,0.15)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        color: "#fff", fontSize: 16, pointerEvents: "none",
-        opacity: 0.7
-      }}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/>
-        </svg>
+    <div style={{ position: "relative", order: isMobile ? -1 : 0 }}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}>
+      <div className="carousel-wrap" style={{ borderRadius: isMobile ? 10 : 12 }}>
+        <div className="carousel-track" style={{ transform: `translateX(-${current * 100}%)` }}>
+          {galleryImages.map((src, i) => (
+            <div key={i} style={{ position: "relative", width: "100%", flexShrink: 0 }}>
+              <img src={src} alt={alts[i]} onClick={() => open(galleryImages, i)} style={{ width: "100%", height: "auto", display: "block", cursor: "pointer" }} />
+              <div style={{
+                position: "absolute", bottom: 0, left: 0, right: 0,
+                padding: "32px 20px 14px",
+                background: "linear-gradient(transparent, rgba(0,0,0,0.65))",
+                pointerEvents: "none"
+              }}>
+                <div style={{ fontSize: 15, fontWeight: 600, color: "#fff", marginBottom: 3, letterSpacing: "0.02em" }}>{galleryMeta[i].title}</div>
+                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", lineHeight: 1.5 }}>{galleryMeta[i].desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* prev */}
+        <button className="carousel-btn prev" onClick={(e) => { e.stopPropagation(); go(-1); }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        {/* next */}
+        <button className="carousel-btn next" onClick={(e) => { e.stopPropagation(); go(1); }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+        {/* dots */}
+        <div className="carousel-dots">
+          {galleryImages.map((_, i) => (
+            <button key={i} className={i === current ? "active" : ""} onClick={(e) => { e.stopPropagation(); setCurrent(i); }} />
+          ))}
+        </div>
+        {/* zoom hint */}
+        <div className="carousel-zoom">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/>
+          </svg>
+        </div>
       </div>
     </div>
   );
@@ -1666,6 +1821,27 @@ function Hero() {
     const check = () => setIsMobile(window.innerWidth < 768);
     check(); window.addEventListener('resize', check); return () => window.removeEventListener('resize', check);
   }, []);
+  const handleHeroPhoneClick = (e) => {
+    e.preventDefault();
+    const isMobileDevice = /Android|iPhone|iPad|iPod|Opera Mini/i.test(navigator.userAgent);
+    if (isMobileDevice) {
+      window.location.href = 'tel:15523827183';
+      return;
+    }
+    const ta = document.createElement('textarea');
+    ta.value = '15523827183';
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    const btn = e.currentTarget;
+    const orig = btn.querySelector('span') || btn;
+    const origText = btn.lastChild.textContent;
+    btn.lastChild.textContent = ' 已复制 ✓';
+    setTimeout(() => { btn.lastChild.textContent = ' 15523827183'; }, 2000);
+  };
   return (
     <section style={{ paddingTop: 150, paddingBottom: 32 }}>
       <div className="wrap" style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1.1fr 0.9fr", gap: isMobile ? 32 : 60, alignItems: "center" }}>
@@ -1691,7 +1867,7 @@ function Hero() {
             marginBottom: 0,
             fontWeight: 400
           }}>
-            <div className="shimmer-text" style={{ marginBottom: 8 }}>{t(S.hero_h1_1)}</div>
+            <div className="shimmer-text" style={{ marginBottom: 8, whiteSpace: "nowrap" }}>{t(S.hero_h1_1)}</div>
             <div>
               <span className="shimmer-text">{t(S.hero_h1_2)}</span>
               <span className="shimmer-text" style={{ marginLeft: 12 }}>{t(S.hero_h1_3)}</span>
@@ -1699,16 +1875,20 @@ function Hero() {
           </h1>
           <p className="h-sub" style={{ marginTop: 28, fontSize: 18 }}>{t(S.hero_sub)}</p>
           <div style={{ display: "flex", gap: 12, marginTop: 36, alignItems: "center", flexWrap: "wrap" }}>
-            <a className="btn btn-primary" href="#trial">{t(S.hero_btn1)}
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            <a href="https://wa.me/8612345678900" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(232,116,58,0.08)", color: "var(--accent)", fontSize: 14, fontWeight: 500, padding: "10px 22px", borderRadius: 999, textDecoration: "none", transition: "all .2s", border: "1px solid rgba(232,116,58,0.3)" }} onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.background = "var(--accent)"; e.currentTarget.style.color = "#0a0a0a"; e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 6px 16px rgba(232,116,58,.35)"; }} onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.background = "rgba(232,116,58,0.08)"; e.currentTarget.style.color = "var(--accent)"; e.currentTarget.style.borderColor = "rgba(232,116,58,0.3)"; e.currentTarget.style.boxShadow = "none"; }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              WhatsApp
             </a>
-            <a className="btn btn-ghost" href="#demo">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" /><path d="M10 8l6 4-6 4V8z" fill="currentColor" /></svg>
-              {t(S.hero_btn2)}
+            <div onClick={handleHeroPhoneClick} style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(232,116,58,0.08)", color: "var(--accent)", fontSize: 14, fontWeight: 500, padding: "10px 22px", borderRadius: 999, textDecoration: "none", transition: "all .2s", border: "1px solid rgba(232,116,58,0.3)", cursor: "pointer" }} onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.background = "var(--accent)"; e.currentTarget.style.color = "#0a0a0a"; e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 6px 16px rgba(232,116,58,.35)"; }} onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.background = "rgba(232,116,58,0.08)"; e.currentTarget.style.color = "var(--accent)"; e.currentTarget.style.borderColor = "rgba(232,116,58,0.3)"; e.currentTarget.style.boxShadow = "none"; }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              15523827183
+            </div>
+            <a href="#partners" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(232,116,58,0.08)", color: "var(--accent)", fontSize: 14, fontWeight: 500, padding: "10px 22px", borderRadius: 999, textDecoration: "none", transition: "all .2s", border: "1px solid rgba(232,116,58,0.3)" }} onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.background = "var(--accent)"; e.currentTarget.style.color = "#0a0a0a"; e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 6px 16px rgba(232,116,58,.35)"; }} onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.background = "rgba(232,116,58,0.08)"; e.currentTarget.style.color = "var(--accent)"; e.currentTarget.style.borderColor = "rgba(232,116,58,0.3)"; e.currentTarget.style.boxShadow = "none"; }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+              微信
             </a>
-            <span style={{ fontFamily: "var(--mono)", fontSize: 12.5, color: "var(--text-3)", letterSpacing: "0.05em" }}>{t(S.hero_noc)}</span>
           </div>
-          <div style={{ marginTop: 48, display: "flex", gap: isMobile ? 16 : 32, borderTop: "1px solid var(--line-soft)", paddingTop: 24, flexWrap: isMobile ? "nowrap" : "wrap", justifyContent: isMobile ? "space-between" : "flex-start", overflowX: isMobile ? "auto" : "visible" }}>
+          <div style={{ marginTop: 48, display: "flex", gap: isMobile ? 16 : 40, borderTop: "1px solid var(--line-soft)", paddingTop: 24, flexWrap: "nowrap", justifyContent: "space-around", overflowX: isMobile ? "auto" : "visible" }}>
             {[{ k: "500", u: t(S.stat_1) }, { k: "8", u: t(S.stat_2) }, { k: "2k+", u: t(S.stat_3) }, { k: "500+", u: t(S.stat_4) }].map((s) =>
             <div key={s.u} style={{ textAlign: "center", minWidth: isMobile ? 0 : "auto", flexShrink: 0 }}>
                 <div style={{ fontFamily: "var(--serif)", fontSize: isMobile ? 26 : 40, lineHeight: 1, color: "var(--accent)", fontWeight: 500 }}>{s.k}</div>
@@ -1736,8 +1916,8 @@ function Hero() {
             flexShrink: 0, position: "relative", zIndex: 2,
             background: "linear-gradient(90deg, var(--bg-2) 70%, transparent)"
           }}>
-            <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--accent)", boxShadow: "0 0 12px var(--accent)" }}></span>
-            <span style={{ fontFamily: "var(--mono)", fontSize: 11, letterSpacing: "0.16em", color: "var(--accent)", textTransform: "uppercase", whiteSpace: "nowrap" }}>{t({en:"Native on 8 platforms",zh:"原生适配 8 大平台"})}</span>
+            <span style={{ width: 10, height: 10, borderRadius: "50%", background: "var(--accent)", boxShadow: "0 0 16px var(--accent)" }}></span>
+            <span style={{ fontFamily: "var(--mono)", fontSize: 14, letterSpacing: "0.14em", color: "var(--accent)", textTransform: "uppercase", whiteSpace: "nowrap" }}>{t({en:"Native on 8 platforms",zh:"原生适配 8 大平台"})}</span>
           </div>
           {/* 滚动区域 */}
           <div style={{ display: "flex", alignItems: "center", overflow: "hidden", flex: 1 }}>
@@ -1750,10 +1930,12 @@ function Hero() {
                 {n:"YouTube", l:"▶", c:"#FF0000"},
                 {n:"LinkedIn", l:"in", c:"#0A66C2"},
                 {n:"WhatsApp", l:"✉", c:"#25D366"},
-                {n:"Telegram", l:"✈", c:"#26A5E4"}
+                {n:"Reddit", l:"R", c:"#FF4500"},
+                {n:"Pinterest", l:"P", c:"#E60023"},
+                {n:"Discord", l:"D", c:"#5865F2"}
               ].map((p,i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text-2)", fontSize: 13.5, flexShrink: 0, marginRight: 32 }}>
-                  <span style={{ width: 22, height: 22, borderRadius: 5, background: "color-mix(in srgb, " + p.c + " 18%, var(--bg))", color: p.c, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--serif)", fontSize: 12, fontWeight: 600 }}>{p.l}</span>
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--text-2)", fontSize: 16, flexShrink: 0, marginRight: 40 }}>
+                  <span style={{ width: 28, height: 28, borderRadius: 6, background: "color-mix(in srgb, " + p.c + " 18%, var(--bg))", color: p.c, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--serif)", fontSize: 14, fontWeight: 600 }}>{p.l}</span>
                   <span>{p.n}</span>
                 </div>
               ))}
@@ -1766,10 +1948,12 @@ function Hero() {
                 {n:"YouTube", l:"▶", c:"#FF0000"},
                 {n:"LinkedIn", l:"in", c:"#0A66C2"},
                 {n:"WhatsApp", l:"✉", c:"#25D366"},
-                {n:"Telegram", l:"✈", c:"#26A5E4"}
+                {n:"Reddit", l:"R", c:"#FF4500"},
+                {n:"Pinterest", l:"P", c:"#E60023"},
+                {n:"Discord", l:"D", c:"#5865F2"}
               ].map((p,i) => (
-                <div key={"dup-"+i} style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text-2)", fontSize: 13.5, flexShrink: 0, marginRight: 32 }}>
-                  <span style={{ width: 22, height: 22, borderRadius: 5, background: "color-mix(in srgb, " + p.c + " 18%, var(--bg))", color: p.c, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--serif)", fontSize: 12, fontWeight: 600 }}>{p.l}</span>
+                <div key={"dup-"+i} style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--text-2)", fontSize: 16, flexShrink: 0, marginRight: 40 }}>
+                  <span style={{ width: 28, height: 28, borderRadius: 6, background: "color-mix(in srgb, " + p.c + " 18%, var(--bg))", color: p.c, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--serif)", fontSize: 14, fontWeight: 600 }}>{p.l}</span>
                   <span>{p.n}</span>
                 </div>
               ))}
@@ -1808,7 +1992,7 @@ function Pain() {
         {/* 标题区：标题 + 副标题纵向排列，逻辑清晰 */}
         <div style={{ textAlign: isMobile ? "left" : "center", marginBottom: isMobile ? 36 : 56 }}>
           <h2 className="h-title" style={{ marginTop: 0 }}>{t(S.pain_title)}</h2>
-          <p className="h-sub" style={{ marginTop: 20, margin: "20px auto 0", maxWidth: isMobile ? "100%" : "720px" }}>{t(S.pain_sub)}</p>
+          <p style={{ marginTop: 20, margin: "20px auto 0", maxWidth: isMobile ? "100%" : "720px", fontSize: 18, lineHeight: 1.8, color: "var(--text-2)" }}>{t(S.pain_sub)}</p>
         </div>
         {/* 卡片区：每张卡片展示「痛点 → Aivamax 方案」 */}
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: isMobile ? 14 : 22 }}>
@@ -1853,10 +2037,8 @@ function Capabilities() {
   return (
     <section>
       <div className="wrap">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: isMobile ? 28 : 48 }}>
-          <div>
-            <h2 className="h-title" style={{ marginTop: 0 }}>{t(S.cap_title)}</h2>
-          </div>
+        <div style={{ textAlign: "center", maxWidth: 860, margin: "0 auto", marginBottom: isMobile ? 28 : 48 }}>
+          <h2 className="h-title" style={{ marginTop: 0 }}>{t(S.cap_title)}</h2>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? (window.innerWidth < 480 ? "1fr" : "repeat(2, 1fr)") : "repeat(5, 1fr)", gap: isMobile ? 12 : 16 }}>
           {t(S.cap_list).map((f) =>
@@ -1917,87 +2099,55 @@ function Agents() {
   const t = useT();
   const cats = t(S.ag_cats);
   const list = t(S.ag_list);
+  const [tab, setTab] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => { const c = () => setIsMobile(window.innerWidth < 768); c(); window.addEventListener('resize', c); return () => window.removeEventListener('resize', c); }, []);
-
-  // 将全部 20 个智能体扁平化，保留所属分类名
-  const allAgents = list.flatMap((group, catIdx) =>
-    group.map(a => ({ ...a, role: cats[catIdx] }))
-  );
-
   return (
     <section id="agents">
       <div className="wrap">
         <div style={{ textAlign: "center", marginBottom: 40, maxWidth: 860, marginLeft: "auto", marginRight: "auto" }}>
           <span className="eyebrow" style={{ justifyContent: "center", visibility: "hidden" }}>{t(S.ag_eye)}</span>
           <h2 className="h-title" style={{ marginTop: 16 }}>{t(S.ag_title)}</h2>
-          <p style={{ color: "var(--text-2)", fontSize: 16, lineHeight: 1.7, marginTop: 16 }}>{t(S.ag_sub)}</p>
+          <p style={{ color: "var(--text-2)", fontSize: 18, lineHeight: 1.8, marginTop: 16 }}>{t(S.ag_sub)}</p>
         </div>
-
-        {/* 总数展示 */}
-        <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginBottom: 28, borderBottom: "1px solid var(--line)", paddingBottom: 14 }}>
-          <div style={{ fontFamily: "var(--mono)", fontSize: 12.5, color: "var(--text-3)" }}>
-            {allAgents.length} {t(S.ag_total)}
+        <div style={{ display: "flex", gap: 0, borderBottom: "1px solid var(--line)", marginBottom: 28, flexWrap: "wrap" }}>
+          {cats.map((c, i) =>
+          <button key={i} onClick={() => setTab(i)} style={{ padding: "14px 22px", fontFamily: "var(--mono)", fontSize: 18, letterSpacing: "0.08em", color: tab === i ? "var(--accent)" : "var(--text-2)", borderBottom: tab === i ? "1px solid var(--accent)" : "1px solid transparent", marginBottom: -1 }}>{c} · {list[i].length}</button>
+          )}
+          <div style={{ marginLeft: "auto", padding: "14px 0", fontFamily: "var(--mono)", fontSize: 12.5, color: "var(--text-3)" }}>
+            {list.reduce((a, c) => a + c.length, 0)} {t(S.ag_total)}
           </div>
         </div>
-
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? (window.innerWidth < 480 ? "1fr" : "repeat(2, 1fr)") : "repeat(5, 1fr)", gap: isMobile ? 14 : 20 }}>
-          {allAgents.map((a, i) => {
+          {list[tab].map((a, i) => {
+            const role = cats[tab];
             const code = `ID · ${String(i + 1).padStart(3, "0")}`;
             return (
             /* ===== 工牌卡片 ===== */
-            <div key={i} className="badge-card" style={{
-              padding: 0,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              minHeight: 340,
-              overflow: "hidden"
-            }}>
-              {/* 工牌夹 — 挂绳孔 + 横条 */}
-              <div style={{
-                width: "100%", paddingTop: 18, display: "flex", justifyContent: "center", alignItems: "flex-start", position: "relative"
-              }}>
-                {/* 横条 */}
-                <div style={{
-                  width: 44, height: 6, borderRadius: 3,
-                  background: "color-mix(in srgb, var(--accent) 50%, var(--line))"
-                }} />
+            <div key={i} className="badge-card">
+              {/* 顶部：头像 + 名称/分类 */}
+              <div className="agent-header">
+                <div className="agent-avatar">{a.e}</div>
+                <div className="agent-name-tag">
+                  <span className="name">{a.n}</span>
+                  <span className="role">{role}</span>
+                </div>
               </div>
-              {/* 头像圆 — 图标字符 */}
-              <div style={{
-                width: 80, height: 80, borderRadius: "50%",
-                background: "var(--bg)",
-                border: "2px solid var(--accent)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontFamily: "var(--serif-cjk)", fontSize: 30, fontWeight: 600,
-                color: "var(--accent)", marginTop: 8, marginBottom: 16,
-                boxShadow: "0 0 24px color-mix(in srgb, var(--accent) 15%, transparent)"
-              }}>{a.e}</div>
-              {/* 部门标签 */}
-              <div className="label-mono" style={{
-                color: "var(--text-3)", fontSize: 11, letterSpacing: "0.12em", marginBottom: 6
-              }}>{a.role}</div>
-              {/* 姓名 */}
-              <div className="serif" style={{
-                fontFamily: "var(--serif-cjk)", fontSize: isMobile ? 19 : 21,
-                lineHeight: 1.25, marginBottom: 10, color: "var(--text)"
-              }}>{a.n}</div>
-              {/* 工作内容 / 职务描述 */}
-              <div style={{
-                color: "var(--text-2)", fontSize: isMobile ? 12.5 : 13.5,
-                lineHeight: 1.7, flex: 1,
-                padding: "0 16px 12px", textAlign: "center"
-              }}>{a.d}</div>
-              {/* 底部栏：ID + 状态 */}
-              <div style={{
-                width: "100%",
-                display: "flex", justifyContent: "space-between", alignItems: "center",
-                padding: "12px 16px", marginTop: 4,
-                borderTop: "1px dashed var(--line)"
-              }}>
-                <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--text-3)", letterSpacing: "0.1em" }}>{code}</span>
-                <span className="status-pill" style={{ fontSize: 11 }}><span className="live" />{t(S.ag_ready)}</span>
+              {/* 中部：描述 */}
+              <div className="agent-body">
+                <div className="desc">{a.d}</div>
+              </div>
+              {/* 操作按钮 */}
+              <div className="agent-action">
+                <div className="agent-action-btn">
+                  <span>{t(S.ag_assign)}</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/><path d="M18 8a5 5 0 0 1 0 8" style={{ opacity: 0.5 }}/><path d="M18 5a8 8 0 0 1 0 14" style={{ opacity: 0.25 }}/></svg>
+                </div>
+              </div>
+              {/* 底部：ID + 状态 */}
+              <div className="agent-footer">
+                <span className="id">{code}</span>
+                <span className="status"><span className="status-dot" />{t(S.ag_ready)}</span>
               </div>
             </div>);
           })}
@@ -2020,7 +2170,9 @@ function Platforms() {
   { n: "TikTok", code: "TK" },
   { n: "YouTube", code: "YT" },
   { n: "WhatsApp", code: "WA" },
-  { n: "Telegram", code: "TG" }];
+  { n: "Reddit", code: "RD" },
+  { n: "Pinterest", code: "PI" },
+  { n: "Discord", code: "DC" }];
 
   return (
     <section>
@@ -2103,55 +2255,40 @@ function Stats() {
 /* ================== PRICING ================== */
 function Pricing() {
   const t = useT();
-  const [annual, setAnnual] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => { const c = () => setIsMobile(window.innerWidth < 768); c(); window.addEventListener('resize', c); return () => window.removeEventListener('resize', c); }, []);
   const plans = t(S.pr_plans);
-  const unit = t(S.pr_unit);
   return (
     <section id="pricing" style={{ paddingTop: isMobile ? 40 : 60, paddingBottom: isMobile ? 28 : 40 }}>
       <div className="wrap">
-        <div style={{ textAlign: "center", marginBottom: isMobile ? 18 : 24 }}>
-          <span className="eyebrow" style={{ justifyContent: "center", visibility: "hidden" }}>{t(S.pr_eye)}</span>
-          <h2 className="h-title" style={{ marginTop: 20 }}>{t(S.pr_title)}</h2>
+        <div style={{ textAlign: "center", marginBottom: isMobile ? 28 : 40 }}>
+          <h2 className="h-title" style={{ marginTop: 0 }}>{t(S.pr_title)}</h2>
         </div>
-        {/* 月付/年付切换已隐藏 — 全部改为定制报价 */}
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 28, height: 0, overflow: "hidden" }}>
-          <div style={{ display: "inline-flex", border: "1px solid var(--line)", borderRadius: 999, padding: 4, background: "var(--bg-2)" }}>
-            <button onClick={() => setAnnual(false)} style={{ padding: "8px 20px", borderRadius: 999, fontFamily: "var(--mono)", fontSize: 12.5, letterSpacing: "0.08em", background: !annual ? "var(--accent)" : "transparent", color: !annual ? "#0a0a0a" : "var(--text-2)" }}>{t(S.pr_monthly)}</button>
-            <button onClick={() => setAnnual(true)} style={{ padding: "8px 20px", borderRadius: 999, fontFamily: "var(--mono)", fontSize: 12.5, letterSpacing: "0.08em", background: annual ? "var(--accent)" : "transparent", color: annual ? "#0a0a0a" : "var(--text-2)" }}>{t(S.pr_annual)}</button>
-          </div>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? (window.innerWidth < 480 ? "1fr" : "repeat(2,1fr)") : "repeat(4, 1fr)", gap: isMobile ? 12 : 16 }}>
+          {plans.map((p, i) => (
+            <div key={p.n} className="card hover-lift" style={{ padding: 28, display: "flex", flexDirection: "column", gap: 16, minHeight: 360, borderColor: "var(--line)", background: "var(--bg-2)", textAlign: "center" }}>
+              <div>
+                <div className="serif" style={{ fontFamily: "var(--serif-cjk)", fontSize: 24 }}>{p.n}</div>
+                <div style={{ color: "var(--text-2)", fontSize: 14, marginTop: 6, lineHeight: 1.5 }}>{p.desc}</div>
+              </div>
+              <div style={{ height: 1, background: "var(--line-soft)", margin: "4px 0" }} />
+              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8, fontSize: 13, textAlign: "left" }}>
+                {p.feat.map((f) =>
+                <li key={f} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ marginTop: 5, flexShrink: 0 }}><path d="M4 12l5 5L20 6" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" /></svg>
+                    <span style={{ color: "var(--text-2)" }}>{f}</span>
+                  </li>
+                )}
+              </ul>
+              <div style={{ marginTop: "auto", paddingTop: 16 }}>
+                <a href="#partners" className="btn btn-ghost" style={{ justifyContent: "center", width: "100%" }}>{p.cta}</a>
+              </div>
+            </div>
+          ))}
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? (window.innerWidth < 480 ? "1fr" : "repeat(2,1fr)") : "repeat(4, 1fr)", gap: isMobile ? 12 : 16, overflowX: isMobile && window.innerWidth >= 480 ? "auto" : "visible" }}>
-          {plans.map((p) => {
-            const price = annual ? Math.round(p.y / 12) : p.p;
-            const isFree = p.p === 0;
-            return (
-              <div key={p.n} className="card hover-lift" style={{ padding: 22, display: "flex", flexDirection: "column", gap: 12, minHeight: 420, borderColor: p.featured ? "var(--accent)" : "var(--line)", background: p.featured ? "linear-gradient(180deg, color-mix(in srgb, var(--accent) 6%, var(--bg-2)), var(--bg-2) 60%)" : "var(--bg-2)", position: "relative" }}>
-                {p.featured && <div style={{ position: "absolute", top: -10, left: 20, padding: "3px 10px", background: "var(--accent)", color: "#0a0a0a", fontFamily: "var(--mono)", fontSize: 14, letterSpacing: "0.1em", borderRadius: 999 }}>{t(S.pr_most)}</div>}
-                <div>
-                  <div className="serif" style={{ fontFamily: "var(--serif-cjk)", fontSize: 24 }}>{p.n}</div>
-                  <div style={{ color: "var(--text-2)", fontSize: 14, marginTop: 4 }}>{p.tagline}</div>
-                </div>
-                <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginTop: 6 }}>
-                  <span className="serif" style={{ fontFamily: "var(--serif-cjk)", fontSize: 44, lineHeight: 1, color: "var(--accent)" }}>{t({ en: "Custom", zh: "定制" })}</span>
-                </div>
-                <div style={{ color: "var(--text-3)", fontSize: 12.5, fontFamily: "var(--mono)", letterSpacing: "0.06em", minHeight: 16 }}>{t({ en: "Tailored quote", zh: "根据需求定制报价" })}</div>
-                <div style={{ height: 1, background: "var(--line-soft)", margin: "4px 0 8px" }} />
-                <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8, fontSize: 13 }}>
-                  {p.feat.map((f) =>
-                  <li key={f} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ marginTop: 5, flexShrink: 0 }}><path d="M4 12l5 5L20 6" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" /></svg>
-                      <span>{f}</span>
-                    </li>
-                  )}
-                </ul>
-                <a href="#trial" className={"btn " + (p.featured ? "btn-primary" : "btn-ghost")} style={{ marginTop: "auto", justifyContent: "center" }}>{p.cta}</a>
-              </div>);
-
-          })}
+        <div style={{ textAlign: "center", marginTop: 32, color: "var(--text-2)", fontSize: 14 }}>
+          {t(S.pr_foot)}
         </div>
-        
       </div>
     </section>);
 
@@ -2162,11 +2299,51 @@ function Partners() {
   const t = useT();
   const items = t(S.pt_items);
   const [isMobile, setIsMobile] = useState(false);
+  const [phoneCopied, setPhoneCopied] = useState(false);
   useEffect(() => { const c = () => setIsMobile(window.innerWidth < 768); c(); window.addEventListener('resize', c); return () => window.removeEventListener('resize', c); }, []);
+  const handlePhoneClick = (e) => {
+    e.preventDefault();
+    const isMobileDevice = /Android|iPhone|iPad|iPod|Opera Mini/i.test(navigator.userAgent);
+    if (isMobileDevice) {
+      window.location.href = 'tel:15523827183';
+      return;
+    }
+    // Fallback for clipboard (works on http/localhost/file protocol)
+    const copyFallback = (text) => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    };
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText('15523827183').then(() => {
+          setPhoneCopied(true);
+          setTimeout(() => setPhoneCopied(false), 2000);
+        }).catch(() => {
+          copyFallback('15523827183');
+          setPhoneCopied(true);
+          setTimeout(() => setPhoneCopied(false), 2000);
+        });
+      } else {
+        copyFallback('15523827183');
+        setPhoneCopied(true);
+        setTimeout(() => setPhoneCopied(false), 2000);
+      }
+    } catch (err) {
+      copyFallback('15523827183');
+      setPhoneCopied(true);
+      setTimeout(() => setPhoneCopied(false), 2000);
+    }
+  };
   return (
     <section id="partners" style={{ paddingTop: 80, paddingBottom: 80 }}>
       <div className="wrap">
-        {/* 单一卡片 — 居中布局 */}
+        {/* 单一卡片 — 左右布局 */}
         <div style={{
           maxWidth: 900,
           margin: "0 auto",
@@ -2175,62 +2352,37 @@ function Partners() {
           overflow: "hidden",
           background: "linear-gradient(165deg, color-mix(in srgb, var(--accent) 4%, var(--bg-2)) 0%, var(--bg-2) 50%, var(--bg) 100%)",
         }}>
-          {/* 上部：标题 + 副标题 */}
-          <div style={{ padding: "44px 48px 32px", textAlign: "center" }}>
-            <span className="eyebrow" style={{ justifyContent: "center" }}>{t({ en: "PARTNER & CONTACT", zh: "合作 & 联系" })}</span>
-            <h2 className="h-title" style={{ marginTop: 14, fontSize: isMobile ? 30 : 38 }}>{t({ en: <span>Let's build your<br/><em>overseas matrix</em> together.</span>, zh: <span>一起，<br/>把你的<em>出海矩阵</em>搭起来。</span> })}</h2>
-            <p style={{ color: "var(--text-2)", fontSize: 15, lineHeight: 1.8, marginTop: 16, maxWidth: 560, margin: "16px auto 0" }}>{t({ en: "Whether you're ready for a trial or want to partner up — reach out. Real human replies within 2 hours (Beijing time).", zh: "无论试用产品还是洽谈合作——直接联系我们，北京工作时间 2 小时内真人回复。" })}</p>
-          </div>
-
-          {/* 分割线 */}
-          <div style={{ height: 1, margin: "0 40px", background: "linear-gradient(90deg, transparent, var(--line-soft), transparent)" }} />
-
-          {/* 下部：联系方式横排 */}
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)", gap: 0 }}>
-            {/* Email */}
-            <a href={`mailto:${t(S.pt_email)}`} style={{ textDecoration: "none", color: "inherit", padding: "28px 24px", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, borderRight: isMobile ? "none" : "1px solid var(--line-soft)", borderBottom: "1px solid var(--line-soft)", transition: "background .2s", ":hover": { background: "color-mix(in srgb, var(--accent) 5%, transparent)" } }}>
-              <div style={{ width: 46, height: 46, borderRadius: 12, border: "1px solid var(--line-soft)", background: "color-mix(in srgb, var(--accent) 8%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--accent)" }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 7l9 6 9-6M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M3 7a2 2 0 012-2h14a2 2 0 012 2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row" }}>
+            {/* 左侧：文字 + 电话 */}
+            <div style={{ flex: 1, padding: isMobile ? "36px 28px 28px" : "48px 44px", display: "flex", flexDirection: "column", justifyContent: "center", gap: 20, borderRight: isMobile ? "none" : "1px solid var(--line-soft)", borderBottom: isMobile ? "1px solid var(--line-soft)" : "none" }}>
+              <div>
+                <h2 className="h-title" style={{ marginTop: 0, fontSize: isMobile ? 28 : 34, lineHeight: 1.25 }}>{t({ en: <span>Let's build your<br/><em>overseas matrix</em> together.</span>, zh: <span>一起<br/>把你的<em>出海矩阵</em>搭起来</span> })}</h2>
+                <p style={{ color: "var(--text-2)", fontSize: 15, lineHeight: 1.8, marginTop: 14 }}>{t({ en: "Whether you're ready for a trial or want to partner up — reach out. Real human replies within 2 hours (Beijing time).", zh: "无论试用产品还是洽谈合作——直接联系我们，北京工作时间 2 小时内真人回复" })}</p>
               </div>
-              <div style={{ fontSize: 11, color: "var(--text-3)", fontFamily: "var(--mono)", letterSpacing: "0.06em", textTransform: "uppercase" }}>Email</div>
-              <div style={{ fontSize: 15, color: "var(--text)", fontWeight: 500, textAlign: "center" }}>{t(S.pt_email)}</div>
-            </a>
 
-            {/* Phone */}
-            <a href="tel:+864008800000" style={{ textDecoration: "none", color: "inherit", padding: "28px 24px", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, borderRight: isMobile ? "none" : "1px solid var(--line-soft)", borderBottom: "1px solid var(--line-soft)", transition: "background .2s", ":hover": { background: "color-mix(in srgb, var(--accent) 5%, transparent)" } }}>
-              <div style={{ width: 46, height: 46, borderRadius: 12, border: "1px solid var(--line-soft)", background: "color-mix(in srgb, var(--accent) 8%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--accent)" }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <div onClick={handlePhoneClick} style={{ display: "inline-flex", alignItems: "center", gap: 14, padding: "14px 18px", borderRadius: 12, border: "1px solid var(--line-soft)", background: "color-mix(in srgb, var(--accent) 6%, transparent)", cursor: "pointer", transition: "background .2s", width: "fit-content" }}>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: "color-mix(in srgb, var(--accent) 12%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--accent)", flexShrink: 0 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: "var(--text-3)", fontFamily: "var(--mono)", letterSpacing: "0.06em", textTransform: "uppercase" }}>Phone</div>
+                  <div style={{ fontSize: 16, color: "var(--text)", fontWeight: 500, marginTop: 2 }}>{phoneCopied ? '已复制 ✓' : '15523827183'}</div>
+                </div>
               </div>
-              <div style={{ fontSize: 11, color: "var(--text-3)", fontFamily: "var(--mono)", letterSpacing: "0.06em", textTransform: "uppercase" }}>{t({ en: "Hotline", zh: "热线" })}</div>
-              <div style={{ fontSize: 15, color: "var(--text)", fontWeight: 500 }}>{t(S.pt_phone)}</div>
-            </a>
-
-            {/* Hours */}
-            <div style={{ padding: "28px 24px", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, borderRight: isMobile ? "none" : "1px solid var(--line-soft)", borderBottom: "1px solid var(--line-soft)" }}>
-              <div style={{ width: 46, height: 46, borderRadius: 12, border: "1px solid var(--line-soft)", background: "color-mix(in srgb, var(--accent) 8%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--accent)" }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6"/><path d="M12 7v5l3 2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
-              </div>
-              <div style={{ fontSize: 11, color: "var(--text-3)", fontFamily: "var(--mono)", letterSpacing: "0.06em", textTransform: "uppercase" }}>{t({ en: "Hours", zh: "时间" })}</div>
-              <div style={{ fontSize: 15, color: "var(--text)", fontWeight: 500, textAlign: "center" }}>{t(S.pt_hours)}</div>
             </div>
 
-            {/* WeChat QR */}
-            <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, borderBottom: "1px solid var(--line-soft)" }}>
-              <div style={{ width: 80, height: 80, background: "#fff", borderRadius: 10, padding: 6, boxShadow: "0 4px 16px -4px rgba(0,0,0,0.2)" }}>
-                <svg viewBox="0 0 29 29" style={{ width: "100%", height: "100%", display: "block" }} shapeRendering="crispEdges">
-                  <rect width="29" height="29" fill="#fff"/>
-                  {[[0,0],[22,0],[0,22]].map(([x,y],i) => (<g key={i}><rect x={x} y={y} width="7" height="7" fill="#1a1a1a"/><rect x={x+1} y={y+1} width="5" height="5" fill="#fff"/><rect x={x+2} y={y+2} width="3" height="3" fill="#1a1a1a"/></g>))}
-                  {Array.from({length: 29}).map((_, r) => Array.from({length: 29}).map((__, c) => { if ((r < 8 && c < 8) || (r < 8 && c > 20) || (r > 20 && c < 8)) return null; const v = Math.sin(r * 7.3 + c * 3.1 + r*c*0.13) * 10000; if (Math.abs(v - Math.floor(v)) > 0.52) return null; return <rect key={r+'-'+c} x={c} y={r} width="1" height="1" fill="#1a1a1a"/>; }))}
-                  <rect x="20" y="20" width="5" height="5" fill="#1a1a1a"/><rect x="21" y="21" width="3" height="3" fill="#fff"/><rect x="22" y="22" width="1" height="1" fill="#1a1a1a"/>
-                </svg>
+            {/* 右侧：二维码 */}
+            <div style={{ flex: "0 0 auto", padding: isMobile ? "32px 28px" : "48px 44px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, minWidth: isMobile ? "auto" : 220 }}>
+              <div style={{ width: 160, height: 160, background: "#fff", borderRadius: 12, padding: 8, boxShadow: "0 4px 16px -4px rgba(0,0,0,0.2)", overflow: "hidden" }}>
+                <img src="wechat-qr.png" alt="WeChat QR" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
               </div>
-              <div style={{ fontSize: 12, color: "var(--text-2)", lineHeight: 1.5, textAlign: "center" }}>{t({ en: "WeChat · Scan to chat", zh: "微信·扫码添加" })}</div>
+              <div style={{ fontSize: 13, color: "var(--text-2)", lineHeight: 1.5, textAlign: "center" }}>{t({ en: "WeChat · Scan to chat", zh: "微信 · 扫码添加" })}</div>
             </div>
           </div>
 
           {/* 底部标语 */}
-          <div style={{ padding: "20px 48px", textAlign: "center", borderTop: "1px solid var(--line-soft)" }}>
-            <span className="serif" style={{ fontSize: 17, color: "var(--accent)", opacity: 0.85, letterSpacing: "0.03em" }}>{t({ en: "See you inside Aivamax.", zh: "我们 Aivamax 后台见。" })}</span>
+          <div style={{ padding: "18px 48px", textAlign: "center", borderTop: "1px solid var(--line-soft)" }}>
+            <span className="serif" style={{ fontSize: 17, color: "var(--accent)", opacity: 0.85, letterSpacing: "0.03em" }}>{t({ en: <span>See you inside Aivamax.</span>, zh: <span>我们 Aivamax 后台见</span> })}</span>
           </div>
         </div>
       </div>
@@ -2542,23 +2694,8 @@ function Contact() {
           </div>
           <div style={{ display: "flex", justifyContent: "center" }}>
             {/* QR placeholder */}
-            <div style={{ width: 200, height: 200, border: "1px solid var(--line)", borderRadius: 8, background: "#fff", position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg viewBox="0 0 100 100" width="180" height="180" style={{ imageRendering: "pixelated" }}>
-                {Array.from({ length: 100 }).map((_, i) => {
-                  const x = i % 10 * 10,y = Math.floor(i / 10) * 10;
-                  // pseudo-random pattern
-                  const fill = (i * 73 + 17) % 7 < 3 ? "#0a0a0a" : "#fff";
-                  return <rect key={i} x={x} y={y} width="10" height="10" fill={fill} />;
-                })}
-                {/* corner markers */}
-                {[[0, 0], [70, 0], [0, 70]].map(([x, y], idx) =>
-                <g key={idx}>
-                    <rect x={x} y={y} width="30" height="30" fill="#0a0a0a" />
-                    <rect x={x + 5} y={y + 5} width="20" height="20" fill="#fff" />
-                    <rect x={x + 10} y={y + 10} width="10" height="10" fill="#0a0a0a" />
-                  </g>
-                )}
-              </svg>
+            <div style={{ width: 200, height: 200, border: "1px solid var(--line)", borderRadius: 8, background: "#fff", position: "relative", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+              <img src="wechat-qr.png" alt="WeChat QR" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
               <div style={{ position: "absolute", bottom: -30, left: 0, right: 0, textAlign: "center", fontFamily: "var(--mono)", fontSize: 12.5, color: "var(--text-3)", letterSpacing: "0.05em" }}>{t(S.ct_wechat_label)}</div>
             </div>
           </div>
@@ -2573,33 +2710,11 @@ function Footer() {
   const t = useT();
   const cols = t(S.ft_cols);
   return (
-    <footer style={{ padding: "70px 0 36px", borderTop: "1px solid var(--line-soft)", marginTop: 40 }}>
+    <footer style={{ padding: "22px 0 36px", borderTop: "1px solid var(--line-soft)", marginTop: 40 }}>
       <div className="wrap">
-        <div style={{ display: "grid", gridTemplateColumns: "1.5fr repeat(4, 1fr)", gap: 40 }}>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: "var(--sans)", fontSize: 24, letterSpacing: "-0.02em" }}>
-              <img src="logo.png" alt="Aivamax" style={{ width: 22, height: 22, borderRadius: 4, objectFit: "cover" }} />
-              <span style={{ display: "inline-flex", alignItems: "baseline" }}><span style={{ fontWeight: 300 }}>Aiva</span><span style={{ fontWeight: 700, color: "var(--accent)" }}>max</span></span>
-            </div>
-            <div className="label-mono" style={{ marginTop: 6 }}>{t(S.ft_tagline)}</div>
-            <p style={{ color: "var(--text-2)", fontSize: 14, lineHeight: 1.7, marginTop: 16, maxWidth: 320 }}>{t(S.ft_blurb)}</p>
-            <div style={{ display: "flex", gap: 12, marginTop: 18 }}>
-              {["IG", "X", "IN", "YT"].map((s) => <div key={s} style={{ width: 32, height: 32, borderRadius: "50%", border: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--mono)", fontSize: 14, color: "var(--text-2)" }}>{s}</div>)}
-            </div>
-          </div>
-          {cols.map((c) =>
-          <div key={c.t}>
-              <div className="label-mono" style={{ color: "var(--accent)" }}>{c.t}</div>
-              <ul style={{ listStyle: "none", padding: 0, margin: "16px 0 0", display: "flex", flexDirection: "column", gap: 10, fontSize: 13.5, color: "var(--text-2)" }}>
-                {c.l.map((x) => <li key={x}><a href="#">{x}</a></li>)}
-              </ul>
-            </div>
-          )}
-        </div>
-        <div style={{ marginTop: 48, paddingTop: 22, borderTop: "1px solid var(--line-soft)", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12, fontFamily: "var(--mono)", fontSize: 12.5, color: "var(--text-3)", letterSpacing: "0.06em" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12, fontFamily: "var(--mono)", fontSize: 12.5, color: "var(--text-3)", letterSpacing: "0.06em" }}>
           <span>{t(S.ft_rights)}</span>
           <span>{t(S.ft_legal)}</span>
-          <span>EN · 中文 · العربية · ES · 日本語</span>
         </div>
       </div>
     </footer>);
@@ -2637,67 +2752,92 @@ function TweaksPanel({ visible, tweaks, setTweaks }) {
 
 }
 
-/* ================== APP ================== */
-
-/* ================== CHAT FAB ================== */
-function ChatFab() {
+/* ================== FAQ WIDGET ================== */
+function FAQChatWidget() {
+  const [open, setOpen] = useState(true);
+  const [active, setActive] = useState(0);
   const t = useT();
-  const [open, setOpen] = useState(false);
-  const [activeFaq, setActiveFaq] = useState(null);
+
   const faqs = t({
-    zh: [
-      { q: "会封号吗？", a: "原生指纹 + 独立代理 + 安全节奏，账号健康度 98.7%。账号医生实时预警。" },
-      { q: "多少钱？", a: "根据企业规模和实际需求定制报价，请联系销售获取专属方案。" },
-      { q: "支持哪些平台？", a: "FB / Ins / TikTok / X / YouTube / LinkedIn / WhatsApp / Telegram 八大主流平台。Threads、Bluesky、微博、小红书即将支持。" },
-      { q: "需要懂技术吗？", a: "不需要。大白话写目标，智能体自动组团执行，你只审批。一个下午即可上线矩阵。" },
-      { q: "可以私有化部署吗？", a: "企业版支持私有云 / 本地部署，SSO、审计日志、SLA 99.9%。" },
-    ],
     en: [
-      { q: "Will my accounts get banned?", a: "Native fingerprints + rotating proxies + safe cadences. 98.7% account health. The Account Doctor flags risk early." },
-      { q: "How much does it cost?", a: "All plans are custom-quoted based on your business scale and requirements. Contact sales for a tailored proposal." },
-      { q: "Which platforms do you support?", a: "FB / IG / TikTok / X / YouTube / LinkedIn / WhatsApp / Telegram — 8 native integrations. Threads, Bluesky, Weibo, Xiaohongshu on the roadmap." },
-      { q: "Do I need technical skills?", a: "No. Write your goal in plain language, the orchestrator staffs a team of agents. You approve. Matrix live in one afternoon." },
-      { q: "Can you deploy on-prem?", a: "Enterprise supports private cloud / on-prem, SSO, audit log, SLA 99.9%." },
+      { q: "Will my accounts get banned?", a: "Through native hardware fingerprint environments and high-anonymity independent proxies, we achieve底层 isolation. Combined with AI dynamic simulation of safe cadences, account correlation is eliminated at the source. The system early-warning mechanism completes automatic weight repair before risk controls trigger, suppressing abnormal ban rates to an extremely low threshold." },
+      { q: "Which platforms are supported?", a: "Meta (FB/IG), X, LinkedIn, TikTok, YouTube, WhatsApp, Reddit, Pinterest, Discord — 9 platforms, expanding." },
+      { q: "Do I need technical skills?", a: "No. Aivamax is designed for operators, not engineers. One person can manage what used to take a 50-person team." },
+      { q: "Can I deploy on-premise?", a: "Yes. Enterprise plans support private cloud and fully on-premise deployment. Data stays within your infrastructure." }
     ],
+    zh: [
+      { q: "会封号吗？", a: "通过原生硬件指纹环境与高匿名独立代理实现底层隔离，配合AI动态模拟安全节奏，从源头抹除账号关联性。系统预警机制可在风控触发前完成自动权重修复，将异常封号率压制在极低阈值。" },
+      { q: "支持哪些平台？", a: "Meta（Facebook/Instagram）、X、LinkedIn、TikTok、YouTube、WhatsApp、Reddit、Pinterest、Discord — 共 8 个平台，持续扩展中。" },
+      { q: "需要懂技术吗？", a: "不需要。Aivamax 为运营人员设计，而非工程师。一个人就能管理过去 50 人团队的活。" },
+      { q: "可以私有化部署吗？", a: "可以。企业版支持私有云与完全私有化部署，数据不出境，留在您的自有基础设施中。" }
+    ]
   });
+
+  const toggle = (i) => setActive(active === i ? -1 : i);
+
   return (
-    <div style={{ position: "fixed", right: 24, bottom: 24, zIndex: 900, fontFamily: "var(--sans-cjk)" }}>
+    <>
+      {/* trigger button */}
+      <button className="faq-widget-trigger" onClick={() => setOpen(!open)} aria-label="FAQ">
+        {open ? (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        ) : (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        )}
+      </button>
+
+      {/* panel */}
       {open && (
-        <div style={{ width: 340, marginBottom: 12, background: "var(--bg-2)", border: "1px solid var(--line)", borderRadius: 14, padding: 18, boxShadow: "0 22px 52px rgba(0,0,0,0.45)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg, var(--accent), var(--accent-deep))", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontFamily: "var(--serif)", fontSize: 14 }}>✦</div>
-              <div style={{ fontFamily: "var(--serif-cjk)", fontSize: 16, color: "var(--text)" }}>{t({ zh: "AI 客服 · 小 X", en: "AI Assistant · X" })}</div>
-            </div>
-            <button onClick={() => setOpen(false)} style={{ color: "var(--text-2)", fontSize: 20, lineHeight: 1, background: "transparent" }}>×</button>
+        <div className="faq-widget-panel">
+          <div className="faq-widget-header">
+            <button onClick={() => setOpen(false)} style={{ marginLeft: "auto" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
           </div>
-          <div style={{ fontSize: 13, color: "var(--text-2)", lineHeight: 1.65, marginBottom: 14, padding: "10px 12px", background: "var(--bg)", borderRadius: 10, border: "1px solid var(--line-soft)" }}>{t({ zh: "您好！有任何问题都可以问我。下面是大家最常问的 ——", en: "Hi! Ask me anything. Here's what people usually ask first —" })}</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12, maxHeight: 260, overflowY: "auto" }}>
+          <div className="faq-widget-welcome" style={{ display: "none" }} />
+          <div style={{ padding: "16px 20px 6px", fontSize: 20, fontWeight: 700, color: "var(--text)", letterSpacing: "0.02em", fontFamily: "var(--serif-cjk)" }}>
+            {t({en:"Common Questions (FAQ)", zh:"常见问题（FAQ）"})}
+          </div>
+          <div className="faq-widget-list" style={{ paddingTop: 4 }}>
             {faqs.map((f, i) => (
-              <div key={i} style={{ border: "1px solid var(--line-soft)", borderRadius: 8, overflow: "hidden" }}>
-                <button onClick={() => setActiveFaq(activeFaq === i ? null : i)} style={{ width: "100%", textAlign: "left", padding: "10px 12px", fontSize: 13, color: "var(--text)", background: activeFaq === i ? "color-mix(in srgb, var(--accent) 10%, var(--bg))" : "var(--bg)", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+              <div key={i} className={"faq-item" + (active === i ? " open" : "")}>
+                <div className="faq-item-q" onClick={() => toggle(i)}>
                   <span>{f.q}</span>
-                  <span style={{ color: "var(--accent)", fontSize: 14, transform: activeFaq === i ? "rotate(45deg)" : "none", transition: "transform 180ms" }}>+</span>
-                </button>
-                {activeFaq === i && (
-                  <div style={{ padding: "8px 12px 12px", fontSize: 12.5, color: "var(--text-2)", lineHeight: 1.65, background: "var(--bg)" }}>{f.a}</div>
-                )}
+                  <span className="icon">+</span>
+                </div>
+                <div className="faq-item-a">{f.a}</div>
               </div>
             ))}
           </div>
-          <button className="btn btn-primary" style={{ width: "100%", justifyContent: "center" }}>{t({ zh: "转接真人客服 →", en: "Talk to a human →" })}</button>
+          <div className="faq-widget-cta">
+            <button onClick={() => {
+              setOpen(false);
+              setTimeout(() => {
+                const el = document.getElementById('partners');
+                if (el) {
+                  const navHeight = 88;
+                  const y = el.getBoundingClientRect().top + window.scrollY - navHeight;
+                  window.scrollTo({ top: y, behavior: 'smooth' });
+                }
+              }, 50);
+            }}>
+              {t({en:"Connect human support →", zh:"转接真人客服 →"})}
+            </button>
+          </div>
         </div>
       )}
-      <button onClick={() => setOpen(!open)} style={{ width: 56, height: 56, borderRadius: "50%", background: "var(--accent)", color: "#fff", boxShadow: "0 10px 30px -5px color-mix(in srgb, var(--accent) 60%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, fontFamily: "var(--serif)", border: "none" }}>{open ? "×" : "✦"}</button>
-    </div>);
-
+    </>
+  );
 }
+
+/* ================== APP ================== */
+
 
 function App() {
   const [tweaks, setTweaks] = useState(TWEAKS);
   const [tweaksVisible, setTweaksVisible] = useState(false);
   const [lang, setLang] = useState(() => {
-    try {return localStorage.getItem("aivamax_overseas_lang") || TWEAKS.defaultLang || "zh";} catch (e) {return "zh";}
+    try {return localStorage.getItem("expandx_overseas_lang") || TWEAKS.defaultLang || "zh";} catch (e) {return "zh";}
   });
 
   useEffect(() => {applyTweaks(tweaks);}, [tweaks]);
@@ -2708,7 +2848,7 @@ function App() {
   }, [tweaks]);
   useEffect(() => {
     document.documentElement.setAttribute("lang", lang);
-    try {localStorage.setItem("aivamax_overseas_lang", lang);} catch (e) {}
+    try {localStorage.setItem("expandx_overseas_lang", lang);} catch (e) {}
   }, [lang]);
 
   useEffect(() => {
@@ -2744,7 +2884,7 @@ function App() {
         <div className="divider" />
         <Partners />
         <Footer />
-        <ChatFab />
+        <FAQChatWidget />
         <TweaksPanel visible={tweaksVisible} tweaks={tweaks} setTweaks={setTweaks} />
       </LightboxProvider>
     </LangCtx.Provider>);
@@ -2755,3 +2895,4 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 </body>
 </html>
+
