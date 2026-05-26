@@ -1,0 +1,16 @@
+# Aivamax robots.txt
+# Last updated: 2026-05-22
+
+User-agent: *
+Allow: /
+Content-Signal: search=yes,ai-input=yes,ai-train=no
+
+# Sitemap
+Sitemap: https://www.aivamax.com/sitemap.xml
+
+# Block unwanted crawlers
+User-agent: Bytespider
+Disallow: /
+
+User-agent: Amazonbot
+Disallow: /
