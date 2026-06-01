@@ -1,0 +1,31 @@
+{
+  "public_brand": "AIvaMax",
+  "default_source": "jarveepro",
+  "forbidden_public_terms": [
+    "JarveePro",
+    "jarveepro",
+    "jarveepro.com",
+    "blog.jarveepro.com",
+    "source_url:",
+    "source_note:",
+    "raw_path:",
+    "note_path:"
+  ],
+  "source_adapters": {
+    "jarveepro": {
+      "source_brand": "JarveePro",
+      "visibility": "internal_only",
+      "role": "oem_knowledge_source"
+    }
+  },
+  "capability_map": {
+    "JarveePro Account Manager": "AIvaMax Account Asset Manager",
+    "JarveePro Campaign Manager": "AIvaMax Automation Orchestrator",
+    "JarveePro AI Monitor": "AIvaMax Real-Time Signal Monitor",
+    "JarveePro Content Explorer": "AIvaMax Content Intelligence Engine",
+    "JarveePro Scheduler": "AIvaMax Publishing Scheduler",
+    "JarveePro Developer API": "AIvaMax Integration API",
+    "JarveePro Warm-Up": "AIvaMax Account Trust Warm-Up",
+    "JarveePro Instagram Warm-Up": "AIvaMax Instagram Trust Warm-Up"
+  }
+}

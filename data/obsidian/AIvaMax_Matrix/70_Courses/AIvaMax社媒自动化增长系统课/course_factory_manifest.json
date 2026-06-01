@@ -1,0 +1,595 @@
+{
+  "generated_at": "2026-06-01T17:36:44+00:00",
+  "public_brand": "AIvaMax",
+  "course_name": "AIvaMax社媒自动化增长系统课",
+  "course_dir": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课",
+  "teaching_pack": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/_V2-Module-Teaching-Pack.md",
+  "module_count": 12,
+  "required_files_per_module": [
+    "00_Module-Overview.md",
+    "01_Lesson-Plan.md",
+    "02_Workbook.md",
+    "03_Instructor-Guide.md",
+    "04_Assessment.md"
+  ],
+  "written_files": [
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/01-social-automation-growth-map/00_Module-Overview.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/01-social-automation-growth-map/01_Lesson-Plan.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/01-social-automation-growth-map/02_Workbook.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/01-social-automation-growth-map/03_Instructor-Guide.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/01-social-automation-growth-map/04_Assessment.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/02-project-intake-diagnosis/00_Module-Overview.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/02-project-intake-diagnosis/01_Lesson-Plan.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/02-project-intake-diagnosis/02_Workbook.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/02-project-intake-diagnosis/03_Instructor-Guide.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/02-project-intake-diagnosis/04_Assessment.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/03-account-matrix-design/00_Module-Overview.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/03-account-matrix-design/01_Lesson-Plan.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/03-account-matrix-design/02_Workbook.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/03-account-matrix-design/03_Instructor-Guide.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/03-account-matrix-design/04_Assessment.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/04-platform-selection-weighting/00_Module-Overview.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/04-platform-selection-weighting/01_Lesson-Plan.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/04-platform-selection-weighting/02_Workbook.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/04-platform-selection-weighting/03_Instructor-Guide.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/04-platform-selection-weighting/04_Assessment.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/05-task-type-library/00_Module-Overview.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/05-task-type-library/01_Lesson-Plan.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/05-task-type-library/02_Workbook.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/05-task-type-library/03_Instructor-Guide.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/05-task-type-library/04_Assessment.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/06-growth-rhythm-7-90-days/00_Module-Overview.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/06-growth-rhythm-7-90-days/01_Lesson-Plan.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/06-growth-rhythm-7-90-days/02_Workbook.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/06-growth-rhythm-7-90-days/03_Instructor-Guide.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/06-growth-rhythm-7-90-days/04_Assessment.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/07-content-system-calendar/00_Module-Overview.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/07-content-system-calendar/01_Lesson-Plan.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/07-content-system-calendar/02_Workbook.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/07-content-system-calendar/03_Instructor-Guide.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/07-content-system-calendar/04_Assessment.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/08-comments-messages-lead-conversion/00_Module-Overview.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/08-comments-messages-lead-conversion/01_Lesson-Plan.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/08-comments-messages-lead-conversion/02_Workbook.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/08-comments-messages-lead-conversion/03_Instructor-Guide.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/08-comments-messages-lead-conversion/04_Assessment.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/09-campaign-naming-structure/00_Module-Overview.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/09-campaign-naming-structure/01_Lesson-Plan.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/09-campaign-naming-structure/02_Workbook.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/09-campaign-naming-structure/03_Instructor-Guide.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/09-campaign-naming-structure/04_Assessment.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/10-data-review-forecasting/00_Module-Overview.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/10-data-review-forecasting/01_Lesson-Plan.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/10-data-review-forecasting/02_Workbook.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/10-data-review-forecasting/03_Instructor-Guide.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/10-data-review-forecasting/04_Assessment.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/11-risk-boundaries-human-review/00_Module-Overview.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/11-risk-boundaries-human-review/01_Lesson-Plan.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/11-risk-boundaries-human-review/02_Workbook.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/11-risk-boundaries-human-review/03_Instructor-Guide.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/11-risk-boundaries-human-review/04_Assessment.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/12-client-delivery-pack-generation/00_Module-Overview.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/12-client-delivery-pack-generation/01_Lesson-Plan.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/12-client-delivery-pack-generation/02_Workbook.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/12-client-delivery-pack-generation/03_Instructor-Guide.md",
+    "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/12-client-delivery-pack-generation/04_Assessment.md"
+  ],
+  "modules": [
+    {
+      "module_id": "01-social-automation-growth-map",
+      "module_number": "01",
+      "title": "Social Automation Growth Map",
+      "risk_level": "medium",
+      "files": [
+        {
+          "name": "00_Module-Overview.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/01-social-automation-growth-map/00_Module-Overview.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 01"
+        },
+        {
+          "name": "01_Lesson-Plan.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/01-social-automation-growth-map/01_Lesson-Plan.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 01"
+        },
+        {
+          "name": "02_Workbook.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/01-social-automation-growth-map/02_Workbook.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 01"
+        },
+        {
+          "name": "03_Instructor-Guide.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/01-social-automation-growth-map/03_Instructor-Guide.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 01"
+        },
+        {
+          "name": "04_Assessment.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/01-social-automation-growth-map/04_Assessment.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 01"
+        }
+      ]
+    },
+    {
+      "module_id": "02-project-intake-diagnosis",
+      "module_number": "02",
+      "title": "Project Intake And Diagnosis",
+      "risk_level": "medium",
+      "files": [
+        {
+          "name": "00_Module-Overview.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/02-project-intake-diagnosis/00_Module-Overview.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 02"
+        },
+        {
+          "name": "01_Lesson-Plan.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/02-project-intake-diagnosis/01_Lesson-Plan.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 02"
+        },
+        {
+          "name": "02_Workbook.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/02-project-intake-diagnosis/02_Workbook.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 02"
+        },
+        {
+          "name": "03_Instructor-Guide.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/02-project-intake-diagnosis/03_Instructor-Guide.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 02"
+        },
+        {
+          "name": "04_Assessment.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/02-project-intake-diagnosis/04_Assessment.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 02"
+        }
+      ]
+    },
+    {
+      "module_id": "03-account-matrix-design",
+      "module_number": "03",
+      "title": "Account Matrix Design",
+      "risk_level": "medium",
+      "files": [
+        {
+          "name": "00_Module-Overview.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/03-account-matrix-design/00_Module-Overview.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 03"
+        },
+        {
+          "name": "01_Lesson-Plan.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/03-account-matrix-design/01_Lesson-Plan.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 03"
+        },
+        {
+          "name": "02_Workbook.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/03-account-matrix-design/02_Workbook.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 03"
+        },
+        {
+          "name": "03_Instructor-Guide.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/03-account-matrix-design/03_Instructor-Guide.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 03"
+        },
+        {
+          "name": "04_Assessment.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/03-account-matrix-design/04_Assessment.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 03"
+        }
+      ]
+    },
+    {
+      "module_id": "04-platform-selection-weighting",
+      "module_number": "04",
+      "title": "Platform Selection And Weighting",
+      "risk_level": "medium",
+      "files": [
+        {
+          "name": "00_Module-Overview.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/04-platform-selection-weighting/00_Module-Overview.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 04"
+        },
+        {
+          "name": "01_Lesson-Plan.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/04-platform-selection-weighting/01_Lesson-Plan.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 04"
+        },
+        {
+          "name": "02_Workbook.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/04-platform-selection-weighting/02_Workbook.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 04"
+        },
+        {
+          "name": "03_Instructor-Guide.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/04-platform-selection-weighting/03_Instructor-Guide.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 04"
+        },
+        {
+          "name": "04_Assessment.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/04-platform-selection-weighting/04_Assessment.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 04"
+        }
+      ]
+    },
+    {
+      "module_id": "05-task-type-library",
+      "module_number": "05",
+      "title": "Task Type Library",
+      "risk_level": "medium",
+      "files": [
+        {
+          "name": "00_Module-Overview.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/05-task-type-library/00_Module-Overview.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 05"
+        },
+        {
+          "name": "01_Lesson-Plan.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/05-task-type-library/01_Lesson-Plan.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 05"
+        },
+        {
+          "name": "02_Workbook.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/05-task-type-library/02_Workbook.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 05"
+        },
+        {
+          "name": "03_Instructor-Guide.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/05-task-type-library/03_Instructor-Guide.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 05"
+        },
+        {
+          "name": "04_Assessment.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/05-task-type-library/04_Assessment.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 05"
+        }
+      ]
+    },
+    {
+      "module_id": "06-growth-rhythm-7-90-days",
+      "module_number": "06",
+      "title": "7/14/30/60/90 Day Growth Rhythm",
+      "risk_level": "medium",
+      "files": [
+        {
+          "name": "00_Module-Overview.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/06-growth-rhythm-7-90-days/00_Module-Overview.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 06"
+        },
+        {
+          "name": "01_Lesson-Plan.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/06-growth-rhythm-7-90-days/01_Lesson-Plan.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 06"
+        },
+        {
+          "name": "02_Workbook.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/06-growth-rhythm-7-90-days/02_Workbook.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 06"
+        },
+        {
+          "name": "03_Instructor-Guide.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/06-growth-rhythm-7-90-days/03_Instructor-Guide.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 06"
+        },
+        {
+          "name": "04_Assessment.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/06-growth-rhythm-7-90-days/04_Assessment.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 06"
+        }
+      ]
+    },
+    {
+      "module_id": "07-content-system-calendar",
+      "module_number": "07",
+      "title": "Content System And Calendar",
+      "risk_level": "medium",
+      "files": [
+        {
+          "name": "00_Module-Overview.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/07-content-system-calendar/00_Module-Overview.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 07"
+        },
+        {
+          "name": "01_Lesson-Plan.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/07-content-system-calendar/01_Lesson-Plan.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 07"
+        },
+        {
+          "name": "02_Workbook.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/07-content-system-calendar/02_Workbook.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 07"
+        },
+        {
+          "name": "03_Instructor-Guide.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/07-content-system-calendar/03_Instructor-Guide.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 07"
+        },
+        {
+          "name": "04_Assessment.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/07-content-system-calendar/04_Assessment.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 07"
+        }
+      ]
+    },
+    {
+      "module_id": "08-comments-messages-lead-conversion",
+      "module_number": "08",
+      "title": "Comments, Messages, And Lead Conversion",
+      "risk_level": "high",
+      "files": [
+        {
+          "name": "00_Module-Overview.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/08-comments-messages-lead-conversion/00_Module-Overview.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 08"
+        },
+        {
+          "name": "01_Lesson-Plan.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/08-comments-messages-lead-conversion/01_Lesson-Plan.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 08"
+        },
+        {
+          "name": "02_Workbook.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/08-comments-messages-lead-conversion/02_Workbook.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 08"
+        },
+        {
+          "name": "03_Instructor-Guide.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/08-comments-messages-lead-conversion/03_Instructor-Guide.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 08"
+        },
+        {
+          "name": "04_Assessment.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/08-comments-messages-lead-conversion/04_Assessment.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 08"
+        }
+      ]
+    },
+    {
+      "module_id": "09-campaign-naming-structure",
+      "module_number": "09",
+      "title": "Campaign Naming And Structure",
+      "risk_level": "medium",
+      "files": [
+        {
+          "name": "00_Module-Overview.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/09-campaign-naming-structure/00_Module-Overview.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 09"
+        },
+        {
+          "name": "01_Lesson-Plan.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/09-campaign-naming-structure/01_Lesson-Plan.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 09"
+        },
+        {
+          "name": "02_Workbook.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/09-campaign-naming-structure/02_Workbook.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 09"
+        },
+        {
+          "name": "03_Instructor-Guide.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/09-campaign-naming-structure/03_Instructor-Guide.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 09"
+        },
+        {
+          "name": "04_Assessment.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/09-campaign-naming-structure/04_Assessment.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 09"
+        }
+      ]
+    },
+    {
+      "module_id": "10-data-review-forecasting",
+      "module_number": "10",
+      "title": "Data Review And Forecasting",
+      "risk_level": "medium",
+      "files": [
+        {
+          "name": "00_Module-Overview.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/10-data-review-forecasting/00_Module-Overview.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 10"
+        },
+        {
+          "name": "01_Lesson-Plan.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/10-data-review-forecasting/01_Lesson-Plan.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 10"
+        },
+        {
+          "name": "02_Workbook.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/10-data-review-forecasting/02_Workbook.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 10"
+        },
+        {
+          "name": "03_Instructor-Guide.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/10-data-review-forecasting/03_Instructor-Guide.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 10"
+        },
+        {
+          "name": "04_Assessment.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/10-data-review-forecasting/04_Assessment.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 10"
+        }
+      ]
+    },
+    {
+      "module_id": "11-risk-boundaries-human-review",
+      "module_number": "11",
+      "title": "Risk Boundaries And Human Review",
+      "risk_level": "high",
+      "files": [
+        {
+          "name": "00_Module-Overview.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/11-risk-boundaries-human-review/00_Module-Overview.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 11"
+        },
+        {
+          "name": "01_Lesson-Plan.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/11-risk-boundaries-human-review/01_Lesson-Plan.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 11"
+        },
+        {
+          "name": "02_Workbook.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/11-risk-boundaries-human-review/02_Workbook.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 11"
+        },
+        {
+          "name": "03_Instructor-Guide.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/11-risk-boundaries-human-review/03_Instructor-Guide.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 11"
+        },
+        {
+          "name": "04_Assessment.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/11-risk-boundaries-human-review/04_Assessment.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 11"
+        }
+      ]
+    },
+    {
+      "module_id": "12-client-delivery-pack-generation",
+      "module_number": "12",
+      "title": "Client Delivery Pack Generation",
+      "risk_level": "medium",
+      "files": [
+        {
+          "name": "00_Module-Overview.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/12-client-delivery-pack-generation/00_Module-Overview.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 12"
+        },
+        {
+          "name": "01_Lesson-Plan.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/12-client-delivery-pack-generation/01_Lesson-Plan.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 12"
+        },
+        {
+          "name": "02_Workbook.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/12-client-delivery-pack-generation/02_Workbook.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 12"
+        },
+        {
+          "name": "03_Instructor-Guide.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/12-client-delivery-pack-generation/03_Instructor-Guide.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 12"
+        },
+        {
+          "name": "04_Assessment.md",
+          "path": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/12-client-delivery-pack-generation/04_Assessment.md",
+          "exists": true,
+          "visibility": "internal",
+          "source_section": "Module 12"
+        }
+      ]
+    }
+  ]
+}

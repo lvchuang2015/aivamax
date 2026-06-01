@@ -1,0 +1,43 @@
+{
+  "allowed_domains": [
+    "blog.jarveepro.com",
+    "www.jarveepro.com",
+    "jarveepro.com"
+  ],
+  "seeds": [
+    "https://blog.jarveepro.com/Home/Blog",
+    "https://blog.jarveepro.com/Home/KnowledgeBaseList",
+    "https://www.jarveepro.com/",
+    "https://www.jarveepro.com/all-features.html",
+    "https://www.jarveepro.com/pricing.html",
+    "https://www.jarveepro.com/facebook-features.html",
+    "https://www.jarveepro.com/instagram-features.html",
+    "https://www.jarveepro.com/youtube-features.html",
+    "https://www.jarveepro.com/twitter-features.html",
+    "https://www.jarveepro.com/pinterest-features.html",
+    "https://www.jarveepro.com/tumblr-features.html",
+    "https://www.jarveepro.com/linkedIn-features.html",
+    "https://www.jarveepro.com/reddit-features.html",
+    "https://www.jarveepro.com/whatsapp-features.html",
+    "https://www.jarveepro.com/tiktok-features.html",
+    "https://www.jarveepro.com/discord-features.html"
+  ],
+  "exclude_url_patterns": [
+    "/assets/",
+    "/Content/",
+    "/Scripts/",
+    ".css",
+    ".js",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".svg",
+    ".webp",
+    ".ico",
+    ".zip",
+    ".exe",
+    ".dmg",
+    ".pdf"
+  ]
+}

@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.test_tmp/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Raw crawl/cache artifacts can be regenerated from the indexed corpus.
+data/raw/
+data/pages/
+data/reports/
+
+# Local runtime noise.
+*.log
+*.tmp
+Thumbs.db

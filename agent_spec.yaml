@@ -1,0 +1,367 @@
+name: aivamax-matrix-agent
+version: 1.3.0
+language: zh-CN
+public_brand: AIvaMax
+purpose: >
+  A local AIvaMax Matrix agent that uses private source adapters to generate
+  Chinese-first AIvaMax dual-layer SOP packs, platform playbooks, risk boundary
+  briefs, Mermaid visual playbooks, project memories, course assets,
+  PDF-ready exports, private-domain sales packs, preview packs, local Agent OS
+  console status, safe MCP-style tools, MCP host config export, stdio host
+  smoke tests, student coach preview, role Skill packages, release gates,
+  and media-aware training materials.
+
+source_adapters:
+  jarveepro:
+    source_brand: JarveePro
+    visibility: internal_only
+    role: oem_knowledge_source
+
+local_cli:
+  public_wrapper: .\aivamax.ps1
+  entrypoint: python jarveepro_cli.py
+  commands:
+    sync-source: Refresh a private source adapter.
+    search-source: Search the private source index for internal retrieval.
+    run-matrix: Run the full AIvaMax Matrix flow from request to audited project and course assets.
+    platform-playbook: Generate a platform-specific AIvaMax playbook.
+    boundary-brief: Generate a green/yellow/red platform boundary brief.
+    brief: Create a structured AIvaMax TaskBrief.
+    evidence: Create a public AIvaMax EvidencePack.
+    sop: Compile an AIvaMax SOP draft.
+    risk-audit: Audit SOP risk and readiness.
+    project: Generate an AIvaMax Obsidian Matrix project package.
+    course: Create a public AIvaMax course module from an AIvaMax project package.
+    agent-run: List or show AIvaMax Matrix agent run records.
+    media-import: Import a screenshot or media asset into the AIvaMax media library.
+    media-list: List AIvaMax media library assets.
+    media-plan: Generate screenshot, video, and case-material capture plans.
+    media-audit: Audit media metadata and paths for source leakage or pending approval.
+    case-plan: Generate public-safe case collection plans.
+    case-audit: Audit case plans and case-library notes for source leakage, desensitization, review status, and missing assets.
+    course-release: Generate course product index, release checklist, instructor runbook, student workbook index, and case library.
+    course-export: Export course modules into public Markdown and print-ready HTML manuals.
+    release-demo: Generate a public-safe sales/demo intro pack for the course.
+    sales-pack: Generate private-domain sales materials for the benchmark course.
+    preview-pack: Generate a lightweight public-safe trial lesson package for prospects.
+    console: Serve the local AIvaMax Agent OS web console on 127.0.0.1 by default.
+    mcp-server: Serve the local AIvaMax MCP-style safe tool server on 127.0.0.1 by default, or stdio JSON-RPC with --stdio for agent hosts.
+    mcp-config-export: Export public-safe stdio MCP config templates for Claude Code, Codex, Work Buddy style hosts, and generic agent hosts.
+    host-integration-status: Show MCP host config readiness and role Skill package status.
+    host-smoke-test: Run a local stdio JSON-RPC smoke test against AIvaMax MCP tools.
+    student-coach-preview: Preview a public-safe learner-facing coach response.
+    skill-export: Export role Skill packages for owner, team, instructor, and student coach use.
+    role-audit: Audit role permissions and blocked public leakage.
+    release-gate: Run the public release gate across brand, artifact, quality, media, and case checks.
+    material-review: Review media and case material readiness.
+    runtime-status: Show Agent Runtime recent runs, flow state, release readiness, and next actions.
+    dashboard-refresh: Refresh the Obsidian course delivery dashboard.
+    quality-audit: Audit course-level project and course deliverables.
+    visual-card: Create a reusable AIvaMax Markdown/HTML visual card.
+    init-matrix: Initialize AIvaMax dashboards, templates, and course stubs.
+    brand-audit: Check public outputs for private source leakage.
+    artifact-audit: Check artifact manifests and public/internal physical separation.
+    stats: Show source index statistics.
+
+brand_policy:
+  public_brand_only: true
+  public_outputs_must_not_include:
+    - JarveePro
+    - jarveepro.com
+    - blog.jarveepro.com
+    - source_url
+    - source_note
+    - raw_path
+    - note_path
+  internal_source_traceability: true
+
+retrieval_protocol:
+  - Prefer run-matrix with --lang zh-CN --visuals mermaid --depth course --sop-layer dual for benchmark course packages.
+  - Prefer run-matrix with --lang zh-CN --visuals mermaid --depth deep --sop-layer dual for faster execution-manual drafts.
+  - Use search-source only for internal retrieval.
+  - Generate public EvidencePack before SOP creation.
+  - Do not expose source URLs or source note paths in public outputs.
+  - Run risk-audit before project generation.
+  - Run brand-audit before publishing or using outputs in courses.
+  - Run artifact-audit before publishing or using outputs in courses.
+  - Run quality-audit before treating an Instagram benchmark course as course-deliverable.
+  - Run course-release and then quality-audit --strict course-release before treating a course package as ready for delivery.
+  - Run course-export before strict release audit; public_export is the only delivery outlet for student/instructor/case manuals.
+  - Run release-demo when preparing sales pages, community posts, or live-class opening material.
+  - Run sales-pack when preparing private chat, community,朋友圈, or live warm-up sales material.
+  - Run preview-pack when preparing a lightweight trial package for prospects.
+  - Sales and preview materials must not promise outcomes or teach limit bypass, evasion, bulk abuse, or unreviewed high-frequency outreach.
+  - Use console for local product inspection; Codex is an advanced host, not the only AIvaMax interface.
+  - The local console must not expose arbitrary shell execution and must bind to loopback hosts in v1.3.
+  - Console actions must remain allowlisted. v1.3 exposes audit refresh, platform asset rebuild, latest course export refresh, MCP config export, host smoke test, release gate, and material review.
+  - Use mcp-server only as a safe local tool facade over AIvaMax Core services. HTTP JSON is for local debugging/control panels; stdio JSON-RPC is for agent hosts.
+  - Run mcp-config-export before connecting Claude Code, Codex, Work Buddy style hosts, or generic agent hosts.
+  - Run host-smoke-test before using an external host in real work.
+  - Use student-coach-preview to verify learner-facing output before shipping student Skills.
+  - Use skill-export for role instructions; Skills do not replace Core and must not copy private source material.
+  - Run role-audit before using a role Skill in another agent host.
+  - Run release-gate before treating any public export as ready.
+  - Keep Instagram as the first course-grade benchmark and LinkedIn as the second benchmark; Facebook, TikTok, and X remain playbook/boundary-first until the benchmark flow is stable.
+  - Run media-audit before inserting screenshots into public training material.
+  - Run case-audit before using case notes in public training material.
+  - Keep InternalOpsSOP under project internal/ with visibility: internal_only and out of course modules.
+  - Course modules may read project public/ artifacts only; legacy root SOP files are compatibility fallback.
+  - PublicCourseSOP must not teach platform-limit confrontation or unreviewed high-frequency outreach.
+
+orchestration_flow:
+  - Intake Agent: Create TaskBrief.
+  - Knowledge Agent: Create public EvidencePack.
+  - Platform Agent: Create PlatformPlaybook.
+  - Boundary Agent: Create BoundaryBrief.
+  - SOP Agent: Compile PublicCourseSOP and InternalOpsSOP.
+  - Risk Agent: Create RiskAudit.
+  - Memory Agent: Save Obsidian project package.
+  - Course Agent: Create course module.
+  - Brand Auditor: Verify public outputs.
+  - Artifact Auditor: Verify artifact manifests and public/internal separation.
+  - Quality Auditor: Verify course depth, teaching assets, assignments, and public/private wording.
+
+output_contract:
+  - TaskBrief
+  - PublicEvidencePack
+  - SOPDraft
+  - DeepSOPExecutionManual
+  - PublicCourseSOP
+  - InternalOpsSOP
+  - DualSOPPack
+  - PlatformPlaybook
+  - BoundaryBrief
+  - RiskAudit
+  - CampaignMemory
+  - CourseModule
+  - VisualPlaybook
+  - MediaIndex
+  - MediaPlan
+  - CasePlan
+  - CaseAuditResult
+  - CourseReleasePack
+  - CourseExportPack
+  - ReleaseDemoPack
+  - SalesPack
+  - PreviewPack
+  - ServiceResponse
+  - MCPToolCall
+  - RoleSkillPackage
+  - RoleAuditResult
+  - ReleaseGateResult
+  - MaterialReviewResult
+  - RuntimeStatus
+  - MCPConfigPack
+  - HostIntegrationStatus
+  - HostSmokeTestResult
+  - StudentCoachPreview
+  - ConsoleStatus
+  - LocalWebConsole
+  - CourseDashboard
+  - AgentRunRecord
+  - BrandAuditResult
+  - ArtifactAuditResult
+  - QualityAuditResult
+  - MediaAuditResult
+
+artifact_policy:
+  canonical_project_layout:
+    public:
+      - PublicCourseSOP.md
+      - BoundaryBrief.md
+      - ExecutionChecklist.md
+      - ReviewRubric.md
+    internal:
+      - InternalOpsSOP.md
+      - ExecutionLog.md
+      - ExperimentNotes.md
+    manifest: manifest.json
+  visibility_levels:
+    public_course: May be used in course modules and public exports after audits.
+    internal_only: Team execution, experiments, incidents, and private review only.
+    instructor_private: Reserved for future instructor notes and classroom guidance.
+  course_source_rule: Read public/PublicCourseSOP.md first; fallback to legacy root public SOP only for old projects.
+
+defaults:
+  language: zh-CN
+  visuals: mermaid
+  depth: course
+  sop_layer: dual
+  console_host: 127.0.0.1
+  console_port: 8765
+  media_import_audit_status: pending
+
+agent_os_policy:
+  product_body: AIvaMax Core
+  current_interfaces:
+    - CLI
+    - local_web_console
+    - Obsidian
+    - Codex host
+    - MCP-style safe tool server
+    - MCP host config templates
+    - role Skill packages
+  future_interfaces:
+    - full MCP SDK server
+    - REST API
+    - Dify/Coze plugin
+    - SaaS/web app
+  local_console_sections:
+    - system_overview
+    - knowledge_base
+    - platform_matrix
+    - course_factory
+    - audit_center
+    - safe_action_console
+    - agent_os_architecture
+    - agent_runtime
+    - next_actions
+    - mcp_tool_status
+    - external_host_integration
+    - skill_package_status
+    - student_coach_preview
+    - student_preview
+    - instructor_preview
+    - team_internal_preview
+    - release_gate
+    - material_review
+  allowed_console_actions:
+    - refresh-audits
+    - refresh-platform-assets
+    - refresh-course-export
+    - export-mcp-config
+    - host-smoke-test
+    - release-gate
+    - material-review
+
+role_policy:
+  roles:
+    owner_admin: Full local operator; may run matrix jobs, audits, exports, skill export, release gates, and material review.
+    team_operator: Team execution role; may run matrix jobs, audits, exports, release gates, and material review.
+    instructor_private: Course delivery role; may read public course assets, run audits, export course materials, and use release gates.
+    student_public: Student coach role; may only read public course assets, platform playbooks, and public-safe knowledge summaries.
+  blocked_for_student_public:
+    - run-matrix
+    - sync-source
+    - raw search-source
+    - arbitrary path read
+    - arbitrary shell
+    - internal project artifacts
+    - raw source mirrors
+
+mcp_policy:
+  server_default_host: 127.0.0.1
+  server_default_port: 8770
+  tools:
+    - aivamax_get_status
+    - aivamax_list_platforms
+    - aivamax_list_courses
+    - aivamax_search_public_knowledge
+    - aivamax_run_matrix
+    - aivamax_run_audit
+    - aivamax_export_course
+    - aivamax_get_latest_course
+    - aivamax_get_runtime_status
+    - aivamax_get_host_integration_status
+    - aivamax_host_smoke_test
+    - aivamax_export_mcp_config
+    - aivamax_student_coach_preview
+  host_config_policy:
+    config_root: integrations/mcp
+    use_env_placeholder: ${AIVAMAX_HOME}
+    supported_hosts:
+      - claude-code
+      - codex
+      - work-buddy
+      - generic-agent
+    require_smoke_test: true
+  student_coach_policy:
+    allowed_role: student_public
+    read_scope:
+      - public courses
+      - public exports
+      - platform playbooks
+      - public-safe evidence summaries
+    blocked_scope:
+      - raw source mirrors
+      - internal project artifacts
+      - internal execution drafts
+      - original URLs
+      - source paths
+  runtime_tool_policy:
+    student_public_blocked: true
+    expose_public_paths_only: true
+    include:
+      - recent_runs
+      - flow_template
+      - latest_course_module
+      - latest_project
+      - next_actions
+    exclude:
+      - raw evidence
+      - source paths
+      - internal project files
+      - internal execution logs
+  forbidden_exposure:
+    - data/raw
+    - data/pages
+    - data/index.jsonl
+    - data/obsidian/JarveePro
+    - 50_Projects/*/internal
+    - InternalOpsSOP
+    - source_url
+    - note_path
+    - raw_path
+
+course_quality_policy:
+  benchmark_platform: instagram
+  required_public_sop_markers:
+    - 逐日讲解
+    - 课堂案例
+    - 作业模板
+    - 复盘评分
+    - 图后解释
+    - 证据转译区
+  required_course_files:
+    - 00_Module-Overview.md
+    - 01_Lesson-Plan.md
+    - 02_Workbook.md
+    - 03_Instructor-Guide.md
+    - 04_Assessment.md
+    - 05_Case-Lab.md
+  required_course_release_files:
+    - _Course-Index.md
+    - _Release-Checklist.md
+    - _Instructor-Runbook.md
+    - _Student-Workbook.md
+    - _Case-Library.md
+  required_public_export_files:
+    - AIvaMax_Student_Manual.md
+    - AIvaMax_Student_Manual.html
+    - AIvaMax_Instructor_Manual.md
+    - AIvaMax_Instructor_Manual.html
+    - AIvaMax_Case_Workbook.md
+    - AIvaMax_Case_Workbook.html
+  required_sales_pack_files:
+    - sales_pack/01_Course-Offer.md
+    - sales_pack/01_Course-Offer.html
+    - sales_pack/02_Private-Chat-Script.md
+    - sales_pack/02_Private-Chat-Script.html
+    - sales_pack/03_Community-Post.md
+    - sales_pack/03_Community-Post.html
+    - sales_pack/04_Trial-Lesson.md
+    - sales_pack/04_Trial-Lesson.html
+    - sales_pack/05_FAQ-And-Boundaries.md
+    - sales_pack/05_FAQ-And-Boundaries.html
+    - sales_pack/06_Delivery-Checklist.md
+    - sales_pack/06_Delivery-Checklist.html
+  strict_release_checks:
+    - lesson_count_and_depth
+    - workbook_assignment_depth
+    - instructor_talk_tracks
+    - case_lab_coverage
+    - material_placeholders
+    - public_export_delivery_files
+    - sales_pack_delivery_files
+    - brand_isolation
+    - artifact_isolation

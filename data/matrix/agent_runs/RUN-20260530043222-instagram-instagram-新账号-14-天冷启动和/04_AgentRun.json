@@ -1,0 +1,116 @@
+{
+  "type": "aivamax_matrix_agent_run",
+  "run_id": "RUN-20260530043222-instagram-instagram-新账号-14-天冷启动和",
+  "public_brand": "AIvaMax",
+  "language": "zh-CN",
+  "visuals": "mermaid",
+  "depth": "deep",
+  "sop_layer": "standard",
+  "created_at": "2026-05-30T04:32:22+00:00",
+  "request": {
+    "goal": "Instagram 新账号 14 天冷启动和评论区轻获客",
+    "platforms": [
+      "instagram"
+    ],
+    "offer": "AI 工具课",
+    "duration_days": 14
+  },
+  "task_id": "instagram-instagram-新账号-14-天冷启动和",
+  "evidence_pack_id": "EVPACK-INSTAGRAM-INSTAGRAM-新账号-14-天冷启动和",
+  "risk_decision": "revise",
+  "agent_flow": [
+    {
+      "order": 1,
+      "agent": "Intake Agent",
+      "tool": "brief",
+      "responsibility": "Convert the user request into a structured TaskBrief.",
+      "status": "completed"
+    },
+    {
+      "order": 2,
+      "agent": "Knowledge Agent",
+      "tool": "evidence",
+      "responsibility": "Retrieve private source context and produce a public EvidencePack.",
+      "status": "completed"
+    },
+    {
+      "order": 3,
+      "agent": "Platform Agent",
+      "tool": "platform-playbook",
+      "responsibility": "Create platform-specific playbooks for tactics, users, content paths, and course framing.",
+      "status": "completed"
+    },
+    {
+      "order": 4,
+      "agent": "Boundary Agent",
+      "tool": "boundary-brief",
+      "responsibility": "Translate policy references and operating experience into green/yellow/red execution boundaries.",
+      "status": "completed"
+    },
+    {
+      "order": 5,
+      "agent": "SOP Agent",
+      "tool": "sop",
+      "responsibility": "Compile source-backed AIvaMax public and internal SOP layers.",
+      "status": "completed"
+    },
+    {
+      "order": 6,
+      "agent": "Risk Agent",
+      "tool": "risk-audit",
+      "responsibility": "Audit account, action, and execution risk before use.",
+      "status": "completed"
+    },
+    {
+      "order": 7,
+      "agent": "Memory Agent",
+      "tool": "project",
+      "responsibility": "Save the project package into AIvaMax Obsidian Matrix.",
+      "status": "completed"
+    },
+    {
+      "order": 8,
+      "agent": "Course Agent",
+      "tool": "course",
+      "responsibility": "Turn the public project package into a course module.",
+      "status": "completed"
+    },
+    {
+      "order": 9,
+      "agent": "Brand Auditor",
+      "tool": "brand-audit",
+      "responsibility": "Check public outputs for private source leakage.",
+      "status": "completed"
+    }
+  ],
+  "outputs": {
+    "run_dir": "data/matrix/agent_runs/RUN-20260530043222-instagram-instagram-新账号-14-天冷启动和",
+    "task_brief": "data/matrix/agent_runs/RUN-20260530043222-instagram-instagram-新账号-14-天冷启动和/00_TaskBrief.json",
+    "evidence_pack": "data/matrix/agent_runs/RUN-20260530043222-instagram-instagram-新账号-14-天冷启动和/01_EvidencePack.json",
+    "sop": "data/matrix/agent_runs/RUN-20260530043222-instagram-instagram-新账号-14-天冷启动和/02_SOP.md",
+    "risk_audit": "data/matrix/agent_runs/RUN-20260530043222-instagram-instagram-新账号-14-天冷启动和/03_RiskAudit.md",
+    "project_dir": "data/obsidian/AIvaMax_Matrix/50_Projects/2026-05-29_instagram-instagram-新账号-14-天冷启动和-03",
+    "course_dir": "data/obsidian/AIvaMax_Matrix/70_Courses/AIvaMax账号安全与获客SOP课/instagram-instagram-新账号-14-天冷启动和-03",
+    "execution_checklist": "data/obsidian/AIvaMax_Matrix/50_Projects/2026-05-29_instagram-instagram-新账号-14-天冷启动和-03/06_Execution-Checklist.md",
+    "review_rubric": "data/obsidian/AIvaMax_Matrix/50_Projects/2026-05-29_instagram-instagram-新账号-14-天冷启动和-03/07_Review-Rubric.md",
+    "public_course_sop": "data/obsidian/AIvaMax_Matrix/50_Projects/2026-05-29_instagram-instagram-新账号-14-天冷启动和-03/PublicCourseSOP.md",
+    "internal_ops_sop": "data/obsidian/AIvaMax_Matrix/50_Projects/2026-05-29_instagram-instagram-新账号-14-天冷启动和-03/InternalOpsSOP.md",
+    "boundary_brief": "data/obsidian/AIvaMax_Matrix/50_Projects/2026-05-29_instagram-instagram-新账号-14-天冷启动和-03/BoundaryBrief.md",
+    "execution_log": "data/obsidian/AIvaMax_Matrix/50_Projects/2026-05-29_instagram-instagram-新账号-14-天冷启动和-03/ExecutionLog.md",
+    "visual_playbook": "data/obsidian/AIvaMax_Matrix/40_Playbooks/Visuals/instagram-instagram-新账号-14-天冷启动和-visuals.md",
+    "platform_playbook": "data/obsidian/AIvaMax_Matrix/40_Playbooks/Platforms/Instagram/Platform-Playbook.md",
+    "platform_boundary_brief": "data/obsidian/AIvaMax_Matrix/20_Risks/Platform_Boundaries/Instagram-BoundaryBrief.md"
+  },
+  "brand_audit": {
+    "passed": true,
+    "violation_count": 0,
+    "checked_paths": [
+      "data/matrix/agent_runs/RUN-20260530043222-instagram-instagram-新账号-14-天冷启动和",
+      "data/obsidian/AIvaMax_Matrix/50_Projects/2026-05-29_instagram-instagram-新账号-14-天冷启动和-03",
+      "data/obsidian/AIvaMax_Matrix/70_Courses/AIvaMax账号安全与获客SOP课/instagram-instagram-新账号-14-天冷启动和-03",
+      "data/obsidian/AIvaMax_Matrix/40_Playbooks/Platforms/Instagram/Platform-Playbook.md",
+      "data/obsidian/AIvaMax_Matrix/20_Risks/Platform_Boundaries/Instagram-BoundaryBrief.md",
+      "data/obsidian/AIvaMax_Matrix/40_Playbooks/Visuals/instagram-instagram-新账号-14-天冷启动和-visuals.md"
+    ]
+  }
+}

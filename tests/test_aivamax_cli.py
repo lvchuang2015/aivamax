@@ -1,0 +1,1565 @@
+from __future__ import annotations
+
+import argparse
+import importlib.util
+import json
+import sys
+import threading
+import unittest
+import urllib.error
+import urllib.request
+import uuid
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SPEC = importlib.util.spec_from_file_location("aivamax_cli", ROOT / "jarveepro_cli.py")
+assert SPEC and SPEC.loader
+cli = importlib.util.module_from_spec(SPEC)
+sys.modules[SPEC.name] = cli
+SPEC.loader.exec_module(cli)
+
+import aivamax_core as core  # noqa: E402
+import aivamax_mcp_server as mcp  # noqa: E402
+import aivamax_services as services  # noqa: E402
+from aivamax_console import build_server, is_loopback_host  # noqa: E402
+
+
+class AIvaMaxCLITest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.brand_config = cli.default_brand_config()
+        self.tmp_root = ROOT / ".test_tmp"
+        self.tmp_root.mkdir(exist_ok=True)
+
+    def assert_public_clean(self, text: str) -> None:
+        for term in self.brand_config["forbidden_public_terms"]:
+            self.assertNotIn(term.lower(), text.lower())
+
+    def make_test_dir(self, name: str) -> Path:
+        path = self.tmp_root / f"{name}_{uuid.uuid4().hex}"
+        path.mkdir(parents=True)
+        return path
+
+    def make_console_fixture(self) -> Path:
+        root = self.make_test_dir("console_fixture")
+        data_dir = root / "data"
+        matrix_root = data_dir / "obsidian" / "AIvaMax_Matrix"
+        (data_dir / "raw").mkdir(parents=True)
+        (data_dir / "pages").mkdir(parents=True)
+        rows = [
+            {"id": "1", "category": "knowledge", "title": "Account safety"},
+            {"id": "2", "category": "blog", "title": "Content path"},
+        ]
+        (data_dir / "index.jsonl").write_text("\n".join(json.dumps(row) for row in rows), encoding="utf-8")
+        for platform in core.PLATFORMS:
+            playbook = matrix_root / "40_Playbooks" / "Platforms" / platform["folder"] / "Platform-Playbook.md"
+            boundary = matrix_root / "20_Risks" / "Platform_Boundaries" / f"{platform['folder']}-BoundaryBrief.md"
+            playbook.parent.mkdir(parents=True, exist_ok=True)
+            boundary.parent.mkdir(parents=True, exist_ok=True)
+            playbook.write_text("# AIvaMax Playbook\n", encoding="utf-8")
+            boundary.write_text("# AIvaMax Boundary\n", encoding="utf-8")
+        course_dir = matrix_root / "70_Courses" / "AIvaMax Course" / "module-1"
+        course_dir.mkdir(parents=True)
+        for name in [
+            "00_Module-Overview.md",
+            "01_Lesson-Plan.md",
+            "02_Workbook.md",
+            "03_Instructor-Guide.md",
+            "04_Assessment.md",
+            "05_Case-Lab.md",
+        ]:
+            (course_dir / name).write_text("# AIvaMax\n", encoding="utf-8")
+        for name in [
+            "_Course-Index.md",
+            "_Release-Checklist.md",
+            "_Instructor-Runbook.md",
+            "_Student-Workbook.md",
+            "_Case-Library.md",
+        ]:
+            (course_dir.parent / name).write_text("# AIvaMax\n", encoding="utf-8")
+        export_dir = matrix_root / "public_export" / "AIvaMax Course" / "module-1"
+        export_dir.mkdir(parents=True)
+        for name in core.PUBLIC_EXPORT_FILES:
+            (export_dir / name).write_text("# AIvaMax\n", encoding="utf-8")
+        sales_dir = export_dir / "sales_pack"
+        sales_dir.mkdir()
+        for name in core.SALES_PACK_FILES:
+            (sales_dir / name).write_text("# AIvaMax\n", encoding="utf-8")
+        preview_dir = export_dir / "preview_pack"
+        preview_dir.mkdir()
+        for name in core.PREVIEW_PACK_FILES:
+            (preview_dir / name).write_text("# AIvaMax\n", encoding="utf-8")
+        project_dir = matrix_root / "50_Projects" / "project-1"
+        project_dir.mkdir(parents=True)
+        (project_dir / "manifest.json").write_text(json.dumps({"artifacts": []}), encoding="utf-8")
+        (matrix_root / "40_Playbooks" / "Case_Plans").mkdir(parents=True, exist_ok=True)
+        (data_dir / "media").mkdir(parents=True, exist_ok=True)
+        (data_dir / "media" / "media_index.json").write_text(json.dumps({"items": []}), encoding="utf-8")
+        return data_dir
+
+    def test_console_core_lists_platforms_courses_and_exports(self) -> None:
+        data_dir = self.make_console_fixture()
+        status = core.console_status(data_dir=data_dir, brand_config_path=ROOT / "config" / "brand_config.json")
+        self.assertEqual(status["version"], "1.3.0")
+        self.assertEqual(status["source"]["total_pages"], 2)
+        self.assertEqual(len(status["platforms"]), 5)
+        self.assertEqual(status["summary"]["platforms_ready"], 5)
+        self.assertEqual(status["courses"]["course_count"], 1)
+        module = status["courses"]["courses"][0]["modules"][0]
+        self.assertTrue(module["public_export"]["delivery_ready"])
+        self.assertTrue(module["public_export"]["sales_pack_ready"])
+        self.assertTrue(module["public_export"]["preview_pack_ready"])
+        self.assertEqual(status["architecture"]["product"], "AIvaMax Agent OS")
+        connection_modes = {item["name"] for item in status["architecture"]["connection_modes"]}
+        self.assertIn("Codex host", connection_modes)
+        self.assertIn("MCP server", connection_modes)
+        service_status = services.get_status(data_dir=data_dir, brand_config_path=ROOT / "config" / "brand_config.json", role="student_public")
+        self.assertTrue(service_status["ok"])
+        self.assertEqual(service_status["role"], "student_public")
+        self.assertNotIn("index_path", service_status["result"]["source"])
+        self.assertIn("aivamax_get_status", service_status["result"]["service"]["mcp_tools"])
+
+    def test_console_api_serves_status_platforms_courses_and_audits(self) -> None:
+        data_dir = self.make_console_fixture()
+        server = build_server(
+            host="127.0.0.1",
+            port=0,
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        base = f"http://127.0.0.1:{server.server_port}"
+        try:
+            for route in [
+                "/api/status",
+                "/api/platforms",
+                "/api/courses",
+                "/api/audits",
+                "/api/architecture",
+                "/api/roles",
+                "/api/skills",
+                "/api/runtime",
+                "/api/host-integration",
+                "/api/student-coach-preview",
+                "/api/mcp/tools",
+            ]:
+                with urllib.request.urlopen(base + route, timeout=15) as response:
+                    payload = json.loads(response.read().decode("utf-8"))
+                self.assertIsInstance(payload, dict)
+                self.assertTrue(payload["ok"])
+            for route in ["/api/release-gate", "/api/material-review"]:
+                with urllib.request.urlopen(base + route, timeout=15) as response:
+                    payload = json.loads(response.read().decode("utf-8"))
+                self.assertIsInstance(payload, dict)
+                self.assertIn("result", payload)
+            with urllib.request.urlopen(base + "/", timeout=5) as response:
+                html = response.read().decode("utf-8")
+            self.assertIn("AIvaMax Agent OS 工作台", html)
+            self.assertIn("这个工作台是什么", html)
+            self.assertIn("三端工作模式", html)
+            self.assertIn("Agent Runtime", html)
+            self.assertIn("下一步动作", html)
+            self.assertIn("角色权限", html)
+            self.assertIn("外部宿主接入", html)
+            self.assertIn("学员陪练智能体预览", html)
+            self.assertIn("发布门禁", html)
+            self.assertIn("Codex", html)
+            self.assertIn("Work Buddy", html)
+            self.assertIn("MCP", html)
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=5)
+
+    def test_console_rejects_non_loopback_and_arbitrary_actions(self) -> None:
+        data_dir = self.make_console_fixture()
+        self.assertTrue(is_loopback_host("127.0.0.1"))
+        self.assertFalse(is_loopback_host("0.0.0.0"))
+        with self.assertRaises(ValueError):
+            build_server(host="0.0.0.0", port=0, data_dir=data_dir, brand_config_path=ROOT / "config" / "brand_config.json")
+        server = build_server(host="127.0.0.1", port=0, data_dir=data_dir, brand_config_path=ROOT / "config" / "brand_config.json")
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        base = f"http://127.0.0.1:{server.server_port}"
+        try:
+            request = urllib.request.Request(base + "/api/actions/shell", method="POST")
+            with self.assertRaises(urllib.error.HTTPError) as ctx:
+                urllib.request.urlopen(request, timeout=5)
+            self.assertEqual(ctx.exception.code, 404)
+            ctx.exception.close()
+            request = urllib.request.Request(base + "/api/actions/refresh-audits", method="POST")
+            with urllib.request.urlopen(request, timeout=5) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+            self.assertIn("brand", payload["result"])
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=5)
+
+    def test_console_allowlisted_actions_refresh_assets(self) -> None:
+        data_dir = self.make_console_fixture()
+        server = build_server(host="127.0.0.1", port=0, data_dir=data_dir, brand_config_path=ROOT / "config" / "brand_config.json")
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        base = f"http://127.0.0.1:{server.server_port}"
+        try:
+            for action in ["refresh-platform-assets", "refresh-course-export"]:
+                request = urllib.request.Request(base + f"/api/actions/{action}", method="POST")
+                with urllib.request.urlopen(request, timeout=30) as response:
+                    payload = json.loads(response.read().decode("utf-8"))
+                self.assertTrue(payload["ok"], payload)
+                self.assertIn("action", payload)
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=5)
+
+    def test_console_cli_defaults_to_loopback(self) -> None:
+        parser = cli.build_parser()
+        args = parser.parse_args(["console"])
+        self.assertEqual(args.host, "127.0.0.1")
+        self.assertEqual(args.port, 8765)
+        mcp_args = parser.parse_args(["mcp-server"])
+        self.assertEqual(mcp_args.host, "127.0.0.1")
+        self.assertEqual(mcp_args.port, 8770)
+        self.assertFalse(mcp_args.stdio)
+        stdio_args = parser.parse_args(["mcp-server", "--stdio"])
+        self.assertTrue(stdio_args.stdio)
+        runtime_args = parser.parse_args(["runtime-status"])
+        self.assertEqual(runtime_args.limit, 8)
+        self.assertEqual(runtime_args.role, "owner_admin")
+        config_args = parser.parse_args(["mcp-config-export"])
+        self.assertEqual(config_args.host, "all")
+        smoke_args = parser.parse_args(["host-smoke-test"])
+        self.assertEqual(smoke_args.host, "stdio")
+        host_status_args = parser.parse_args(["host-integration-status"])
+        self.assertEqual(host_status_args.role, "owner_admin")
+        coach_args = parser.parse_args(["student-coach-preview", "--question", "账号安全怎么检查？"])
+        self.assertEqual(coach_args.role, "student_public")
+
+    def test_services_public_search_and_role_boundaries(self) -> None:
+        data_dir = self.make_console_fixture()
+        search = services.search_public_knowledge(
+            "Instagram account safety",
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="student_public",
+        )
+        self.assertTrue(search["ok"])
+        dumped = json.dumps(search, ensure_ascii=False)
+        self.assertNotIn("source_url", dumped)
+        self.assertNotIn("note_path", dumped)
+        self.assertNotIn("raw_path", dumped)
+        with self.assertRaises(PermissionError):
+            services.run_matrix_job(
+                goal="Instagram SOP",
+                data_dir=data_dir,
+                brand_config_path=ROOT / "config" / "brand_config.json",
+                role="student_public",
+            )
+        audit = services.role_audit(role="student_public", data_dir=data_dir, brand_config_path=ROOT / "config" / "brand_config.json")
+        self.assertTrue(audit["ok"])
+        self.assertNotIn("run_matrix", audit["result"]["permissions"])
+
+    def test_mcp_tools_enforce_student_boundary(self) -> None:
+        data_dir = self.make_console_fixture()
+        tools = mcp.list_tools()["tools"]
+        tool_names = {item["name"] for item in tools}
+        self.assertIn("aivamax_get_status", tool_names)
+        self.assertIn("aivamax_run_matrix", tool_names)
+        self.assertIn("aivamax_get_runtime_status", tool_names)
+        self.assertIn("aivamax_get_host_integration_status", tool_names)
+        self.assertIn("aivamax_host_smoke_test", tool_names)
+        self.assertIn("aivamax_export_mcp_config", tool_names)
+        self.assertIn("aivamax_student_coach_preview", tool_names)
+        self.assertIn("inputSchema", tools[0])
+        status = mcp.call_tool(
+            "aivamax_get_status",
+            {"role": "student_public"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertTrue(status["ok"])
+        blocked = mcp.call_tool(
+            "aivamax_run_matrix",
+            {"role": "student_public", "goal": "Instagram SOP"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked["ok"])
+        self.assertEqual(blocked["error"], "permission_denied")
+        blocked_runtime = mcp.call_tool(
+            "aivamax_get_runtime_status",
+            {"role": "student_public"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_runtime["ok"])
+        self.assertEqual(blocked_runtime["error"], "permission_denied")
+        coach = mcp.call_tool(
+            "aivamax_student_coach_preview",
+            {"role": "student_public", "question": "账号安全怎么检查？"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertTrue(coach["ok"], coach)
+        blocked_config = mcp.call_tool(
+            "aivamax_export_mcp_config",
+            {"role": "student_public"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_config["ok"])
+        self.assertEqual(blocked_config["error"], "permission_denied")
+        blocked_smoke = mcp.call_tool(
+            "aivamax_host_smoke_test",
+            {"role": "student_public"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_smoke["ok"])
+        self.assertEqual(blocked_smoke["error"], "permission_denied")
+
+    def test_mcp_jsonrpc_stdio_protocol_shape(self) -> None:
+        data_dir = self.make_console_fixture()
+        init = mcp.handle_jsonrpc_message(
+            {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertEqual(init["result"]["serverInfo"]["name"], "aivamax-mcp-server")
+        tools = mcp.handle_jsonrpc_message(
+            {"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertIn("inputSchema", tools["result"]["tools"][0])
+        blocked = mcp.handle_jsonrpc_message(
+            {
+                "jsonrpc": "2.0",
+                "id": 3,
+                "method": "tools/call",
+                "params": {
+                    "name": "aivamax_run_matrix",
+                    "arguments": {"role": "student_public", "goal": "Instagram SOP"},
+                },
+            },
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertTrue(blocked["result"]["isError"])
+        self.assertIn("permission_denied", blocked["result"]["content"][0]["text"])
+
+    def test_role_and_skill_inventory_are_public_safe(self) -> None:
+        data_dir = self.make_console_fixture()
+        roles = services.role_inventory(data_dir=data_dir, brand_config_path=ROOT / "config" / "brand_config.json", role="owner_admin")
+        skills = services.skill_inventory(data_dir=data_dir, brand_config_path=ROOT / "config" / "brand_config.json", role="owner_admin")
+        self.assertTrue(roles["ok"])
+        self.assertEqual(len(roles["result"]["roles"]), 4)
+        self.assertTrue(skills["ok"])
+        dumped = json.dumps({"roles": roles, "skills": skills}, ensure_ascii=False)
+        self.assertNotIn("source_url", dumped)
+        self.assertNotIn("note_path", dumped)
+
+    def test_runtime_status_lists_public_run_state_only(self) -> None:
+        data_dir = self.make_console_fixture()
+        run_dir = data_dir / "matrix" / "agent_runs" / "RUN-test-runtime"
+        run_dir.mkdir(parents=True)
+        record = {
+            "run_id": "RUN-test-runtime",
+            "created_at": "2026-05-31T00:00:00+00:00",
+            "task_id": "linkedin-test",
+            "depth": "course",
+            "sop_layer": "dual",
+            "risk_decision": "revise",
+            "request": {"platforms": ["linkedin"]},
+            "agent_flow": [
+                {"agent": "Intake Agent", "status": "completed"},
+                {"agent": "Knowledge Agent", "status": "completed"},
+            ],
+            "outputs": {
+                "project_dir": "data/obsidian/AIvaMax_Matrix/50_Projects/project-1",
+                "course_dir": "data/obsidian/AIvaMax_Matrix/70_Courses/AIvaMax Course/module-1",
+                "internal_ops_sop": "data/obsidian/AIvaMax_Matrix/50_Projects/project-1/internal/InternalOpsSOP.md",
+            },
+            "brand_audit": {"passed": True},
+            "artifact_audit": {"passed": True},
+        }
+        (run_dir / "04_AgentRun.json").write_text(json.dumps(record, ensure_ascii=False), encoding="utf-8")
+        runtime = services.runtime_status(data_dir=data_dir, brand_config_path=ROOT / "config" / "brand_config.json", role="owner_admin")
+        self.assertTrue(runtime["ok"])
+        self.assertEqual(runtime["result"]["latest_run"]["run_id"], "RUN-test-runtime")
+        self.assertEqual(runtime["result"]["latest_run"]["completed_steps"], 2)
+        self.assertTrue(runtime["result"]["next_actions"])
+        dumped = json.dumps(runtime, ensure_ascii=False)
+        self.assertNotIn("InternalOpsSOP", dumped)
+        self.assertNotIn("/internal/", dumped)
+
+    def test_host_integration_config_export_and_smoke_test_are_public_safe(self) -> None:
+        data_dir = self.make_console_fixture()
+        out = self.make_test_dir("mcp_configs")
+        exported = services.mcp_config_export(
+            host="all",
+            out_dir=out,
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="owner_admin",
+        )
+        self.assertTrue(exported["ok"], exported)
+        self.assertEqual(len(exported["result"]["hosts"]), 4)
+        for host in ["claude-code", "codex", "generic-agent", "work-buddy"]:
+            path = out / f"{host}.mcp.json"
+            self.assertTrue(path.exists(), host)
+            text = path.read_text(encoding="utf-8")
+            self.assertIn("${AIVAMAX_HOME}", text)
+            self.assert_public_clean(text)
+        readme = (out / "README.md").read_text(encoding="utf-8")
+        self.assertIn("host-smoke-test", readme)
+        self.assert_public_clean(readme)
+        status = services.host_integration_status(data_dir=data_dir, brand_config_path=ROOT / "config" / "brand_config.json", role="student_public")
+        self.assertTrue(status["ok"], status)
+        dumped = json.dumps(status, ensure_ascii=False)
+        self.assertNotIn("InternalOpsSOP", dumped)
+        self.assertNotIn("source_url", dumped)
+        smoke = services.host_smoke_test(data_dir=data_dir, brand_config_path=ROOT / "config" / "brand_config.json", role="owner_admin")
+        self.assertTrue(smoke["ok"], smoke)
+        self.assertTrue(smoke["result"]["passed"])
+
+    def test_student_coach_preview_is_public_safe_and_student_allowed(self) -> None:
+        data_dir = self.make_console_fixture()
+        preview = services.student_coach_preview(
+            question="账号安全怎么检查？",
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="student_public",
+        )
+        self.assertTrue(preview["ok"], preview)
+        markdown = preview["result"]["markdown"]
+        self.assertIn("学员作业", markdown)
+        self.assertIn("公开风险边界", markdown)
+        self.assertNotIn("InternalOpsSOP", markdown)
+        self.assertNotIn("source_url", markdown)
+        self.assert_public_clean(markdown)
+
+    def test_skill_export_generates_role_skill_without_private_terms(self) -> None:
+        out = self.make_test_dir("skills_out")
+        result = services.skill_export(
+            role="student_public",
+            out_dir=out,
+            data_dir=self.make_console_fixture(),
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            caller_role="owner_admin",
+        )
+        self.assertTrue(result["ok"], result)
+        skill_path = out / "aivamax-student-coach" / "SKILL.md"
+        self.assertTrue(skill_path.exists())
+        text = skill_path.read_text(encoding="utf-8")
+        self.assertIn("AIvaMax Student Coach", text)
+        self.assertIn("Only read public course assets", text)
+        self.assertNotIn("InternalOpsSOP", text)
+        self.assertNotIn("data/raw", text)
+        self.assert_public_clean(text)
+
+    def test_redact_public_text_maps_private_brand(self) -> None:
+        text = "JarveePro AI Monitor uses blog.jarveepro.com source URLs."
+        redacted = cli.redact_public_text(text, self.brand_config)
+        self.assertIn("AIvaMax Real-Time Signal Monitor", redacted)
+        self.assertNotIn("JarveePro", redacted)
+        self.assertNotIn("jarveepro.com", redacted.lower())
+
+    def test_task_brief_uses_unknowns_without_invention(self) -> None:
+        args = argparse.Namespace(
+            task_id=None,
+            template="instagram-comment-leadgen-14d",
+            platform="instagram",
+            accounts=30,
+            stage="new",
+            offer="AI tools",
+            days=14,
+            risk="conservative",
+            goal="lead_generation",
+            scenario="account_safety_comment_leadgen",
+            proxies="unknown",
+            vps="unknown",
+            content_assets="unknown",
+            keyword=[],
+        )
+        brief = cli.build_task_brief(args, self.brand_config)
+        self.assertEqual(brief["public_brand"], "AIvaMax")
+        self.assertEqual(brief["resources"]["proxies"], "unknown")
+        self.assertIn("mass_dm", brief["forbidden_actions"])
+
+    def test_public_evidence_pack_redacts_private_source_fields(self) -> None:
+        records = [
+            {
+                "id": "abc123",
+                "url": "https://blog.jarveepro.com/example",
+                "title": "JarveePro AI Monitor for Instagram",
+                "category": "knowledge",
+                "summary": "JarveePro AI Monitor tracks Instagram comments.",
+                "text": "Instagram warm up account proxy safety. JarveePro AI Monitor tracks comments.",
+                "headings": ["JarveePro AI Monitor"],
+                "note_path": "pages/source.md",
+                "raw_path": "raw/source.html",
+            }
+        ]
+        brief = {
+            "task_id": "ig-comment",
+            "platforms": ["instagram"],
+            "product_or_offer": "AI tools",
+        }
+        pack = cli.build_evidence_pack(brief, records, 5, self.brand_config, public_mode=True)
+        dumped = json.dumps(pack, ensure_ascii=False)
+        self.assertIn("AIvaMax", dumped)
+        self.assertNotIn("JarveePro", dumped)
+        self.assertNotIn("jarveepro.com", dumped.lower())
+        self.assertNotIn("source_url", dumped)
+        self.assertNotIn("note_path", dumped)
+
+    def test_vendor_source_index_is_separate_and_searchable(self) -> None:
+        data_dir = self.make_test_dir("vendor_source") / "data"
+        vendor_dir = data_dir / "obsidian" / "JarveePro" / "Vendor_Source_Docs"
+        vendor_dir.mkdir(parents=True)
+        (data_dir / "index.jsonl").parent.mkdir(parents=True, exist_ok=True)
+        (data_dir / "index.jsonl").write_text(
+            json.dumps({"id": "web1", "category": "knowledge", "title": "Web knowledge", "text": "settings detail"}, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        source_doc = vendor_dir / "JarveePro_Source.md"
+        source_doc.write_text(
+            """---
+source_type: vendor_source_doc
+---
+
+# JarveePro Source
+
+# 三、社媒账号矩阵模板
+
+| 账号类型 | 数量建议 |
+| --- | --- |
+| 品牌主账号 | 每个平台 1 个 |
+
+# 七、推广周期模板
+
+7/14/30 天推广周期和内容日历。
+""",
+            encoding="utf-8",
+        )
+
+        args = argparse.Namespace(data_dir=str(data_dir), source="jarveepro", path=None, json=False)
+        self.assertEqual(cli.run_index_vendor_source(args), 0)
+        self.assertTrue((data_dir / "vendor_sources" / "index.jsonl").exists())
+        self.assertTrue((data_dir / "vendor_sources" / "manifest.json").exists())
+        self.assertEqual((data_dir / "index.jsonl").read_text(encoding="utf-8").count("web1"), 1)
+
+        records = cli.load_source_records(data_dir, "vendor")
+        results = cli.search_records(records, "账号矩阵 推广周期 内容日历", 5)
+        self.assertTrue(results)
+        self.assertEqual(results[0][1]["category"], "vendor-template")
+        self.assertEqual(results[0][1]["source_corpus"], "vendor")
+
+    def test_template_derive_redacts_vendor_brand_and_paths(self) -> None:
+        data_dir = self.make_test_dir("template_derive") / "data"
+        vendor_dir = data_dir / "obsidian" / "JarveePro" / "Vendor_Source_Docs"
+        vendor_dir.mkdir(parents=True)
+        source_doc = vendor_dir / "JarveePro_Source.md"
+        source_doc.write_text(
+            """---
+source_path: private
+---
+
+# JarveePro Social Media Automation Master Template CN
+
+JarveePro AI Monitor uses blog.jarveepro.com examples.
+""",
+            encoding="utf-8",
+        )
+        out = data_dir / "obsidian" / "AIvaMax_Matrix" / "90_Templates" / "AIvaMax_Source.md"
+        args = argparse.Namespace(
+            data_dir=str(data_dir),
+            brand_config=str(ROOT / "config" / "brand_config.json"),
+            source_doc="JarveePro_Source.md",
+            template_id="aivamax-source",
+            out=str(out),
+            force=False,
+            dry_run=False,
+            json=False,
+        )
+        self.assertEqual(cli.run_template_derive(args), 0)
+        text = out.read_text(encoding="utf-8")
+        self.assertIn("AIvaMax", text)
+        self.assertNotIn("JarveePro", text)
+        self.assertNotIn("jarveepro.com", text.lower())
+        self.assertNotIn("source_path", text)
+        self.assertTrue((data_dir / "vendor_sources" / "derivations.jsonl").exists())
+
+    def test_brand_audit_detects_private_brand(self) -> None:
+        violations = cli.scan_brand_violations(ROOT / "config" / "brand_config.json", self.brand_config)
+        self.assertTrue(violations)
+
+    def test_public_project_renderers_are_brand_clean(self) -> None:
+        brief = {
+                "task_id": "ig-comment",
+                "public_brand": "AIvaMax",
+                "platforms": ["instagram"],
+                "product_or_offer": "AI tools",
+                "account_count": 30,
+                "account_stage": "new",
+                "duration_days": 14,
+                "risk_tolerance": "conservative",
+                "resources": {"keywords": []},
+        }
+        evidence = {
+                "evidence_pack_id": "EVPACK-IG",
+                "public_brand": "AIvaMax",
+                "queries": ["instagram warm up"],
+                "items": [
+                    {
+                        "basis_id": "PUB-ABC123",
+                        "title": "AIvaMax Real-Time Signal Monitor",
+                        "category": "knowledge",
+                        "source_basis": "internal knowledge base",
+                        "claim": "Accounts should warm up before outreach.",
+                        "claim_type": "knowledge_fact",
+                        "confidence": "high",
+                    }
+                ],
+        }
+        sop = cli.render_sop_markdown(brief, evidence, self.brand_config, lang="en")
+        risk = cli.render_risk_audit_markdown(brief, evidence, sop, self.brand_config, lang="en")
+        project_brief = cli.markdown_from_json("AIvaMax Brief", brief, self.brand_config)
+        evidence_md = cli.render_evidence_pack_markdown(evidence)
+        self.assert_public_clean(sop)
+        self.assert_public_clean(risk)
+        self.assert_public_clean(project_brief)
+        self.assert_public_clean(evidence_md)
+
+    def test_course_module_renderers_are_brand_clean(self) -> None:
+        sop = """# AIvaMax SOP
+
+## 5. 14-Day Execution Rhythm
+Use JarveePro AI Monitor style signal checks while keeping volume conservative.
+
+## 6. Comment Rules
+Never repeat templates from blog.jarveepro.com.
+
+## 7. DM Boundary
+DM only after a clear human reply.
+
+## 8. Pause Conditions
+Pause when proxy inventory is unknown.
+"""
+        risk = """# AIvaMax Risk Audit
+
+decision: revise
+"""
+        files = cli.build_course_module_files_from_texts(
+            project_name="2026-05-29_IG_Comment_LeadGen_14D",
+            brief="# AIvaMax Brief",
+            evidence="# AIvaMax EvidencePack",
+            risk=risk,
+            sop=sop,
+            module_id="ig-comment-leadgen-14d",
+            brand_config=self.brand_config,
+            lang="en",
+        )
+        self.assertEqual(
+            set(files),
+            {
+                "00_Module-Overview.md",
+                "01_Lesson-Plan.md",
+                "02_Workbook.md",
+                "03_Instructor-Guide.md",
+                "04_Assessment.md",
+            },
+        )
+        dumped = "\n".join(files.values())
+        self.assertIn("AIvaMax Real-Time Signal Monitor", dumped)
+        self.assert_public_clean(dumped)
+
+    def test_relative_cli_path_resolves_to_project_root_when_needed(self) -> None:
+        path = cli.resolve_existing_cli_path("README.md")
+        self.assertEqual(path.resolve(), (ROOT / "README.md").resolve())
+
+    def test_matrix_agent_flow_is_decision_complete(self) -> None:
+        flow = cli.matrix_agent_flow()
+        self.assertEqual(
+            [item["agent"] for item in flow],
+            [
+                "Intake Agent",
+                "Knowledge Agent",
+                "Platform Agent",
+                "Boundary Agent",
+                "SOP Agent",
+                "Risk Agent",
+                "Memory Agent",
+                "Course Agent",
+                "Brand Auditor",
+                "Artifact Auditor",
+                "Quality Auditor",
+            ],
+        )
+        self.assertEqual(flow[-1]["tool"], "quality-audit")
+
+    def test_agent_run_record_render_is_brand_clean(self) -> None:
+        brief = {
+            "task_id": "ig-comment",
+            "platforms": ["instagram"],
+            "product_or_offer": "JarveePro AI Monitor training",
+            "duration_days": 14,
+        }
+        evidence = {"evidence_pack_id": "EVPACK-IG"}
+        record = cli.build_agent_run_record(
+            run_id="RUN-TEST",
+            request_goal="Use JarveePro Knowledge Base to build a SOP",
+            brief=brief,
+            evidence_pack=evidence,
+            risk_decision="revise",
+            outputs={"project_dir": "data/obsidian/AIvaMax_Matrix/50_Projects/example"},
+            checked_paths=[ROOT / "data" / "obsidian" / "AIvaMax_Matrix"],
+            violation_count=0,
+            brand_config=self.brand_config,
+        )
+        dumped = json.dumps(record, ensure_ascii=False)
+        rendered = cli.render_agent_run_markdown(record, self.brand_config, lang="en")
+        self.assertIn("AIvaMax Real-Time Signal Monitor", dumped)
+        self.assert_public_clean(dumped)
+        self.assert_public_clean(rendered)
+
+    def test_content_matrix_sop_uses_content_language(self) -> None:
+        args = argparse.Namespace(
+            task_id="ig-reels",
+            template="instagram-reels-content-matrix-14d",
+            platform="instagram",
+            accounts=5,
+            stage="new",
+            offer="AI tools",
+            days=14,
+            risk="conservative",
+            goal="content growth",
+            scenario="content_matrix_reels",
+            proxies="known",
+            vps="unknown",
+            content_assets="known",
+            keyword=[],
+        )
+        brief = cli.build_task_brief(args, self.brand_config)
+        evidence = {
+            "items": [
+                {
+                    "basis_id": "PUB-1",
+                    "claim_type": "knowledge_fact",
+                    "confidence": "high",
+                    "claim": "Use content planning before publishing.",
+                }
+            ]
+        }
+        sop = cli.render_sop_markdown(brief, evidence, self.brand_config, lang="zh-CN", visuals="mermaid")
+        self.assertIn("内容矩阵", sop)
+        self.assertIn("可视化流程图", sop)
+        self.assert_public_clean(sop)
+
+    def test_zh_sop_and_risk_are_chinese_and_visual(self) -> None:
+        brief = {
+            "task_id": "ig-comment",
+            "public_brand": "AIvaMax",
+            "platforms": ["instagram"],
+            "product_or_offer": "AI 工具课",
+            "account_count": 30,
+            "account_stage": "new",
+            "duration_days": 14,
+            "risk_tolerance": "conservative",
+            "resources": {"keywords": ["冷启动"]},
+            "forbidden_actions": ["mass_dm", "high_frequency_comment", "spam_template"],
+            "allowed_actions": ["warmup", "comment", "monitor"],
+        }
+        evidence = {
+            "items": [
+                {
+                    "basis_id": "PUB-1",
+                    "claim_type": "knowledge_fact",
+                    "confidence": "high",
+                    "claim": "Warm up before outreach.",
+                }
+            ]
+        }
+        sop = cli.render_sop_markdown(brief, evidence, self.brand_config, lang="zh-CN", visuals="mermaid")
+        risk = cli.render_risk_audit_markdown(brief, evidence, sop, self.brand_config, lang="zh-CN")
+        self.assertIn("任务简报", sop)
+        self.assertIn("```mermaid", sop)
+        self.assertIn("风险审核", risk)
+        self.assertIn("需补充后执行", risk)
+        self.assert_public_clean(sop)
+        self.assert_public_clean(risk)
+
+    def test_bilingual_sop_keeps_chinese_and_english_terms(self) -> None:
+        brief = {
+            "task_id": "ig-comment",
+            "platforms": ["instagram"],
+            "product_or_offer": "AI tools",
+            "account_count": 5,
+            "account_stage": "warm",
+            "duration_days": 14,
+            "risk_tolerance": "conservative",
+            "resources": {"keywords": []},
+        }
+        evidence = {"items": [{"basis_id": "PUB-1", "claim_type": "knowledge_fact", "confidence": "high", "claim": "Use warm-up."}]}
+        sop = cli.render_sop_markdown(brief, evidence, self.brand_config, lang="bilingual", visuals="mermaid")
+        self.assertIn("任务简报", sop)
+        self.assertIn("Account Safety", sop)
+        self.assert_public_clean(sop)
+
+    def test_media_entry_and_metadata_audit(self) -> None:
+        entry = cli.build_media_entry(
+            src=Path("JarveePro-screen.png"),
+            asset_path="data/media/assets/account-screen.png",
+            module="account-assets",
+            step="inventory",
+            platform="instagram",
+            caption="JarveePro Account Manager page",
+            alt="blog.jarveepro.com screenshot",
+            audit_status="approved",
+            brand_config=self.brand_config,
+        )
+        dumped = json.dumps(entry, ensure_ascii=False)
+        self.assert_public_clean(dumped)
+        bad_items = [
+            {
+                "media_id": "MEDIA-BAD",
+                "asset_path": "data/media/assets/jarveepro.png",
+                "caption": "JarveePro screenshot",
+                "alt": "source_url: https://blog.jarveepro.com",
+                "audit_status": "pending",
+            }
+        ]
+        violations = cli.scan_media_metadata_violations(bad_items, self.brand_config)
+        self.assertGreaterEqual(len(violations), 3)
+
+    def test_visual_card_is_brand_clean(self) -> None:
+        card = cli.render_visual_card("risk-map", "zh-CN", self.brand_config)
+        self.assertIn("风险审核卡", card)
+        self.assertIn("```mermaid", card)
+        self.assert_public_clean(card)
+
+    def test_deep_sop_is_execution_manual(self) -> None:
+        brief = {
+            "task_id": "ig-comment",
+            "platforms": ["instagram"],
+            "product_or_offer": "AI 工具课",
+            "account_count": 30,
+            "account_stage": "new",
+            "duration_days": 14,
+            "risk_tolerance": "conservative",
+            "resources": {"keywords": ["冷启动"]},
+            "forbidden_actions": ["mass_dm", "high_frequency_comment", "spam_template"],
+            "allowed_actions": ["warmup", "comment", "monitor"],
+        }
+        evidence = {
+            "items": [
+                {
+                    "basis_id": f"PUB-{idx}",
+                    "claim_type": "knowledge_fact",
+                    "confidence": "high",
+                    "claim": "Accounts should warm up before outreach and proxy safety matters.",
+                }
+                for idx in range(1, 9)
+            ]
+        }
+        sop = cli.render_sop_markdown(
+            brief,
+            evidence,
+            self.brand_config,
+            lang="zh-CN",
+            visuals="mermaid",
+            depth="deep",
+        )
+        cjk_chars = sum("\u4e00" <= ch <= "\u9fff" for ch in sop)
+        self.assertGreaterEqual(cjk_chars, 3000)
+        for marker in ["14 天逐日执行表", "执行前检查清单", "异常处理 SOP", "复盘评分表", "证据转译区"]:
+            self.assertIn(marker, sop)
+        self.assert_public_clean(sop)
+
+    def test_deep_project_package_adds_checklist_and_rubric(self) -> None:
+        brief = {
+            "task_id": "ig-comment",
+            "platforms": ["instagram"],
+            "product_or_offer": "AI 工具课",
+            "account_count": 30,
+            "account_stage": "new",
+            "duration_days": 14,
+            "risk_tolerance": "conservative",
+            "resources": {"keywords": []},
+        }
+        evidence = {"evidence_pack_id": "EVPACK-IG", "items": []}
+        risk = "decision: revise\n"
+        files = cli.build_project_package_files(
+            brief,
+            evidence,
+            "# 深度 SOP",
+            risk,
+            self.brand_config,
+            run_id="RUN-TEST",
+            lang="zh-CN",
+            depth="deep",
+        )
+        self.assertIn("06_Execution-Checklist.md", files)
+        self.assertIn("07_Review-Rubric.md", files)
+        self.assertIn("执行检查表", files["06_Execution-Checklist.md"])
+        self.assertIn("复盘评分表", files["07_Review-Rubric.md"])
+        self.assert_public_clean("\n".join(files.values()))
+
+    def test_agent_run_record_keeps_depth(self) -> None:
+        record = cli.build_agent_run_record(
+            run_id="RUN-TEST",
+            request_goal="Instagram 冷启动",
+            brief={"task_id": "ig", "platforms": ["instagram"], "product_or_offer": "AI 工具课", "duration_days": 14},
+            evidence_pack={"evidence_pack_id": "EVPACK-IG"},
+            risk_decision="revise",
+            outputs={},
+            checked_paths=[],
+            violation_count=0,
+            brand_config=self.brand_config,
+            lang="zh-CN",
+            visuals="mermaid",
+            depth="deep",
+        )
+        rendered = cli.render_agent_run_markdown(record, self.brand_config, lang="zh-CN")
+        self.assertEqual(record["depth"], "deep")
+        self.assertIn("深度: deep", rendered)
+        self.assert_public_clean(json.dumps(record, ensure_ascii=False))
+
+
+    def test_boundary_brief_outputs_color_matrix_and_strategies(self) -> None:
+        brief = cli.render_boundary_brief("instagram", self.brand_config, lang="zh-CN")
+        self.assertIn("红黄绿风险矩阵", brief)
+        self.assertIn("绿色", brief)
+        self.assertIn("黄色", brief)
+        self.assertIn("红色", brief)
+        self.assertIn("继续执行", brief)
+        self.assertIn("降级执行", brief)
+        self.assertIn("放弃或改写", brief)
+        self.assert_public_clean(brief)
+
+    def test_platform_playbook_has_required_sections(self) -> None:
+        playbook = cli.render_platform_playbook("instagram", self.brand_config, lang="zh-CN")
+        self.assertIn("平台专项打法库", playbook)
+        self.assertIn("用户画像", playbook)
+        self.assertIn("内容入口与转化路径", playbook)
+        self.assertIn("红黄绿风险边界", playbook)
+        self.assertIn("```mermaid", playbook)
+        self.assert_public_clean(playbook)
+
+    def test_course_depth_public_sop_is_course_deliverable(self) -> None:
+        brief = {
+            "task_id": "ig-comment",
+            "platforms": ["instagram"],
+            "product_or_offer": "AI 工具课",
+            "account_count": 30,
+            "account_stage": "new",
+            "duration_days": 14,
+            "risk_tolerance": "conservative",
+            "resources": {"keywords": ["冷启动"]},
+        }
+        evidence = {
+            "items": [
+                {
+                    "basis_id": f"PUB-{idx}",
+                    "claim_type": "knowledge_fact",
+                    "confidence": "high",
+                    "claim": "Accounts should warm up before outreach and proxy safety matters.",
+                }
+                for idx in range(1, 9)
+            ]
+        }
+        sop = cli.render_public_course_sop(
+            brief,
+            evidence,
+            self.brand_config,
+            lang="zh-CN",
+            visuals="mermaid",
+            depth="course",
+        )
+        cjk_chars = sum("\u4e00" <= ch <= "\u9fff" for ch in sop)
+        self.assertGreaterEqual(cjk_chars, 4500)
+        for marker in ["逐日讲解", "课堂案例", "作业模板", "复盘评分", "图后解释", "证据转译区"]:
+            self.assertIn(marker, sop)
+        self.assert_public_clean(sop)
+
+    def test_course_depth_module_files_avoid_private_boundary_dump(self) -> None:
+        sop = """---
+platform: Instagram
+---
+# AIvaMax Instagram 课程级公开执行手册
+
+## 8. 14 天逐日讲解
+课程主线。
+
+## 13. 课堂案例演练
+案例。
+"""
+        files = cli.build_course_module_files_from_texts(
+            project_name="project",
+            brief="# Brief",
+            evidence="# Evidence",
+            risk="decision: revise\n",
+            sop=sop,
+            module_id="module",
+            brand_config=self.brand_config,
+            lang="zh-CN",
+            depth="course",
+            visuals="mermaid",
+        )
+        dumped = "\n".join(files.values())
+        self.assertIn("课程教案", dumped)
+        self.assertIn("学员练习册", dumped)
+        self.assertIn("讲师指南", dumped)
+        self.assertIn("课程考核", dumped)
+        self.assertNotIn("团队私有资料边界", dumped)
+        self.assertNotIn("InternalOpsSOP", dumped)
+        self.assert_public_clean(dumped)
+
+    def test_quality_audit_detects_thin_course_package(self) -> None:
+        root = self.make_test_dir("quality")
+        project = root / "50_Projects" / "sample"
+        course = root / "70_Courses" / "Course" / "module"
+        (project / "public").mkdir(parents=True)
+        course.mkdir(parents=True)
+        (project / "public" / "PublicCourseSOP.md").write_text("# 太短\n", encoding="utf-8")
+        for filename in ["00_Module-Overview.md", "01_Lesson-Plan.md", "02_Workbook.md", "03_Instructor-Guide.md", "04_Assessment.md"]:
+            (course / filename).write_text("# draft\n", encoding="utf-8")
+        result = cli.scan_course_quality(project, course, forbidden_terms=self.brand_config["forbidden_public_terms"])
+        self.assertFalse(result["passed"])
+        terms = {item["term"] for item in result["violations"]}
+        self.assertIn("public_sop_depth", terms)
+
+    def test_course_release_module_files_are_course_delivery_depth(self) -> None:
+        files = cli.render_course_grade_module_files(
+            brand="AIvaMax",
+            module_title="Instagram 标杆课",
+            project_name="project",
+            module_id="module",
+            decision_label="需要补齐后执行",
+            platform_name="Instagram",
+        )
+        self.assertIn("05_Case-Lab.md", files)
+        self.assertGreaterEqual(len([line for line in files["01_Lesson-Plan.md"].splitlines() if line.strip()]), 70)
+        self.assertGreaterEqual(len([line for line in files["02_Workbook.md"].splitlines() if line.strip()]), 65)
+        self.assertGreaterEqual(len([line for line in files["03_Instructor-Guide.md"].splitlines() if line.strip()]), 55)
+        self.assertGreaterEqual(len([line for line in files["04_Assessment.md"].splitlines() if line.strip()]), 45)
+        self.assertGreaterEqual(len([line for line in files["05_Case-Lab.md"].splitlines() if line.strip()]), 45)
+        dumped = "\n".join(files.values())
+        for marker in ["课程教案", "学员练习册", "讲师话术", "评分 Rubric", "案例演练", "素材占位"]:
+            self.assertIn(marker, dumped)
+        self.assert_public_clean(dumped)
+
+    def test_strict_quality_audit_requires_release_files_then_passes(self) -> None:
+        root = self.make_test_dir("strict_quality")
+        project = root / "50_Projects" / "sample"
+        course = root / "70_Courses" / "AIvaMax账号安全与获客SOP课" / "module"
+        (project / "public").mkdir(parents=True)
+        course.mkdir(parents=True)
+        sop_text = "\n".join([
+            "# AIvaMax 课程级公开 SOP",
+            "## 逐日讲解",
+            "## 课堂案例",
+            "## 作业模板",
+            "## 复盘评分",
+            "## 图后解释",
+            "## 证据转译区",
+            "账号安全、平台逻辑、内容入口、风险边界、人审复盘。" * 450,
+        ])
+        (project / "public" / "PublicCourseSOP.md").write_text(sop_text, encoding="utf-8")
+        module_files = cli.render_course_grade_module_files(
+            brand="AIvaMax",
+            module_title="Instagram 标杆课",
+            project_name=project.name,
+            module_id=course.name,
+            decision_label="需要补齐后执行",
+            platform_name="Instagram",
+        )
+        for name, content in module_files.items():
+            (course / name).write_text(content, encoding="utf-8")
+        missing_release = cli.scan_course_quality(
+            project,
+            course,
+            forbidden_terms=self.brand_config["forbidden_public_terms"],
+            strict="course-release",
+        )
+        self.assertFalse(missing_release["passed"])
+        self.assertIn("<missing release file>", {item["term"] for item in missing_release["violations"]})
+        release_files = cli.render_course_release_files(
+            brand="AIvaMax",
+            course_name="AIvaMax账号安全与获客SOP课",
+            module_id=course.name,
+            project_path=str(project),
+            course_path=str(course),
+            quality_result={"passed": True, "score": 100, "strict": "basic"},
+        )
+        for name, content in release_files.items():
+            (course.parent / name).write_text(content, encoding="utf-8")
+        missing_export = cli.scan_course_quality(
+            project,
+            course,
+            forbidden_terms=self.brand_config["forbidden_public_terms"],
+            strict="course-release",
+        )
+        self.assertFalse(missing_export["passed"])
+        self.assertIn("<missing public_export>", {item["term"] for item in missing_export["violations"]})
+        export_dir = cli.public_export_dir_for_course(course)
+        export_dir.mkdir(parents=True)
+        export_files = cli.render_course_export_files(
+            brand="AIvaMax",
+            course_name="AIvaMax账号安全与获客SOP课",
+            module_id=course.name,
+            course_files=module_files,
+            release_files=release_files,
+            include_html=True,
+        )
+        for name, content in export_files.items():
+            (export_dir / name).write_text(content, encoding="utf-8")
+        missing_sales = cli.scan_course_quality(
+            project,
+            course,
+            forbidden_terms=self.brand_config["forbidden_public_terms"],
+            strict="course-release",
+        )
+        self.assertFalse(missing_sales["passed"])
+        self.assertIn("<missing sales_pack>", {item["term"] for item in missing_sales["violations"]})
+        sales_dir = export_dir / "sales_pack"
+        sales_dir.mkdir(parents=True)
+        sales_files = cli.render_sales_pack_files(
+            brand="AIvaMax",
+            course_name="AIvaMax Course",
+            module_id=course.name,
+            export_files=export_files,
+            include_html=True,
+        )
+        for name, content in sales_files.items():
+            (sales_dir / name).write_text(content, encoding="utf-8")
+        release_ready = cli.scan_course_quality(
+            project,
+            course,
+            forbidden_terms=self.brand_config["forbidden_public_terms"],
+            strict="course-release",
+        )
+        self.assertTrue(release_ready["passed"], release_ready["violations"])
+
+    def test_course_export_files_include_manuals_and_html(self) -> None:
+        module_files = cli.render_course_grade_module_files(
+            brand="AIvaMax",
+            module_title="Instagram 标杆课",
+            project_name="project",
+            module_id="module",
+            decision_label="需要补齐后执行",
+            platform_name="Instagram",
+        )
+        release_files = cli.render_course_release_files(
+            brand="AIvaMax",
+            course_name="AIvaMax账号安全与获客SOP课",
+            module_id="module",
+            project_path="AIvaMax_Matrix/50_Projects/sample",
+            course_path="AIvaMax_Matrix/70_Courses/AIvaMax账号安全与获客SOP课/module",
+            quality_result={"passed": True, "score": 100, "strict": "course-release"},
+        )
+        exports = cli.render_course_export_files(
+            brand="AIvaMax",
+            course_name="AIvaMax账号安全与获客SOP课",
+            module_id="module",
+            course_files=module_files,
+            release_files=release_files,
+            include_html=True,
+        )
+        self.assertEqual(
+            set(exports),
+            {
+                "AIvaMax_Student_Manual.md",
+                "AIvaMax_Instructor_Manual.md",
+                "AIvaMax_Case_Workbook.md",
+                "AIvaMax_Student_Manual.html",
+                "AIvaMax_Instructor_Manual.html",
+                "AIvaMax_Case_Workbook.html",
+            },
+        )
+        dumped = "\n".join(exports.values())
+        for marker in ["学员手册", "讲师手册", "案例练习册", "<!doctype html>"]:
+            self.assertIn(marker, dumped)
+        self.assert_public_clean(dumped)
+
+    def test_release_demo_pack_is_public_safe(self) -> None:
+        files = cli.render_release_demo_files(
+            brand="AIvaMax",
+            course_name="AIvaMax账号安全与获客SOP课",
+            module_id="module",
+            include_html=True,
+        )
+        self.assertIn("AIvaMax_Course_Demo.md", files)
+        self.assertIn("AIvaMax_Course_Demo.html", files)
+        dumped = "\n".join(files.values())
+        self.assertIn("课程简介", dumped)
+        self.assertIn("风险边界声明", dumped)
+        self.assert_public_clean(dumped)
+
+    def test_sales_pack_files_are_private_domain_ready_and_clean(self) -> None:
+        files = cli.render_sales_pack_files(
+            brand="AIvaMax",
+            course_name="AIvaMax Course",
+            module_id="module",
+            export_files={},
+            include_html=True,
+        )
+        self.assertEqual(
+            set(files),
+            {
+                "01_Course-Offer.md",
+                "01_Course-Offer.html",
+                "02_Private-Chat-Script.md",
+                "02_Private-Chat-Script.html",
+                "03_Community-Post.md",
+                "03_Community-Post.html",
+                "04_Trial-Lesson.md",
+                "04_Trial-Lesson.html",
+                "05_FAQ-And-Boundaries.md",
+                "05_FAQ-And-Boundaries.html",
+                "06_Delivery-Checklist.md",
+                "06_Delivery-Checklist.html",
+            },
+        )
+        dumped = "\n".join(files.values())
+        for marker in [
+            "\u8bfe\u7a0b\u5b9a\u4f4d",
+            "\u9002\u5408\u4eba\u7fa4",
+            "\u5b66\u4e60\u6210\u679c",
+            "\u4ea4\u4ed8\u7269",
+            "\u8bd5\u770b\u5185\u5bb9",
+            "FAQ",
+            "\u98ce\u9669\u8fb9\u754c",
+            "<!doctype html>",
+        ]:
+            self.assertIn(marker, dumped)
+        self.assert_public_clean(dumped)
+
+    def test_preview_pack_contains_trial_case_homework_and_boundaries(self) -> None:
+        files = cli.render_preview_pack_files(
+            brand="AIvaMax",
+            course_name="AIvaMax Course",
+            module_id="module",
+            include_html=True,
+        )
+        self.assertEqual(set(files), {"AIvaMax_Preview_Pack.md", "AIvaMax_Preview_Pack.html"})
+        dumped = "\n".join(files.values())
+        for marker in [
+            "\u8bd5\u770b\u5305",
+            "\u4e00\u4e2a\u6a21\u62df\u6848\u4f8b",
+            "\u5b66\u5458\u4f5c\u4e1a\u6837\u4f8b",
+            "\u98ce\u9669\u8fb9\u754c\u58f0\u660e",
+            "<!doctype html>",
+        ]:
+            self.assertIn(marker, dumped)
+        self.assert_public_clean(dumped)
+
+    def test_case_plan_and_case_audit_are_brand_safe(self) -> None:
+        plan = cli.render_case_plan_markdown(brand="AIvaMax", platform=cli.platform_profile("instagram"))
+        self.assertIn("案例采集清单", plan)
+        self.assertIn("素材占位", plan)
+        self.assert_public_clean(plan)
+        root = self.make_test_dir("case_audit")
+        good = root / "Instagram-Case-Plan.md"
+        bad = root / "Bad-Case.md"
+        good.write_text(plan, encoding="utf-8")
+        bad.write_text("source_url: https://blog.jarveepro.com\n未脱敏\n缺素材\n", encoding="utf-8")
+        result = cli.scan_case_plan(root, forbidden_terms=self.brand_config["forbidden_public_terms"])
+        self.assertFalse(result["passed"])
+        terms = {item["term"] for item in result["violations"]}
+        self.assertIn("source_url:", terms)
+        self.assertIn("未脱敏", terms)
+        self.assertIn("缺素材", terms)
+
+    def test_dashboard_renderer_links_course_release_files(self) -> None:
+        dashboard = cli.render_course_dashboard(
+            brand="AIvaMax",
+            course_name="AIvaMax账号安全与获客SOP课",
+            latest_project="data/obsidian/AIvaMax_Matrix/50_Projects/sample",
+            latest_course="data/obsidian/AIvaMax_Matrix/70_Courses/course/module",
+            quality_result={"passed": True, "score": 100, "strict": "course-release"},
+        )
+        self.assertIn("课程交付看板", dashboard)
+        self.assertIn("_Course-Index", dashboard)
+        self.assertIn("_Release-Checklist", dashboard)
+        self.assert_public_clean(dashboard)
+
+    def test_platform_all_and_media_plan_cover_five_platforms(self) -> None:
+        keys = cli.platform_keys_for_request("all")
+        self.assertEqual(set(keys), {"instagram", "facebook", "tiktok", "linkedin", "x_twitter"})
+        plan = cli.render_media_plan_markdown(brand="AIvaMax", platform=cli.platform_profile("instagram"))
+        self.assertIn("课程素材补拍计划", plan)
+        self.assertIn("必补截图", plan)
+        self.assertIn("审核规则", plan)
+        self.assert_public_clean(plan)
+
+    def test_dual_sop_pack_separates_public_and_internal_layers(self) -> None:
+        brief = {
+            "task_id": "ig-comment",
+            "platforms": ["instagram"],
+            "product_or_offer": "AI 工具课",
+            "account_count": 30,
+            "account_stage": "new",
+            "duration_days": 14,
+            "risk_tolerance": "conservative",
+            "resources": {"keywords": ["冷启动"]},
+            "forbidden_actions": ["mass_dm", "high_frequency_comment", "spam_template"],
+            "allowed_actions": ["warmup", "comment", "monitor"],
+        }
+        evidence = {
+            "items": [
+                {
+                    "basis_id": "PUB-1",
+                    "claim_type": "knowledge_fact",
+                    "confidence": "high",
+                    "claim": "Accounts should warm up before outreach and proxy safety matters.",
+                }
+            ]
+        }
+        pack = cli.build_dual_sop_pack(brief, evidence, self.brand_config, lang="zh-CN", visuals="mermaid")
+        self.assertEqual(
+            set(pack),
+            {"PublicCourseSOP.md", "InternalOpsSOP.md", "BoundaryBrief.md", "ExecutionLog.md"},
+        )
+        self.assertIn("visibility: public_course", pack["PublicCourseSOP.md"])
+        self.assertIn("visibility: internal_only", pack["InternalOpsSOP.md"])
+        self.assertIn("visibility: internal_only", pack["ExecutionLog.md"])
+        self.assertIn("公开课程可讲内容", pack["PublicCourseSOP.md"])
+        self.assertIn("内部执行版 SOP", pack["InternalOpsSOP.md"])
+        self.assertEqual(cli.scan_public_training_violations(pack["PublicCourseSOP.md"]), [])
+        self.assert_public_clean("\n".join(pack.values()))
+
+    def test_dual_project_package_adds_public_internal_boundary_files(self) -> None:
+        brief = {
+            "task_id": "ig-comment",
+            "platforms": ["instagram"],
+            "product_or_offer": "AI 工具课",
+            "account_count": 30,
+            "account_stage": "new",
+            "duration_days": 14,
+            "risk_tolerance": "conservative",
+            "resources": {"keywords": []},
+        }
+        evidence = {"evidence_pack_id": "EVPACK-IG", "items": []}
+        risk = "decision: revise\n"
+        dual_pack = cli.build_dual_sop_pack(brief, evidence, self.brand_config, lang="zh-CN")
+        files = cli.build_project_package_files(
+            brief,
+            evidence,
+            dual_pack["PublicCourseSOP.md"],
+            risk,
+            self.brand_config,
+            run_id="RUN-TEST",
+            lang="zh-CN",
+            depth="deep",
+            sop_layer="dual",
+            dual_sop_pack=dual_pack,
+            project_id="2026-05-29_ig-comment",
+        )
+        for name in [
+            "public/PublicCourseSOP.md",
+            "public/BoundaryBrief.md",
+            "public/ExecutionChecklist.md",
+            "public/ReviewRubric.md",
+            "internal/InternalOpsSOP.md",
+            "internal/ExecutionLog.md",
+            "internal/ExperimentNotes.md",
+            "manifest.json",
+        ]:
+            self.assertIn(name, files)
+        self.assertNotIn("PublicCourseSOP.md", {name for name in files if "/" not in name and name != "manifest.json"})
+        self.assertIn("visibility: internal_only", files["internal/InternalOpsSOP.md"])
+        manifest = json.loads(files["manifest.json"])
+        manifest_paths = {item["path"] for item in manifest["artifacts"]}
+        self.assertIn("public/PublicCourseSOP.md", manifest_paths)
+        self.assertIn("internal/InternalOpsSOP.md", manifest_paths)
+        self.assert_public_clean("\n".join(files.values()))
+
+    def test_course_sop_prefers_public_folder_and_keeps_internal_out(self) -> None:
+        project = self.make_test_dir("course_public")
+        (project / "public").mkdir()
+        (project / "00_Brief.md").write_text("# Brief", encoding="utf-8")
+        (project / "01_Evidence-Pack.md").write_text("# Evidence", encoding="utf-8")
+        (project / "02_Risk-Review.md").write_text("decision: revise\n", encoding="utf-8")
+        (project / "03_14-Day-SOP.md").write_text("# InternalOpsSOP should not be read\n", encoding="utf-8")
+        (project / "public" / "PublicCourseSOP.md").write_text(
+            "# PUBLIC ONLY SOP\n\n## 5. 14-Day Execution Rhythm\nUse public course source.\n",
+            encoding="utf-8",
+        )
+        self.assertIn("PUBLIC ONLY SOP", cli.read_course_sop(project))
+        files = cli.build_course_module_files(project, "module-1", self.brand_config, lang="en")
+        dumped = "\n".join(files.values())
+        self.assertIn("PUBLIC ONLY SOP", dumped)
+        self.assertNotIn("InternalOpsSOP should not be read", dumped)
+
+    def test_artifact_audit_checks_course_markers_and_manifest_paths(self) -> None:
+        root = self.make_test_dir("artifact_audit")
+        course_dir = root / "70_Courses" / "Course" / "Module"
+        course_dir.mkdir(parents=True)
+        (course_dir / "00_Module-Overview.md").write_text("visibility: internal_only\n", encoding="utf-8")
+        project_dir = root / "50_Projects" / "sample"
+        project_dir.mkdir(parents=True)
+        (project_dir / "manifest.json").write_text(
+            json.dumps({
+                "artifacts": [
+                    {
+                        "path": "internal/Missing.md",
+                        "artifact_type": "InternalOpsSOP",
+                        "visibility": "internal_only",
+                        "allowed_exports": ["project_internal"],
+                        "blocked_exports": ["course", "public_export"],
+                    }
+                ]
+            }),
+            encoding="utf-8",
+        )
+        violations = cli.scan_artifact_violations(root)
+        terms = {item["term"] for item in violations}
+        self.assertIn("visibility: internal_only", terms)
+        self.assertIn("<missing artifact>", terms)
+
+    def make_course_factory_fixture(self) -> tuple[Path, Path]:
+        root = self.make_test_dir("course_factory")
+        data_dir = root / "data"
+        course_dir = data_dir / "obsidian" / "AIvaMax_Matrix" / "70_Courses" / "AIvaMax Course Factory"
+        course_dir.mkdir(parents=True)
+        module_sections = []
+        for idx in range(1, 13):
+            number = f"{idx:02d}"
+            module_dir = course_dir / f"{number}-module-{number}"
+            module_dir.mkdir()
+            for name in cli.COURSE_FACTORY_REQUIRED_FILES:
+                (module_dir / name).write_text("# draft\n", encoding="utf-8")
+            module_sections.append(
+                f"""## Module {number} - Module {number} Title
+
+### Teaching Goal
+
+Teach the module {number} decision model, worksheet, review gate, and final output.
+
+### Lesson Flow
+
+| Segment | Teaching point | Instructor action |
+| --- | --- | --- |
+| 0-10 min | Explain the decision | Show a project brief |
+| 10-30 min | Complete the worksheet | Review assumptions |
+| 30-45 min | Decide next action | Apply the review gate |
+
+### Workbook Task
+
+Students complete the module {number} worksheet for one realistic project.
+
+### Assessment
+
+The answer must explain the decision, evidence, boundary, and next action.
+
+### Production Output
+
+Module {number} production output
+"""
+            )
+        (course_dir / "_V2-Module-Teaching-Pack.md").write_text("\n".join(module_sections), encoding="utf-8")
+        return data_dir, course_dir
+
+    def test_course_factory_build_and_audit_generate_manifest(self) -> None:
+        data_dir, course_dir = self.make_course_factory_fixture()
+        build_code = cli.main([
+            "--data-dir",
+            str(data_dir),
+            "course-factory-build",
+            "--course-dir",
+            str(course_dir),
+            "--force",
+            "--json",
+        ])
+        self.assertEqual(build_code, 0)
+        manifest = course_dir / "course_factory_manifest.json"
+        self.assertTrue(manifest.exists())
+        manifest_data = json.loads(manifest.read_text(encoding="utf-8"))
+        self.assertEqual(manifest_data["module_count"], 12)
+        lesson = course_dir / "08-module-08" / "01_Lesson-Plan.md"
+        text = lesson.read_text(encoding="utf-8")
+        self.assertIn("risk_level: high", text)
+        self.assertIn("Source Trace", text)
+        audit = cli.audit_course_factory(course_dir, data_dir, self.brand_config)
+        self.assertTrue(audit["passed"], audit)
+        self.assert_public_clean("\n".join(path.read_text(encoding="utf-8") for path in course_dir.rglob("*.md")))
+
+    def test_client_pack_and_sales_preview_generators_are_brand_safe(self) -> None:
+        data_dir, course_dir = self.make_course_factory_fixture()
+        self.assertEqual(cli.main([
+            "--data-dir",
+            str(data_dir),
+            "course-factory-build",
+            "--course-dir",
+            str(course_dir),
+            "--force",
+        ]), 0)
+        client_out = data_dir / "obsidian" / "AIvaMax_Matrix" / "50_Projects" / "Samples" / "test-client"
+        client_code = cli.main([
+            "--data-dir",
+            str(data_dir),
+            "client-pack-generate",
+            "--client-code",
+            "TEST-CLIENT",
+            "--industry",
+            "AI SaaS",
+            "--product",
+            "Workflow automation tool",
+            "--market",
+            "United States",
+            "--goal",
+            "lead_generation",
+            "--out",
+            str(client_out),
+            "--force",
+            "--json",
+        ])
+        self.assertEqual(client_code, 0)
+        self.assertTrue((client_out / "00_Client-Brief.md").exists())
+        self.assertTrue((client_out / "manifest.json").exists())
+        preview_out = data_dir / "obsidian" / "AIvaMax_Matrix" / "public_export" / "preview"
+        preview_code = cli.main([
+            "--data-dir",
+            str(data_dir),
+            "sales-preview-generate",
+            "--course-dir",
+            str(course_dir),
+            "--out",
+            str(preview_out),
+            "--format",
+            "html",
+            "--force",
+            "--json",
+        ])
+        self.assertEqual(preview_code, 0)
+        self.assertTrue((preview_out / "01_Course-Offer.md").exists())
+        self.assertTrue((preview_out / "01_Course-Offer.html").exists())
+        full_export = data_dir / "obsidian" / "AIvaMax_Matrix" / "public_export" / "full"
+        export_code = cli.main([
+            "--data-dir",
+            str(data_dir),
+            "course-factory-export-all",
+            "--course-dir",
+            str(course_dir),
+            "--out",
+            str(full_export),
+            "--format",
+            "html",
+            "--force",
+            "--json",
+        ])
+        self.assertEqual(export_code, 0)
+        self.assertTrue((full_export / "01_Student-Manual.md").exists())
+        self.assertTrue((full_export / "01_Student-Manual.html").exists())
+        self.assertNotIn("Source Trace", (full_export / "01_Student-Manual.md").read_text(encoding="utf-8"))
+        dumped = "\n".join(path.read_text(encoding="utf-8") for path in list(client_out.rglob("*")) + list(preview_out.rglob("*")) + list(full_export.rglob("*")) if path.is_file())
+        self.assert_public_clean(dumped)
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -1,0 +1,14 @@
+{
+  "audit_id": "RISK-AUDIT-IG-14D",
+  "public_brand": "AIvaMax",
+  "decision": "revise",
+  "blockers": [
+    "Proxy inventory is unknown.",
+    "Account maturity is new or unknown."
+  ],
+  "required_changes": [
+    "Record proxy count and one-account-one-proxy binding status.",
+    "Keep the SOP in conservative warm-up and light validation mode."
+  ],
+  "human_review_required": true
+}

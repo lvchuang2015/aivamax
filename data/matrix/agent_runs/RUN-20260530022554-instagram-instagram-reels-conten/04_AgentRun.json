@@ -1,0 +1,86 @@
+{
+  "type": "aivamax_matrix_agent_run",
+  "run_id": "RUN-20260530022554-instagram-instagram-reels-conten",
+  "public_brand": "AIvaMax",
+  "created_at": "2026-05-30T02:25:54+00:00",
+  "request": {
+    "goal": "Instagram Reels content matrix for AI tools course lead generation",
+    "platforms": [
+      "instagram"
+    ],
+    "offer": "AI tools course",
+    "duration_days": 14
+  },
+  "task_id": "instagram-instagram-reels-conten",
+  "evidence_pack_id": "EVPACK-INSTAGRAM-INSTAGRAM-REELS-CONTEN",
+  "risk_decision": "revise",
+  "agent_flow": [
+    {
+      "order": 1,
+      "agent": "Intake Agent",
+      "tool": "brief",
+      "responsibility": "Convert the user request into a structured TaskBrief.",
+      "status": "completed"
+    },
+    {
+      "order": 2,
+      "agent": "Knowledge Agent",
+      "tool": "evidence",
+      "responsibility": "Retrieve private source context and produce a public EvidencePack.",
+      "status": "completed"
+    },
+    {
+      "order": 3,
+      "agent": "SOP Agent",
+      "tool": "sop",
+      "responsibility": "Compile a source-backed AIvaMax SOP draft.",
+      "status": "completed"
+    },
+    {
+      "order": 4,
+      "agent": "Risk Agent",
+      "tool": "risk-audit",
+      "responsibility": "Audit account, action, and execution risk before use.",
+      "status": "completed"
+    },
+    {
+      "order": 5,
+      "agent": "Memory Agent",
+      "tool": "project",
+      "responsibility": "Save the project package into AIvaMax Obsidian Matrix.",
+      "status": "completed"
+    },
+    {
+      "order": 6,
+      "agent": "Course Agent",
+      "tool": "course",
+      "responsibility": "Turn the public project package into a course module.",
+      "status": "completed"
+    },
+    {
+      "order": 7,
+      "agent": "Brand Auditor",
+      "tool": "brand-audit",
+      "responsibility": "Check public outputs for private source leakage.",
+      "status": "completed"
+    }
+  ],
+  "outputs": {
+    "run_dir": "data/matrix/agent_runs/RUN-20260530022554-instagram-instagram-reels-conten",
+    "task_brief": "data/matrix/agent_runs/RUN-20260530022554-instagram-instagram-reels-conten/00_TaskBrief.json",
+    "evidence_pack": "data/matrix/agent_runs/RUN-20260530022554-instagram-instagram-reels-conten/01_EvidencePack.json",
+    "sop": "data/matrix/agent_runs/RUN-20260530022554-instagram-instagram-reels-conten/02_SOP.md",
+    "risk_audit": "data/matrix/agent_runs/RUN-20260530022554-instagram-instagram-reels-conten/03_RiskAudit.md",
+    "project_dir": "data/obsidian/AIvaMax_Matrix/50_Projects/2026-05-29_instagram-instagram-reels-conten",
+    "course_dir": "data/obsidian/AIvaMax_Matrix/70_Courses/AIvaMax智能营销矩阵入门课/instagram-instagram-reels-conten"
+  },
+  "brand_audit": {
+    "passed": true,
+    "violation_count": 0,
+    "checked_paths": [
+      "data/matrix/agent_runs/RUN-20260530022554-instagram-instagram-reels-conten",
+      "data/obsidian/AIvaMax_Matrix/50_Projects/2026-05-29_instagram-instagram-reels-conten",
+      "data/obsidian/AIvaMax_Matrix/70_Courses/AIvaMax智能营销矩阵入门课/instagram-instagram-reels-conten"
+    ]
+  }
+}

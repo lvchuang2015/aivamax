@@ -1,0 +1,17 @@
+{
+  "name": "aivamax",
+  "transport": "stdio",
+  "command": "powershell",
+  "args": [
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "${AIVAMAX_HOME}\\aivamax.ps1",
+    "mcp-server",
+    "--stdio"
+  ],
+  "env": {
+    "AIVAMAX_ROLE": "owner_admin"
+  }
+}

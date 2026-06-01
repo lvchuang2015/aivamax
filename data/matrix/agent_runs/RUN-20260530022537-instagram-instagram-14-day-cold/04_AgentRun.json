@@ -1,0 +1,86 @@
+{
+  "type": "aivamax_matrix_agent_run",
+  "run_id": "RUN-20260530022537-instagram-instagram-14-day-cold",
+  "public_brand": "AIvaMax",
+  "created_at": "2026-05-30T02:25:37+00:00",
+  "request": {
+    "goal": "Instagram 14-day cold start and light comment lead generation",
+    "platforms": [
+      "instagram"
+    ],
+    "offer": "AI tools",
+    "duration_days": 14
+  },
+  "task_id": "instagram-instagram-14-day-cold",
+  "evidence_pack_id": "EVPACK-INSTAGRAM-INSTAGRAM-14-DAY-COLD",
+  "risk_decision": "revise",
+  "agent_flow": [
+    {
+      "order": 1,
+      "agent": "Intake Agent",
+      "tool": "brief",
+      "responsibility": "Convert the user request into a structured TaskBrief.",
+      "status": "completed"
+    },
+    {
+      "order": 2,
+      "agent": "Knowledge Agent",
+      "tool": "evidence",
+      "responsibility": "Retrieve private source context and produce a public EvidencePack.",
+      "status": "completed"
+    },
+    {
+      "order": 3,
+      "agent": "SOP Agent",
+      "tool": "sop",
+      "responsibility": "Compile a source-backed AIvaMax SOP draft.",
+      "status": "completed"
+    },
+    {
+      "order": 4,
+      "agent": "Risk Agent",
+      "tool": "risk-audit",
+      "responsibility": "Audit account, action, and execution risk before use.",
+      "status": "completed"
+    },
+    {
+      "order": 5,
+      "agent": "Memory Agent",
+      "tool": "project",
+      "responsibility": "Save the project package into AIvaMax Obsidian Matrix.",
+      "status": "completed"
+    },
+    {
+      "order": 6,
+      "agent": "Course Agent",
+      "tool": "course",
+      "responsibility": "Turn the public project package into a course module.",
+      "status": "completed"
+    },
+    {
+      "order": 7,
+      "agent": "Brand Auditor",
+      "tool": "brand-audit",
+      "responsibility": "Check public outputs for private source leakage.",
+      "status": "completed"
+    }
+  ],
+  "outputs": {
+    "run_dir": "data/matrix/agent_runs/RUN-20260530022537-instagram-instagram-14-day-cold",
+    "task_brief": "data/matrix/agent_runs/RUN-20260530022537-instagram-instagram-14-day-cold/00_TaskBrief.json",
+    "evidence_pack": "data/matrix/agent_runs/RUN-20260530022537-instagram-instagram-14-day-cold/01_EvidencePack.json",
+    "sop": "data/matrix/agent_runs/RUN-20260530022537-instagram-instagram-14-day-cold/02_SOP.md",
+    "risk_audit": "data/matrix/agent_runs/RUN-20260530022537-instagram-instagram-14-day-cold/03_RiskAudit.md",
+    "project_dir": "data/obsidian/AIvaMax_Matrix/50_Projects/2026-05-29_instagram-instagram-14-day-cold",
+    "course_dir": "data/obsidian/AIvaMax_Matrix/70_Courses/AIvaMax账号安全与获客SOP课/instagram-instagram-14-day-cold"
+  },
+  "brand_audit": {
+    "passed": true,
+    "violation_count": 0,
+    "checked_paths": [
+      "data/matrix/agent_runs/RUN-20260530022537-instagram-instagram-14-day-cold",
+      "data/obsidian/AIvaMax_Matrix/50_Projects/2026-05-29_instagram-instagram-14-day-cold",
+      "data/obsidian/AIvaMax_Matrix/70_Courses/AIvaMax账号安全与获客SOP课/instagram-instagram-14-day-cold"
+    ]
+  }
+}

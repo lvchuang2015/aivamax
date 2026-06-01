@@ -1,0 +1,100 @@
+{
+  "schema_version": "aivamax.artifacts.v1",
+  "project_id": "2026-05-29_instagram-instagram-新账号-14-天冷启动和-06",
+  "run_id": "RUN-20260530062750-instagram-instagram-新账号-14-天冷启动和",
+  "artifact_policy": {
+    "public_course": "May be used for course modules and public exports after audits.",
+    "internal_only": "May be used only for team execution, experiments, incident logs, and private review.",
+    "instructor_private": "Reserved for future instructor-only notes."
+  },
+  "artifacts": [
+    {
+      "path": "public/PublicCourseSOP.md",
+      "artifact_type": "PublicCourseSOP",
+      "visibility": "public_course",
+      "allowed_exports": [
+        "course",
+        "public_export",
+        "project_public"
+      ],
+      "blocked_exports": [
+        "project_internal"
+      ]
+    },
+    {
+      "path": "public/BoundaryBrief.md",
+      "artifact_type": "BoundaryBrief",
+      "visibility": "public_course",
+      "allowed_exports": [
+        "course",
+        "public_export",
+        "project_public"
+      ],
+      "blocked_exports": [
+        "project_internal"
+      ]
+    },
+    {
+      "path": "public/ExecutionChecklist.md",
+      "artifact_type": "ExecutionChecklist",
+      "visibility": "public_course",
+      "allowed_exports": [
+        "course",
+        "public_export",
+        "project_public"
+      ],
+      "blocked_exports": [
+        "project_internal"
+      ]
+    },
+    {
+      "path": "public/ReviewRubric.md",
+      "artifact_type": "ReviewRubric",
+      "visibility": "public_course",
+      "allowed_exports": [
+        "course",
+        "public_export",
+        "project_public"
+      ],
+      "blocked_exports": [
+        "project_internal"
+      ]
+    },
+    {
+      "path": "internal/InternalOpsSOP.md",
+      "artifact_type": "InternalOpsSOP",
+      "visibility": "internal_only",
+      "allowed_exports": [
+        "project_internal"
+      ],
+      "blocked_exports": [
+        "course",
+        "public_export"
+      ]
+    },
+    {
+      "path": "internal/ExecutionLog.md",
+      "artifact_type": "ExecutionLog",
+      "visibility": "internal_only",
+      "allowed_exports": [
+        "project_internal"
+      ],
+      "blocked_exports": [
+        "course",
+        "public_export"
+      ]
+    },
+    {
+      "path": "internal/ExperimentNotes.md",
+      "artifact_type": "ExperimentNotes",
+      "visibility": "internal_only",
+      "allowed_exports": [
+        "project_internal"
+      ],
+      "blocked_exports": [
+        "course",
+        "public_export"
+      ]
+    }
+  ]
+}

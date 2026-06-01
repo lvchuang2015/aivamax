@@ -1,0 +1,21 @@
+{
+  "generated_at": "2026-06-01T13:23:15+00:00",
+  "source_adapter": "jarveepro",
+  "source_root": "E:\\Obsidian\\总库20260225\\总库20260225\\01.项目\\GEO\\jarveepro-agent\\data\\obsidian\\JarveePro\\Vendor_Source_Docs",
+  "source_doc_count": 1,
+  "chunk_count": 85,
+  "category_counts": {
+    "vendor-template": 85
+  },
+  "chunk_type_counts": {
+    "calendar": 1,
+    "execution_rule": 19,
+    "framework": 21,
+    "message_template": 2,
+    "prompt": 3,
+    "table": 39
+  },
+  "source_docs": [
+    "JarveePro_Social_Media_Automation_Master_Template_CN.md"
+  ]
+}
