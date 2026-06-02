@@ -1557,7 +1557,30 @@ Module {number} production output
         self.assertTrue((full_export / "01_Student-Manual.md").exists())
         self.assertTrue((full_export / "01_Student-Manual.html").exists())
         self.assertNotIn("Source Trace", (full_export / "01_Student-Manual.md").read_text(encoding="utf-8"))
-        dumped = "\n".join(path.read_text(encoding="utf-8") for path in list(client_out.rglob("*")) + list(preview_out.rglob("*")) + list(full_export.rglob("*")) if path.is_file())
+        run_code = cli.main([
+            "--data-dir",
+            str(data_dir),
+            "course-factory-run-all",
+            "--course-dir",
+            str(course_dir),
+            "--report-name",
+            "test-production-run",
+            "--format",
+            "html",
+            "--force",
+            "--json",
+        ])
+        self.assertEqual(run_code, 0)
+        report_json = data_dir / "obsidian" / "AIvaMax_Matrix" / "00_Dashboards" / "test-production-run.json"
+        report_md = data_dir / "obsidian" / "AIvaMax_Matrix" / "00_Dashboards" / "test-production-run.md"
+        self.assertTrue(report_json.exists())
+        self.assertTrue(report_md.exists())
+        report = json.loads(report_json.read_text(encoding="utf-8"))
+        self.assertTrue(report["passed"], report)
+        self.assertEqual(len(report["client_packs"]), 3)
+        self.assertTrue((data_dir / report["full_export"]["out_dir"] / "01_Student-Manual.html").exists())
+        self.assertTrue((data_dir / report["sales_preview"]["out_dir"] / "01_Course-Offer.html").exists())
+        dumped = "\n".join(path.read_text(encoding="utf-8") for path in list(client_out.rglob("*")) + list(preview_out.rglob("*")) + list(full_export.rglob("*")) + list(report_md.parent.rglob("test-production-run.*")) if path.is_file())
         self.assert_public_clean(dumped)
 
 

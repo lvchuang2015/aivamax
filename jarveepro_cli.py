@@ -1295,18 +1295,19 @@ def write_course_factory_manifest(course_dir: Path, data_dir: Path, modules: lis
     return path
 
 
-def run_course_factory_build(args: argparse.Namespace) -> int:
-    data_dir = Path(args.data_dir)
-    brand_config = load_brand_config(Path(args.brand_config))
-    course_dir = resolve_course_factory_dir(data_dir, args.course_dir, args.course)
-    teaching_pack = resolve_existing_cli_path(args.teaching_pack) if args.teaching_pack else course_dir / "_V2-Module-Teaching-Pack.md"
+def build_course_factory_files(
+    data_dir: Path,
+    course_dir: Path,
+    teaching_pack: Path,
+    brand_config: dict,
+    force: bool = False,
+    dry_run: bool = False,
+) -> dict:
     if not teaching_pack.exists():
-        print(f"Teaching pack not found: {teaching_pack}", file=sys.stderr)
-        return 1
+        raise FileNotFoundError(f"Teaching pack not found: {teaching_pack}")
     modules = parse_course_teaching_pack(teaching_pack.read_text(encoding="utf-8", errors="ignore"))
     if len(modules) < 12:
-        print(f"Teaching pack has only {len(modules)} module sections; expected 12.", file=sys.stderr)
-        return 1
+        raise ValueError(f"Teaching pack has only {len(modules)} module sections; expected 12.")
     module_dirs = {path.name[:2]: path for path in course_module_dirs(course_dir)}
     written: list[Path] = []
     trace_records: list[dict] = []
@@ -1314,14 +1315,14 @@ def run_course_factory_build(args: argparse.Namespace) -> int:
         module_dir = module_dirs.get(module["number"])
         if not module_dir:
             module_dir = course_dir / f"{module['number']}-{slugify(module['title'], 'module')}"
-            if not args.dry_run:
+            if not dry_run:
                 module_dir.mkdir(parents=True, exist_ok=True)
         files = render_course_factory_module_files(module_dir, module, brand_config)
         for name, content in files.items():
             path = module_dir / name
-            if path.exists() and not args.force:
+            if path.exists() and not force:
                 continue
-            if not args.dry_run:
+            if not dry_run:
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(content, encoding="utf-8")
             written.append(path)
@@ -1338,23 +1339,42 @@ def run_course_factory_build(args: argparse.Namespace) -> int:
                 "risk_level": "high" if module["number"] in {"08", "11"} else "medium",
             })
     manifest_path = course_dir / "course_factory_manifest.json"
-    if not args.dry_run:
+    if not dry_run:
         manifest_path = write_course_factory_manifest(course_dir, data_dir, modules, written, brand_config)
         append_course_factory_derivations(data_dir, trace_records)
-    result = {
+    return {
         "course_dir": safe_rel(course_dir, data_dir),
         "teaching_pack": safe_rel(teaching_pack, data_dir),
         "module_sections": len(modules),
         "written_count": len(written),
         "manifest_path": safe_rel(manifest_path, data_dir),
-        "dry_run": args.dry_run,
+        "dry_run": dry_run,
     }
+
+
+def run_course_factory_build(args: argparse.Namespace) -> int:
+    data_dir = Path(args.data_dir)
+    brand_config = load_brand_config(Path(args.brand_config))
+    course_dir = resolve_course_factory_dir(data_dir, args.course_dir, args.course)
+    teaching_pack = resolve_existing_cli_path(args.teaching_pack) if args.teaching_pack else course_dir / "_V2-Module-Teaching-Pack.md"
+    try:
+        result = build_course_factory_files(
+            data_dir=data_dir,
+            course_dir=course_dir,
+            teaching_pack=teaching_pack,
+            brand_config=brand_config,
+            force=args.force,
+            dry_run=args.dry_run,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
     else:
         print(f"Course factory build: {course_dir}")
-        print(f"Written files: {len(written)}")
-        print(f"Manifest: {manifest_path}")
+        print(f"Written files: {result['written_count']}")
+        print(f"Manifest: {result['manifest_path']}")
     return 0
 
 
@@ -2126,6 +2146,309 @@ def run_course_factory_export_all(args: argparse.Namespace) -> int:
         print(f"Files: {len(files)}")
         print(f"Brand audit: {'passed' if not violations else 'failed'}")
     return 0 if not violations else 1
+
+
+def default_course_factory_client_scenarios() -> list[dict]:
+    return [
+        {
+            "client_code": "AI-SaaS-Pilot",
+            "industry": "AI SaaS",
+            "product": "AI workflow automation service",
+            "market": "United States B2B",
+            "goal": "lead_generation",
+            "days": 30,
+        },
+        {
+            "client_code": "Local-Service-Pilot",
+            "industry": "local service",
+            "product": "local service booking offer",
+            "market": "United States local market",
+            "goal": "appointment_generation",
+            "days": 30,
+        },
+        {
+            "client_code": "Education-Course-Pilot",
+            "industry": "education course",
+            "product": "online course offer",
+            "market": "global Chinese-speaking audience",
+            "goal": "course_sales",
+            "days": 30,
+        },
+    ]
+
+
+def normalize_course_factory_client_scenario(raw: dict, index: int) -> dict:
+    scenario = {
+        "client_code": raw.get("client_code") or raw.get("code") or f"Client-Pack-{index:02d}",
+        "industry": raw.get("industry") or "AI SaaS",
+        "product": raw.get("product") or "growth offer",
+        "market": raw.get("market") or "United States",
+        "goal": raw.get("goal") or "lead_generation",
+        "days": int(raw.get("days") or 30),
+    }
+    if scenario["days"] < 1:
+        raise ValueError(f"Client scenario {index} has invalid days: {scenario['days']}")
+    return scenario
+
+
+def load_course_factory_client_scenarios(path: str | None) -> list[dict]:
+    if not path:
+        return default_course_factory_client_scenarios()
+    source = resolve_existing_cli_path(path)
+    data = json.loads(source.read_text(encoding="utf-8"))
+    if isinstance(data, dict):
+        scenarios = data.get("scenarios") or data.get("client_packs") or data.get("clients")
+    else:
+        scenarios = data
+    if not isinstance(scenarios, list):
+        raise ValueError("Client scenarios must be a list or an object with scenarios/client_packs/clients.")
+    normalized: list[dict] = []
+    for index, item in enumerate(scenarios, 1):
+        if not isinstance(item, dict):
+            raise ValueError(f"Client scenario {index} must be an object.")
+        normalized.append(normalize_course_factory_client_scenario(item, index))
+    return normalized
+
+
+def render_course_factory_run_report(report: dict) -> str:
+    client_rows = "\n".join(
+        f"| {item['pack_id']} | {item['industry']} | {item['goal']} | {item['out_dir']} | {'pass' if item['brand_audit_passed'] else 'fail'} |"
+        for item in report.get("client_packs", [])
+    ) or "| - | - | - | - | - |"
+    stage_rows = "\n".join(
+        f"| {name} | {'pass' if value else 'fail'} |"
+        for name, value in [
+            ("course_factory_audit", report.get("course_factory_audit", {}).get("passed", False)),
+            ("full_export_brand_audit", report.get("full_export", {}).get("brand_audit_passed", False)),
+            ("sales_preview_brand_audit", report.get("sales_preview", {}).get("brand_audit_passed", False)),
+            ("client_pack_brand_audit", all(item.get("brand_audit_passed") for item in report.get("client_packs", []))),
+            ("matrix_artifact_audit", report.get("artifact_audit", {}).get("passed", False)),
+            ("matrix_brand_audit", report.get("brand_audit", {}).get("passed", False)),
+        ]
+    )
+    return f"""---
+type: course_factory_production_run
+visibility: internal
+status: draft
+generated_at: {report['generated_at']}
+---
+
+# Course Factory Production Run
+
+## Summary
+
+| Field | Value |
+| --- | --- |
+| Course | {report['course_name']} |
+| Course directory | {report['course_dir']} |
+| Overall passed | {report['passed']} |
+| Dry run | {report['dry_run']} |
+
+## Stage Gates
+
+| Gate | Result |
+| --- | --- |
+{stage_rows}
+
+## Outputs
+
+| Output | Path |
+| --- | --- |
+| Full course export | {report.get('full_export', {}).get('out_dir', '')} |
+| Sales preview | {report.get('sales_preview', {}).get('out_dir', '')} |
+| Production report JSON | {report.get('report_json', '')} |
+
+## Client Packs
+
+| Pack | Industry | Goal | Path | Brand |
+| --- | --- | --- | --- | --- |
+{client_rows}
+
+## Next Operating Decision
+
+- If all gates pass, this course factory is ready for repeatable public export and sample client-pack production.
+- If any gate fails, fix the specific output folder before expanding more client scenarios.
+- Keep vendor source material internal and continue using source traces only inside private production records.
+"""
+
+
+def run_course_factory_run_all(args: argparse.Namespace) -> int:
+    data_dir = Path(args.data_dir)
+    brand_config = load_brand_config(Path(args.brand_config))
+    matrix_root = ensure_aivamax_matrix_dirs(data_dir)
+    course_dir = resolve_course_factory_dir(data_dir, args.course_dir, args.course)
+    build_result = None
+    teaching_pack = resolve_existing_cli_path(args.teaching_pack) if args.teaching_pack else course_dir / "_V2-Module-Teaching-Pack.md"
+    if args.build:
+        try:
+            build_result = build_course_factory_files(
+                data_dir=data_dir,
+                course_dir=course_dir,
+                teaching_pack=teaching_pack,
+                brand_config=brand_config,
+                force=args.force,
+                dry_run=args.dry_run,
+            )
+        except (FileNotFoundError, ValueError) as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
+
+    audit = audit_course_factory(course_dir, data_dir, brand_config)
+    if not audit["passed"] and not args.skip_audit:
+        print("Course factory audit failed. Use --skip-audit only for draft debugging.", file=sys.stderr)
+        if args.json:
+            print(json.dumps(audit, ensure_ascii=False, indent=2))
+        return 1
+
+    include_html = args.format in {"html", "all"}
+    full_files = render_course_factory_full_export(course_dir, brand_config, include_html)
+    sales_files = render_sales_preview_files(course_dir, brand_config, include_html)
+    if args.format == "md":
+        full_files = {name: content for name, content in full_files.items() if name.endswith(".md")}
+        sales_files = {name: content for name, content in sales_files.items() if name.endswith(".md")}
+
+    export_root = Path(args.export_root) if args.export_root else matrix_root / "public_export" / course_dir.name
+    full_out = export_root / "course_factory_full_export"
+    sales_out = export_root / "course_factory_sales_preview"
+    if not args.force:
+        for out_dir in [full_out, sales_out]:
+            if out_dir.exists() and any(out_dir.iterdir()):
+                print(f"Output already exists: {out_dir}. Use --force to overwrite.", file=sys.stderr)
+                return 1
+
+    if not args.dry_run:
+        write_named_files(full_out, full_files, brand_config, force=True)
+        write_named_files(sales_out, sales_files, brand_config, force=True)
+        append_course_factory_derivations(data_dir, [
+            {
+                "generated_at": now_iso(),
+                "derivation_type": "course_factory_run_all_full_export",
+                "source_corpus": "course_factory",
+                "source_file": safe_rel(course_dir / "course_factory_manifest.json", data_dir),
+                "output_path": safe_rel(full_out, data_dir),
+                "visibility": "public_course",
+                "public_brand": public_brand(brand_config),
+            },
+            {
+                "generated_at": now_iso(),
+                "derivation_type": "course_factory_run_all_sales_preview",
+                "source_corpus": "course_factory",
+                "source_file": safe_rel(course_dir / "_V2-Module-Teaching-Pack.md", data_dir),
+                "output_path": safe_rel(sales_out, data_dir),
+                "visibility": "sales_preview",
+                "public_brand": public_brand(brand_config),
+            },
+        ])
+
+    full_violations = [] if args.dry_run else scan_brand_violations(full_out, brand_config)
+    sales_violations = [] if args.dry_run else scan_brand_violations(sales_out, brand_config)
+
+    client_results: list[dict] = []
+    if not args.no_client_packs:
+        try:
+            scenarios = load_course_factory_client_scenarios(args.client_scenarios)
+        except (json.JSONDecodeError, ValueError, FileNotFoundError) as exc:
+            print(f"Client scenarios error: {exc}", file=sys.stderr)
+            return 1
+        client_root = Path(args.client_root) if args.client_root else matrix_root / "50_Projects" / "Samples"
+        for scenario in scenarios:
+            pack_args = argparse.Namespace(**scenario)
+            pack_id = client_pack_slug(pack_args.client_code, pack_args.industry, pack_args.goal, int(pack_args.days))
+            out_dir = client_root / pack_id
+            if out_dir.exists() and any(out_dir.iterdir()) and not args.force:
+                print(f"Client pack already exists: {out_dir}. Use --force to overwrite.", file=sys.stderr)
+                return 1
+            files = render_client_pack_files(pack_args, brand_config, pack_id)
+            if not args.dry_run:
+                write_named_files(out_dir, files, brand_config, force=True)
+                append_course_factory_derivations(data_dir, [{
+                    "generated_at": now_iso(),
+                    "derivation_type": "course_factory_run_all_client_pack",
+                    "source_corpus": "course_factory",
+                    "source_file": "AIvaMax course factory templates",
+                    "output_path": safe_rel(out_dir, data_dir),
+                    "visibility": "client_delivery",
+                    "public_brand": public_brand(brand_config),
+                    "pack_id": pack_id,
+                }])
+            violations = [] if args.dry_run else scan_brand_violations(out_dir, brand_config)
+            client_results.append({
+                "pack_id": pack_id,
+                "industry": pack_args.industry,
+                "product": pack_args.product,
+                "market": pack_args.market,
+                "goal": pack_args.goal,
+                "days": int(pack_args.days),
+                "out_dir": safe_rel(out_dir, data_dir),
+                "file_count": len(files),
+                "brand_audit_passed": not violations,
+                "violation_count": len(violations),
+            })
+
+    brand_violations = [] if args.dry_run else scan_brand_violations(matrix_root, brand_config)
+    artifact_violations = [] if args.dry_run else scan_artifact_violations(matrix_root)
+    report_dir = Path(args.report_dir) if args.report_dir else matrix_root / "00_Dashboards"
+    report_stem = args.report_name or f"course_factory_run_{dt.datetime.now(dt.UTC).strftime('%Y%m%d%H%M%S')}"
+    report_json_path = report_dir / f"{report_stem}.json"
+    report_md_path = report_dir / f"{report_stem}.md"
+    passed = (
+        audit["passed"]
+        and not full_violations
+        and not sales_violations
+        and all(item["brand_audit_passed"] for item in client_results)
+        and not brand_violations
+        and not artifact_violations
+    )
+    report = {
+        "generated_at": now_iso(),
+        "public_brand": public_brand(brand_config),
+        "course_name": course_dir.name,
+        "course_dir": safe_rel(course_dir, data_dir),
+        "dry_run": args.dry_run,
+        "build": build_result,
+        "course_factory_audit": audit,
+        "full_export": {
+            "out_dir": safe_rel(full_out, data_dir),
+            "file_count": len(full_files),
+            "brand_audit_passed": not full_violations,
+            "violation_count": len(full_violations),
+        },
+        "sales_preview": {
+            "out_dir": safe_rel(sales_out, data_dir),
+            "file_count": len(sales_files),
+            "brand_audit_passed": not sales_violations,
+            "violation_count": len(sales_violations),
+        },
+        "client_packs": client_results,
+        "brand_audit": {"passed": not brand_violations, "violation_count": len(brand_violations)},
+        "artifact_audit": {"passed": not artifact_violations, "violation_count": len(artifact_violations)},
+        "report_json": safe_rel(report_json_path, data_dir),
+        "report_md": safe_rel(report_md_path, data_dir),
+        "passed": passed,
+    }
+    if not args.dry_run:
+        report_dir.mkdir(parents=True, exist_ok=True)
+        report_json_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+        report_md_path.write_text(render_course_factory_run_report(report), encoding="utf-8")
+        append_course_factory_derivations(data_dir, [{
+            "generated_at": now_iso(),
+            "derivation_type": "course_factory_run_all_report",
+            "source_corpus": "course_factory",
+            "source_file": safe_rel(course_dir / "course_factory_manifest.json", data_dir),
+            "output_path": safe_rel(report_md_path, data_dir),
+            "visibility": "internal",
+            "public_brand": public_brand(brand_config),
+        }])
+
+    if args.json:
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+    else:
+        print(f"Course factory production run: {'passed' if passed else 'failed'}")
+        print(f"Full export: {full_out}")
+        print(f"Sales preview: {sales_out}")
+        print(f"Client packs: {len(client_results)}")
+        print(f"Report: {report_md_path}")
+    return 0 if passed else 1
 
 
 def query_terms(query: str) -> list[str]:
@@ -7267,6 +7590,24 @@ def build_parser() -> argparse.ArgumentParser:
     course_factory_export_all.add_argument("--skip-audit", action="store_true")
     course_factory_export_all.add_argument("--json", action="store_true")
     course_factory_export_all.set_defaults(func=run_course_factory_export_all)
+
+    course_factory_run_all = sub.add_parser("course-factory-run-all", help="Run the full AIvaMax course factory production pipeline.")
+    course_factory_run_all.add_argument("--course", default="AIvaMax社媒自动化增长系统课")
+    course_factory_run_all.add_argument("--course-dir")
+    course_factory_run_all.add_argument("--teaching-pack")
+    course_factory_run_all.add_argument("--format", default="html", choices=["md", "html", "all"])
+    course_factory_run_all.add_argument("--export-root")
+    course_factory_run_all.add_argument("--client-root")
+    course_factory_run_all.add_argument("--client-scenarios")
+    course_factory_run_all.add_argument("--report-dir")
+    course_factory_run_all.add_argument("--report-name")
+    course_factory_run_all.add_argument("--build", action="store_true")
+    course_factory_run_all.add_argument("--no-client-packs", action="store_true")
+    course_factory_run_all.add_argument("--force", action="store_true")
+    course_factory_run_all.add_argument("--dry-run", action="store_true")
+    course_factory_run_all.add_argument("--skip-audit", action="store_true")
+    course_factory_run_all.add_argument("--json", action="store_true")
+    course_factory_run_all.set_defaults(func=run_course_factory_run_all)
 
     platform_playbook = sub.add_parser("platform-playbook", help="Create an AIvaMax platform-specific playbook.")
     platform_playbook.add_argument("--platform", default="instagram", choices=["instagram", "facebook", "tiktok", "linkedin", "x_twitter", "twitter", "x", "all"])

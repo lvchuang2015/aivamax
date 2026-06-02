@@ -1,0 +1,22 @@
+{
+  "generated_at": "2026-06-02T01:05:44+00:00",
+  "public_brand": "AIvaMax",
+  "pack_id": "ai-saas-pilot",
+  "industry": "AI SaaS",
+  "product": "AI workflow automation service",
+  "market": "United States B2B",
+  "goal": "lead_generation",
+  "days": 30,
+  "visibility": "client_delivery",
+  "files": [
+    "00_Client-Brief.md",
+    "01_Strategy-Plan.md",
+    "02_Account-Matrix.md",
+    "03_Platform-Weights.md",
+    "04_Content-Calendar.md",
+    "05_Content-Topic-Bank.md",
+    "06_Review-Forecast.md",
+    "07_Risk-Boundary.md",
+    "08_Delivery-README.md"
+  ]
+}
