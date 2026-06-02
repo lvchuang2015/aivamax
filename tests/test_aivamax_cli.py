@@ -2456,6 +2456,12 @@ Module {number} production output
                 self.assertFalse(review_pack["approval_blockers"])
             else:
                 self.assertTrue(review_pack["approval_blockers"])
+            self.assertEqual(review_pack["owner_confirmation_phrases"]["approved"], "APPROVE AIVAMAX RELEASE")
+            self.assertEqual(review_pack["owner_confirmation_phrases"]["rejected"], "REJECT AIVAMAX RELEASE")
+            self.assertTrue(any(item.get("label") == "Final release archive" for item in review_pack["evidence_files"]))
+            self.assertTrue(any(item.get("label") == "Release status report" for item in review_pack["evidence_files"]))
+            self.assertTrue(any("release-distribution-package" in item.get("cli_command", "") for item in review_pack["post_decision_steps"]))
+            self.assertTrue(any("release-distribution-delivery-record" in item.get("cli_command", "") for item in review_pack["post_decision_steps"]))
             review_pack_path = core.resolve_reported_path(review_pack["pack"]["json"]["path"])
             self.assertTrue(review_pack_path and review_pack_path.exists())
             review_pack_data = json.loads(review_pack_path.read_text(encoding="utf-8"))
@@ -2464,6 +2470,9 @@ Module {number} production output
             with urllib.request.urlopen(base + review_pack["pack"]["markdown"]["preview_url"], timeout=20) as response:
                 review_pack_markdown = response.read().decode("utf-8")
             self.assertIn("Owner Release Review Pack", review_pack_markdown)
+            self.assertIn("Evidence Files", review_pack_markdown)
+            self.assertIn("Console confirmation phrase: `APPROVE AIVAMAX RELEASE`", review_pack_markdown)
+            self.assertIn("release-distribution-delivery-record", review_pack_markdown)
             self.assertIn("This review pack prepares a human release decision", review_pack_markdown)
             self.assert_public_clean(review_pack_markdown)
 

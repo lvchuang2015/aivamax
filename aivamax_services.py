@@ -33,6 +33,11 @@ ROLES = {
     STUDENT_PUBLIC,
 }
 
+OWNER_RELEASE_CONFIRMATIONS = {
+    "approved": "APPROVE AIVAMAX RELEASE",
+    "rejected": "REJECT AIVAMAX RELEASE",
+}
+
 ROLE_LABELS = {
     OWNER_ADMIN: "Owner Admin",
     TEAM_OPERATOR: "Team Operator",
@@ -3012,13 +3017,84 @@ def release_review_decision_options(record: dict[str, Any]) -> list[dict[str, st
             "decision": "approved",
             "label": "Approve release",
             "cli_command": f".\\aivamax.ps1 release-signoff-record --decision approved --signer owner_admin --version {version!r} --notes \"Owner approved after review.\"",
+            "console_confirmation": OWNER_RELEASE_CONFIRMATIONS["approved"],
         },
         {
             "decision": "rejected",
             "label": "Reject release",
             "cli_command": f".\\aivamax.ps1 release-signoff-record --decision rejected --signer owner_admin --version {version!r} --notes \"Owner rejected; remediation required.\"",
+            "console_confirmation": OWNER_RELEASE_CONFIRMATIONS["rejected"],
         },
     ]
+
+
+def release_review_post_decision_steps() -> list[dict[str, str]]:
+    return [
+        {
+            "stage": "after_approval",
+            "label": "Generate approved distribution package",
+            "cli_command": ".\\aivamax.ps1 release-distribution-package",
+        },
+        {
+            "stage": "after_approval",
+            "label": "Check approved distribution status",
+            "cli_command": ".\\aivamax.ps1 release-distribution-status",
+        },
+        {
+            "stage": "after_approval",
+            "label": "Record owner delivery evidence after handoff",
+            "cli_command": ".\\aivamax.ps1 release-distribution-delivery-record --recipient-label internal_distribution_recipient --delivery-channel manual_handoff --notes \"Approved distribution package handed off.\"",
+        },
+        {
+            "stage": "after_rejection",
+            "label": "Refresh release readiness after remediation",
+            "cli_command": ".\\aivamax.ps1 course-factory-release-status",
+        },
+    ]
+
+
+def release_review_file_item(label: str, file_record: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not file_record or not file_record.get("path"):
+        return None
+    return {
+        "label": label,
+        "name": file_record.get("name"),
+        "path": file_record.get("path"),
+        "size": file_record.get("size"),
+        "visibility": file_record.get("visibility"),
+        "preview_url": file_record.get("preview_url"),
+        "download_url": file_record.get("download_url"),
+    }
+
+
+def release_review_bundle_file_items(record: dict[str, Any]) -> list[dict[str, Any]]:
+    bundle = record.get("bundle", {})
+    items: list[dict[str, Any]] = []
+    for label, key in [
+        ("Final release archive", "archive_path"),
+        ("Final release manifest", "manifest_path"),
+        ("Final signoff checklist", "checklist_path"),
+    ]:
+        path = core.resolve_reported_path(bundle.get(key))
+        if not path or not path.exists() or is_blocked_path(path):
+            continue
+        item = release_review_file_item(label, release_bundle_file_record(path))
+        if item:
+            items.append(item)
+    return items
+
+
+def release_review_evidence_files(record: dict[str, Any], status: dict[str, Any], history: dict[str, Any]) -> list[dict[str, Any]]:
+    items = release_review_bundle_file_items(record)
+    for label, file_record in [
+        ("Latest release record", record.get("record", {}).get("markdown")),
+        ("Release status report", status.get("report", {}).get("markdown")),
+        ("Release history dashboard", history.get("dashboard", {}).get("markdown")),
+    ]:
+        item = release_review_file_item(label, file_record)
+        if item:
+            items.append(item)
+    return items
 
 
 def render_release_review_pack_markdown(review: dict[str, Any], brand_config: dict[str, Any]) -> str:
@@ -3027,9 +3103,17 @@ def render_release_review_pack_markdown(review: dict[str, Any], brand_config: di
         f"| {name} | {item.get('status')} | {item.get('detail')} |"
         for name, item in review.get("gates", {}).items()
     ) or "| - | - | - |"
+    evidence_rows = "\n".join(
+        f"| {item.get('label')} | {item.get('path')} | {item.get('preview_url') or '-'} | {item.get('download_url') or '-'} |"
+        for item in review.get("evidence_files", [])
+    ) or "| - | - | - | - |"
     command_lines = "\n\n".join(
-        f"### {item.get('label')}\n\n```powershell\n{item.get('cli_command')}\n```"
+        f"### {item.get('label')}\n\nConsole confirmation phrase: `{item.get('console_confirmation')}`\n\n```powershell\n{item.get('cli_command')}\n```"
         for item in review.get("decision_options", [])
+    )
+    post_decision_lines = "\n\n".join(
+        f"### {item.get('label')}\n\nStage: `{item.get('stage')}`\n\n```powershell\n{item.get('cli_command')}\n```"
+        for item in review.get("post_decision_steps", [])
     )
     return scrub_text(f"""---
 type: release_review_pack
@@ -3063,6 +3147,12 @@ status: {review.get("review_status")}
 - [ ] Confirm the bundle SHA256 matches the signoff record.
 - [ ] Record an approved or rejected signoff decision after review.
 
+## Evidence Files
+
+| Evidence | Path | Preview | Download |
+| --- | --- | --- | --- |
+{evidence_rows}
+
 ## Gates
 
 | Gate | Status | Detail |
@@ -3072,6 +3162,10 @@ status: {review.get("review_status")}
 ## Decision Commands
 
 {command_lines}
+
+## Post Decision Workflow
+
+{post_decision_lines}
 
 ## Boundary
 
@@ -3142,14 +3236,26 @@ def release_review_pack(
         "release_record": record.get("record", {}),
         "release_status_report": status.get("report", {}),
         "release_history_dashboard": history.get("dashboard", {}),
+        "evidence_files": release_review_evidence_files(record, status, history),
         "decision_options": release_review_decision_options(record),
+        "post_decision_steps": release_review_post_decision_steps(),
+        "owner_confirmation_phrases": OWNER_RELEASE_CONFIRMATIONS,
     }
     review["pack"] = persist_release_review_pack(review, ctx)
+    public_paths = [
+        review["pack"]["json"]["path"],
+        review["pack"]["markdown"]["path"],
+        *[
+            item["path"]
+            for item in review.get("evidence_files", [])
+            if item.get("path")
+        ],
+    ]
     return service_response(
         action="aivamax_release_review_pack",
         role=caller_role,
         result=review,
-        public_paths=[review["pack"]["json"]["path"], review["pack"]["markdown"]["path"]],
+        public_paths=public_paths,
         audit={"passed": review_status in {"awaiting_owner_approval", "approved_recorded"}, "review_status": review_status, "release_id": record.get("release_id")},
     )
 

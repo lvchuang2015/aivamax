@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-02T06:34:58+00:00",
+  "generated_at": "2026-06-02T07:54:30+00:00",
   "public_brand": "AIvaMax",
   "review_status": "awaiting_owner_approval",
   "human_decision_required": true,
@@ -113,16 +113,100 @@
       "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-History-Dashboard.md&mode=download"
     }
   },
+  "evidence_files": [
+    {
+      "label": "Final release archive",
+      "name": "AIvaMax-Course-Factory-Final-Release.zip",
+      "path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release.zip",
+      "size": 87291,
+      "visibility": "final_release_bundle",
+      "preview_url": null,
+      "download_url": "/api/release-bundle/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Frelease_bundle%2FAIvaMax-Course-Factory-Final-Release.zip&mode=download"
+    },
+    {
+      "label": "Final release manifest",
+      "name": "AIvaMax-Course-Factory-Final-Release-Manifest.json",
+      "path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release-Manifest.json",
+      "size": 19461,
+      "visibility": "final_release_bundle",
+      "preview_url": "/api/release-bundle/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Frelease_bundle%2FAIvaMax-Course-Factory-Final-Release-Manifest.json&mode=preview",
+      "download_url": "/api/release-bundle/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Frelease_bundle%2FAIvaMax-Course-Factory-Final-Release-Manifest.json&mode=download"
+    },
+    {
+      "label": "Final signoff checklist",
+      "name": "AIvaMax-Course-Factory-Final-Release-Signoff-Checklist.md",
+      "path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release-Signoff-Checklist.md",
+      "size": 1798,
+      "visibility": "final_release_bundle",
+      "preview_url": "/api/release-bundle/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Frelease_bundle%2FAIvaMax-Course-Factory-Final-Release-Signoff-Checklist.md&mode=preview",
+      "download_url": "/api/release-bundle/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Frelease_bundle%2FAIvaMax-Course-Factory-Final-Release-Signoff-Checklist.md&mode=download"
+    },
+    {
+      "label": "Latest release record",
+      "name": "Latest-Release-Record.md",
+      "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Latest-Release-Record.md",
+      "size": 1874,
+      "visibility": "release_record",
+      "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FLatest-Release-Record.md&mode=preview",
+      "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FLatest-Release-Record.md&mode=download"
+    },
+    {
+      "label": "Release status report",
+      "name": "Course-Factory-Release-Status.md",
+      "path": "data/obsidian/AIvaMax_Matrix/00_Dashboards/Course-Factory-Release-Status.md",
+      "size": 1664,
+      "visibility": "internal_dashboard",
+      "preview_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-Release-Status.md&mode=preview",
+      "download_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-Release-Status.md&mode=download"
+    },
+    {
+      "label": "Release history dashboard",
+      "name": "Release-History-Dashboard.md",
+      "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-History-Dashboard.md",
+      "size": 789,
+      "visibility": "release_record",
+      "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-History-Dashboard.md&mode=preview",
+      "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-History-Dashboard.md&mode=download"
+    }
+  ],
   "decision_options": [
     {
       "decision": "approved",
       "label": "Approve release",
-      "cli_command": ".\\aivamax.ps1 release-signoff-record --decision approved --signer owner_admin --version 'course-factory-v1' --notes \"Owner approved after review.\""
+      "cli_command": ".\\aivamax.ps1 release-signoff-record --decision approved --signer owner_admin --version 'course-factory-v1' --notes \"Owner approved after review.\"",
+      "console_confirmation": "APPROVE AIVAMAX RELEASE"
     },
     {
       "decision": "rejected",
       "label": "Reject release",
-      "cli_command": ".\\aivamax.ps1 release-signoff-record --decision rejected --signer owner_admin --version 'course-factory-v1' --notes \"Owner rejected; remediation required.\""
+      "cli_command": ".\\aivamax.ps1 release-signoff-record --decision rejected --signer owner_admin --version 'course-factory-v1' --notes \"Owner rejected; remediation required.\"",
+      "console_confirmation": "REJECT AIVAMAX RELEASE"
     }
-  ]
+  ],
+  "post_decision_steps": [
+    {
+      "stage": "after_approval",
+      "label": "Generate approved distribution package",
+      "cli_command": ".\\aivamax.ps1 release-distribution-package"
+    },
+    {
+      "stage": "after_approval",
+      "label": "Check approved distribution status",
+      "cli_command": ".\\aivamax.ps1 release-distribution-status"
+    },
+    {
+      "stage": "after_approval",
+      "label": "Record owner delivery evidence after handoff",
+      "cli_command": ".\\aivamax.ps1 release-distribution-delivery-record --recipient-label internal_distribution_recipient --delivery-channel manual_handoff --notes \"Approved distribution package handed off.\""
+    },
+    {
+      "stage": "after_rejection",
+      "label": "Refresh release readiness after remediation",
+      "cli_command": ".\\aivamax.ps1 course-factory-release-status"
+    }
+  ],
+  "owner_confirmation_phrases": {
+    "approved": "APPROVE AIVAMAX RELEASE",
+    "rejected": "REJECT AIVAMAX RELEASE"
+  }
 }

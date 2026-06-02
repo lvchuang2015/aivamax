@@ -9,7 +9,7 @@ status: awaiting_owner_approval
 
 | Field | Value |
 | --- | --- |
-| Generated at | 2026-06-02T06:34:58+00:00 |
+| Generated at | 2026-06-02T07:54:30+00:00 |
 | Review status | awaiting_owner_approval |
 | Human decision required | True |
 | Release ID | REL-20260602061539 |
@@ -30,6 +30,17 @@ status: awaiting_owner_approval
 - [ ] Confirm the bundle SHA256 matches the signoff record.
 - [ ] Record an approved or rejected signoff decision after review.
 
+## Evidence Files
+
+| Evidence | Path | Preview | Download |
+| --- | --- | --- | --- |
+| Final release archive | data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release.zip | - | /api/release-bundle/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Frelease_bundle%2FAIvaMax-Course-Factory-Final-Release.zip&mode=download |
+| Final release manifest | data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release-Manifest.json | /api/release-bundle/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Frelease_bundle%2FAIvaMax-Course-Factory-Final-Release-Manifest.json&mode=preview | /api/release-bundle/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Frelease_bundle%2FAIvaMax-Course-Factory-Final-Release-Manifest.json&mode=download |
+| Final signoff checklist | data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release-Signoff-Checklist.md | /api/release-bundle/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Frelease_bundle%2FAIvaMax-Course-Factory-Final-Release-Signoff-Checklist.md&mode=preview | /api/release-bundle/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Frelease_bundle%2FAIvaMax-Course-Factory-Final-Release-Signoff-Checklist.md&mode=download |
+| Latest release record | data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Latest-Release-Record.md | /api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FLatest-Release-Record.md&mode=preview | /api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FLatest-Release-Record.md&mode=download |
+| Release status report | data/obsidian/AIvaMax_Matrix/00_Dashboards/Course-Factory-Release-Status.md | /api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-Release-Status.md&mode=preview | /api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-Release-Status.md&mode=download |
+| Release history dashboard | data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-History-Dashboard.md | /api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-History-Dashboard.md&mode=preview | /api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-History-Dashboard.md&mode=download |
+
 ## Gates
 
 | Gate | Status | Detail |
@@ -46,14 +57,52 @@ status: awaiting_owner_approval
 
 ### Approve release
 
+Console confirmation phrase: `APPROVE AIVAMAX RELEASE`
+
 ```powershell
 .\aivamax.ps1 release-signoff-record --decision approved --signer owner_admin --version 'course-factory-v1' --notes "Owner approved after review."
 ```
 
 ### Reject release
 
+Console confirmation phrase: `REJECT AIVAMAX RELEASE`
+
 ```powershell
 .\aivamax.ps1 release-signoff-record --decision rejected --signer owner_admin --version 'course-factory-v1' --notes "Owner rejected; remediation required."
+```
+
+## Post Decision Workflow
+
+### Generate approved distribution package
+
+Stage: `after_approval`
+
+```powershell
+.\aivamax.ps1 release-distribution-package
+```
+
+### Check approved distribution status
+
+Stage: `after_approval`
+
+```powershell
+.\aivamax.ps1 release-distribution-status
+```
+
+### Record owner delivery evidence after handoff
+
+Stage: `after_approval`
+
+```powershell
+.\aivamax.ps1 release-distribution-delivery-record --recipient-label internal_distribution_recipient --delivery-channel manual_handoff --notes "Approved distribution package handed off."
+```
+
+### Refresh release readiness after remediation
+
+Stage: `after_rejection`
+
+```powershell
+.\aivamax.ps1 course-factory-release-status
 ```
 
 ## Boundary

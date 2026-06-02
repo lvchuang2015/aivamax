@@ -11,6 +11,7 @@ from aivamax_core import DEFAULT_BRAND_CONFIG, DEFAULT_DATA_DIR
 from aivamax_mcp_server import list_tools
 from aivamax_services import (
     OWNER_ADMIN,
+    OWNER_RELEASE_CONFIRMATIONS,
     client_pack_batch_delivery_qa,
     course_factory_release_status,
     course_factory_status,
@@ -61,10 +62,7 @@ from aivamax_services import (
 
 
 LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "::1"}
-FINAL_RELEASE_CONFIRMATIONS = {
-    "approved": "APPROVE AIVAMAX RELEASE",
-    "rejected": "REJECT AIVAMAX RELEASE",
-}
+FINAL_RELEASE_CONFIRMATIONS = OWNER_RELEASE_CONFIRMATIONS
 
 
 def is_loopback_host(host: str) -> bool:

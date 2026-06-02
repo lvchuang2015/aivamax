@@ -128,7 +128,7 @@ The safe action buttons are allowlisted only:
 - `Final Bundle`: assemble the final release ZIP, manifest, and human signoff checklist from public-safe exports and reports.
 - `Release Record`: write a release signoff record with bundle hash, signer, version, and gate status; `approved` and `rejected` decisions require `owner_admin`, and Console final decisions require an explicit owner confirmation phrase.
 - `Release History`: generate the internal release-history dashboard across all signoff records.
-- `Review Pack`: generate an owner review pack for human approval or rejection without changing release decision state.
+- `Review Pack`: generate an owner review pack for human approval or rejection without changing release decision state; it includes evidence file links, Console confirmation phrases, decision commands, and the post-approval distribution/delivery-record workflow.
 - `Distribution Package`: generate the formal approved distribution wrapper only after an approved signoff record.
 - `Export MCP config`: generate stdio config templates for Claude Code, Codex, Work Buddy style hosts, and generic agent hosts.
 - `Host smoke test`: run a local stdio JSON-RPC smoke test against the AIvaMax MCP tool bridge.
