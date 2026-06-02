@@ -31,6 +31,7 @@ from aivamax_services import (
     repair_client_pack_batch,
     release_history,
     release_distribution_package,
+    release_distribution_status,
     release_review_pack,
     release_signoff_record,
     runtime_status,
@@ -231,6 +232,16 @@ TOOL_DEFINITIONS = [
     {
         "name": "aivamax_release_review_pack",
         "description": "Generate the AIvaMax owner release review pack for human approval or rejection.",
+        "allowed_roles": ["owner_admin", "team_operator"],
+        "inputSchema": {
+            "type": "object",
+            "properties": {"role": {"type": "string"}},
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "aivamax_release_distribution_status",
+        "description": "Check approved AIvaMax distribution readiness without generating distribution files.",
         "allowed_roles": ["owner_admin", "team_operator"],
         "inputSchema": {
             "type": "object",
@@ -493,6 +504,8 @@ def call_tool(
             return release_history(**common)
         if name == "aivamax_release_review_pack":
             return release_review_pack(arguments, **common)
+        if name == "aivamax_release_distribution_status":
+            return release_distribution_status(arguments, **common)
         if name == "aivamax_release_distribution_package":
             return release_distribution_package(arguments, **common)
         if name == "aivamax_list_client_packs":

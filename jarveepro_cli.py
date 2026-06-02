@@ -7393,6 +7393,27 @@ def run_release_distribution_package(args: argparse.Namespace) -> int:
     return 0 if result.get("ok") else 1
 
 
+def run_release_distribution_status(args: argparse.Namespace) -> int:
+    from aivamax_services import release_distribution_status
+
+    result = release_distribution_status(
+        data_dir=Path(args.data_dir),
+        brand_config_path=Path(args.brand_config),
+        role=args.role,
+    )
+    if args.json:
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+    else:
+        payload = result.get("result", {})
+        print(f"Release distribution status: {payload.get('distribution_status') or result.get('error')}")
+        print(f"Release ID: {payload.get('release_id')} | can_generate={payload.get('can_generate')}")
+        if payload.get("blockers"):
+            print(f"Blockers: {', '.join(payload.get('blockers', []))}")
+        if payload.get("required_action"):
+            print(f"Next: {payload.get('required_action')}")
+    return 0 if result.get("ok") else 1
+
+
 def run_material_review(args: argparse.Namespace) -> int:
     from aivamax_services import material_review
 
@@ -7654,6 +7675,11 @@ def build_parser() -> argparse.ArgumentParser:
     release_distribution_package_parser.add_argument("--role", default="owner_admin", choices=["owner_admin", "team_operator", "instructor_private", "student_public"])
     release_distribution_package_parser.add_argument("--json", action="store_true")
     release_distribution_package_parser.set_defaults(func=run_release_distribution_package)
+
+    release_distribution_status_parser = sub.add_parser("release-distribution-status", help="Check AIvaMax distribution readiness without generating files.")
+    release_distribution_status_parser.add_argument("--role", default="owner_admin", choices=["owner_admin", "team_operator", "instructor_private", "student_public"])
+    release_distribution_status_parser.add_argument("--json", action="store_true")
+    release_distribution_status_parser.set_defaults(func=run_release_distribution_status)
 
     material_review = sub.add_parser("material-review", help="Review AIvaMax media and case material readiness.")
     material_review.add_argument("--path")

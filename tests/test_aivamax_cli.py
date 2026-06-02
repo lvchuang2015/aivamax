@@ -265,6 +265,8 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertEqual(release_review_pack_args.role, "owner_admin")
         release_distribution_args = parser.parse_args(["release-distribution-package"])
         self.assertEqual(release_distribution_args.role, "owner_admin")
+        release_distribution_status_args = parser.parse_args(["release-distribution-status"])
+        self.assertEqual(release_distribution_status_args.role, "owner_admin")
         coach_args = parser.parse_args(["student-coach-preview", "--question", "账号安全怎么检查？"])
         self.assertEqual(coach_args.role, "student_public")
 
@@ -371,6 +373,7 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("aivamax_release_signoff_record", tool_names)
         self.assertIn("aivamax_release_history", tool_names)
         self.assertIn("aivamax_release_review_pack", tool_names)
+        self.assertIn("aivamax_release_distribution_status", tool_names)
         self.assertIn("aivamax_release_distribution_package", tool_names)
         self.assertIn("aivamax_list_client_packs", tool_names)
         self.assertIn("aivamax_generate_client_pack", tool_names)
@@ -568,6 +571,14 @@ class AIvaMaxCLITest(unittest.TestCase):
         )
         self.assertFalse(blocked_distribution["ok"])
         self.assertEqual(blocked_distribution["error"], "permission_denied")
+        blocked_distribution_status = mcp.call_tool(
+            "aivamax_release_distribution_status",
+            {"role": "student_public"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_distribution_status["ok"])
+        self.assertEqual(blocked_distribution_status["error"], "permission_denied")
         blocked_zip = mcp.call_tool(
             "aivamax_export_client_pack_zip",
             {"role": "student_public", "pack_id": "AI-SaaS-Pilot"},
@@ -611,6 +622,17 @@ class AIvaMaxCLITest(unittest.TestCase):
         latest_path = release_root / "Latest-Release-Record.json"
         latest_path.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
 
+        status = services.release_distribution_status(
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="owner_admin",
+        )
+        self.assertTrue(status["ok"], status)
+        self.assertEqual(status["result"]["distribution_status"], "release_not_approved")
+        self.assertFalse(status["result"]["can_generate"])
+        self.assertEqual(status["result"]["blockers"], ["release_not_approved"])
+        self.assertFalse((matrix_root / "public_export" / "approved_distribution" / "AIvaMax-Approved-Distribution.zip").exists())
+
         blocked = services.release_distribution_package(
             data_dir=data_dir,
             brand_config_path=ROOT / "config" / "brand_config.json",
@@ -622,6 +644,17 @@ class AIvaMaxCLITest(unittest.TestCase):
 
         record["decision"] = "approved"
         latest_path.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
+        ready_status = services.release_distribution_status(
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="owner_admin",
+        )
+        self.assertTrue(ready_status["ok"], ready_status)
+        self.assertEqual(ready_status["result"]["distribution_status"], "ready_to_generate")
+        self.assertTrue(ready_status["result"]["can_generate"])
+        self.assertEqual(ready_status["result"]["actual_sha256"], bundle_sha)
+        self.assertFalse((matrix_root / "public_export" / "approved_distribution" / "AIvaMax-Approved-Distribution.zip").exists())
+
         approved = services.release_distribution_package(
             data_dir=data_dir,
             brand_config_path=ROOT / "config" / "brand_config.json",
@@ -637,6 +670,14 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertTrue(distribution_archive and distribution_archive.exists())
         self.assertTrue(checklist_path and checklist_path.exists())
         self.assertIn("/api/distribution/file", result["files"]["checklist"]["preview_url"])
+        generated_status = services.release_distribution_status(
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="owner_admin",
+        )
+        self.assertEqual(generated_status["result"]["distribution_status"], "approved_distribution_exists")
+        self.assertTrue(generated_status["result"]["has_existing_distribution"])
+        self.assertIn("archive", generated_status["result"]["existing_distribution_files"])
         with zipfile.ZipFile(distribution_archive) as archive:
             names = archive.namelist()
         self.assertIn("release_bundle/AIvaMax-Course-Factory-Final-Release.zip", names)
@@ -694,6 +735,7 @@ class AIvaMaxCLITest(unittest.TestCase):
         team_skill = services.render_skill("team_operator")
         self.assertIn("Final release decisions (`approved`/`rejected`) allowed: yes", owner_skill)
         self.assertIn("Final release decisions (`approved`/`rejected`) allowed: no", team_skill)
+        self.assertIn("aivamax_release_distribution_status", owner_skill)
         self.assertIn("aivamax_release_distribution_package", owner_skill)
         self.assertIn("course_factory", team_skill)
         self.assertIn("client_packs", team_skill)
@@ -2341,6 +2383,13 @@ Module {number} production output
             )
             self.assertFalse(blocked_distribution["ok"])
             self.assertEqual(blocked_distribution["error"], "release_not_approved")
+
+            with urllib.request.urlopen(base + "/api/release-distribution-package", timeout=20) as response:
+                distribution_status_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(distribution_status_payload["ok"], distribution_status_payload)
+            self.assertEqual(distribution_status_payload["action"], "aivamax_release_distribution_status")
+            self.assertEqual(distribution_status_payload["result"]["distribution_status"], "release_not_approved")
+            self.assertFalse(distribution_status_payload["result"]["can_generate"])
 
             blocked_approval_request = urllib.request.Request(
                 base + "/api/actions/release-signoff-record",

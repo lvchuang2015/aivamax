@@ -164,7 +164,7 @@ Course factory production is also exposed through:
 - `GET /api/release-record/latest`
 - `GET /api/release-history`
 - `GET /api/release-review-pack`
-- `GET /api/release-distribution-package`
+- `GET /api/release-distribution-package` (read-only distribution readiness status)
 - `GET /api/release-record/file?path=<encoded-path>&mode=preview|download`
 - `GET /api/distribution/file?path=<encoded-path>&mode=preview|download`
 - `GET /api/client-packs/file?path=<encoded-path>&mode=preview|download`
@@ -232,6 +232,7 @@ aivamax_final_release_bundle
 aivamax_release_signoff_record
 aivamax_release_history
 aivamax_release_review_pack
+aivamax_release_distribution_status
 aivamax_release_distribution_package
 aivamax_list_client_packs
 aivamax_generate_client_pack

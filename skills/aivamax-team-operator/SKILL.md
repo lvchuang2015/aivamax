@@ -67,6 +67,7 @@ Team operators prepare and repair release assets, then write `pending_review`; t
 - `aivamax_release_signoff_record`
 - `aivamax_release_history`
 - `aivamax_release_review_pack`
+- `aivamax_release_distribution_status`
 - `aivamax_release_distribution_package`
 - `aivamax_generate_client_pack`
 - `aivamax_client_pack_delivery_qa`

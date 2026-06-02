@@ -35,6 +35,7 @@ from aivamax_services import (
     release_gate,
     release_history,
     release_distribution_package,
+    release_distribution_status,
     release_review_pack,
     release_signoff_record,
     role_inventory,
@@ -863,8 +864,8 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.NOT_FOUND, payload)
                 return
             if route == "/api/release-distribution-package":
-                payload = release_distribution_package(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
-                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.CONFLICT, payload)
+                payload = release_distribution_status(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.NOT_FOUND, payload)
                 return
             json_response(self, HTTPStatus.NOT_FOUND, {"ok": False, "error": "unknown_route", "route": route})
 

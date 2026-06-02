@@ -152,6 +152,7 @@ MCP_TOOL_ROLE_ALLOWLIST: dict[str, set[str]] = {
     "aivamax_release_signoff_record": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_history": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_review_pack": {OWNER_ADMIN, TEAM_OPERATOR},
+    "aivamax_release_distribution_status": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_distribution_package": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_list_client_packs": {OWNER_ADMIN, TEAM_OPERATOR, INSTRUCTOR_PRIVATE},
     "aivamax_generate_client_pack": {OWNER_ADMIN, TEAM_OPERATOR},
@@ -3168,6 +3169,97 @@ def persist_distribution_package(manifest: dict[str, Any], release_archive: Path
     }
 
 
+def existing_distribution_file_records(ctx: ServiceContext) -> dict[str, dict[str, Any]]:
+    paths = approved_distribution_paths(ctx)
+    files: dict[str, dict[str, Any]] = {}
+    for key in ["manifest", "checklist", "archive"]:
+        path = paths[key]
+        if path.exists():
+            files[key] = distribution_file_record(path)
+    return files
+
+
+def release_distribution_status(
+    request: dict[str, Any] | None = None,
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    latest_payload = latest_release_record(data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+    if not latest_payload.get("ok"):
+        return service_response(
+            action="aivamax_release_distribution_status",
+            role=caller_role,
+            ok=False,
+            error=latest_payload.get("error", "no_release_record"),
+            warnings=latest_payload.get("warnings", []),
+        )
+    record = latest_payload.get("result", {})
+    existing_files = existing_distribution_file_records(ctx)
+    status = {
+        "generated_at": cli.now_iso(),
+        "public_brand": ctx.brand_config.get("public_brand", "AIvaMax"),
+        "release_id": record.get("release_id"),
+        "decision": record.get("decision"),
+        "review_status": release_review_status(record),
+        "ready_to_release": bool(record.get("ready_to_release")),
+        "can_generate": False,
+        "distribution_status": "blocked",
+        "blockers": [],
+        "required_action": "",
+        "expected_sha256": record.get("bundle", {}).get("sha256"),
+        "actual_sha256": None,
+        "bundle": record.get("bundle", {}),
+        "existing_distribution_files": existing_files,
+        "has_existing_distribution": "archive" in existing_files,
+    }
+    blockers: list[str] = status["blockers"]
+    if record.get("decision") != "approved":
+        blockers.append("release_not_approved")
+        status["distribution_status"] = "release_not_approved"
+        status["required_action"] = "Run release-review-pack and record an approved signoff before distribution."
+    elif not record.get("ready_to_release"):
+        blockers.append("approved_release_not_ready")
+        status["distribution_status"] = "approved_release_not_ready"
+        status["required_action"] = "Refresh release status, repair blockers, and record a ready approved signoff before distribution."
+    else:
+        archive_record = record.get("bundle", {}).get("archive_path")
+        archive_path = core.resolve_reported_path(archive_record)
+        if not archive_path or not archive_path.exists():
+            blockers.append("missing_release_archive")
+            status["distribution_status"] = "missing_release_archive"
+            status["required_action"] = "Regenerate the final release bundle before distribution."
+        else:
+            try:
+                archive_path = resolve_release_bundle_file(relpath(archive_path), data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+            except (PermissionError, FileNotFoundError):
+                blockers.append("blocked_release_archive")
+                status["distribution_status"] = "blocked_release_archive"
+                status["required_action"] = "Regenerate the final release bundle in the allowlisted release_bundle folder."
+            else:
+                actual_sha = sha256_file(archive_path)
+                status["actual_sha256"] = actual_sha
+                if status["expected_sha256"] != actual_sha:
+                    blockers.append("bundle_hash_mismatch")
+                    status["distribution_status"] = "bundle_hash_mismatch"
+                    status["required_action"] = "Regenerate signoff after rebuilding the final release bundle."
+                else:
+                    status["can_generate"] = True
+                    status["distribution_status"] = "approved_distribution_exists" if status["has_existing_distribution"] else "ready_to_generate"
+                    status["required_action"] = "Run release-distribution-package to generate the formal approved distribution wrapper."
+    public_paths = [item["path"] for item in existing_files.values()]
+    return service_response(
+        action="aivamax_release_distribution_status",
+        role=caller_role,
+        result=status,
+        public_paths=public_paths,
+        audit={"passed": bool(status["can_generate"]), "distribution_status": status["distribution_status"], "release_id": record.get("release_id")},
+    )
+
+
 def release_distribution_package(
     request: dict[str, Any] | None = None,
     *,
@@ -4212,6 +4304,7 @@ def render_skill(role: str) -> str:
             "aivamax_release_signoff_record",
             "aivamax_release_history",
             "aivamax_release_review_pack",
+            "aivamax_release_distribution_status",
             "aivamax_release_distribution_package",
             "aivamax_generate_client_pack",
             "aivamax_client_pack_delivery_qa",
