@@ -54,6 +54,12 @@ PREVIEW_PACK_FILES = [
     "AIvaMax_Preview_Pack.html",
 ]
 
+PROJECT_SOP_FILES = [
+    "public/PublicCourseSOP.md",
+    "PublicCourseSOP.md",
+    "03_14-Day-SOP.md",
+]
+
 TEXT_SUFFIXES = {
     ".css",
     ".html",
@@ -158,6 +164,10 @@ def _has_files(root: Path, names: list[str]) -> bool:
     return all((root / name).exists() for name in names)
 
 
+def _has_any_file(root: Path, names: list[str]) -> bool:
+    return any((root / name).exists() for name in names)
+
+
 def _latest_dir(paths: list[Path]) -> Path | None:
     existing = [path for path in paths if path.exists()]
     if not existing:
@@ -207,11 +217,13 @@ def course_inventory(data_dir: Path) -> dict[str, Any]:
                 ]),
             })
     latest_module = _latest_dir(module_paths)
-    latest_project = _latest_dir([p for p in project_root.iterdir() if p.is_dir()]) if project_root.exists() else None
+    project_dirs = [p for p in project_root.iterdir() if p.is_dir()] if project_root.exists() else []
+    auditable_project_dirs = [p for p in project_dirs if _has_any_file(p, PROJECT_SOP_FILES)]
+    latest_project = _latest_dir(auditable_project_dirs) or _latest_dir(project_dirs)
     return {
         "course_count": len(courses),
         "module_count": len(module_paths),
-        "project_count": len([p for p in project_root.iterdir() if p.is_dir()]) if project_root.exists() else 0,
+        "project_count": len(project_dirs),
         "courses": courses,
         "latest_course_module": relpath(latest_module) if latest_module else None,
         "latest_project": relpath(latest_project) if latest_project else None,

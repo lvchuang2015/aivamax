@@ -1,7 +1,7 @@
 ---
 type: client_pack_delivery_qa
 public_brand: AIvaMax
-pack_id: education-course-pilot
+pack_id: AI-SaaS-LeadGen-30D
 visibility: client_delivery_qa
 status: passed
 ---
@@ -10,12 +10,12 @@ status: passed
 
 | Field | Value |
 | --- | --- |
-| Pack ID | education-course-pilot |
+| Pack ID | AI-SaaS-LeadGen-30D |
 | Generated at | 2026-06-02T05:31:22+00:00 |
 | Decision | deliverable |
-| Score | 100 |
+| Score | 80 |
 | Critical failures | 0 |
-| Failed checks | 0 |
+| Failed checks | 2 |
 
 ## Gate Checks
 
@@ -23,10 +23,10 @@ status: passed
 | --- | --- | --- | --- |
 | Client file set | pass | 10 | 8/8 client-facing files present. |
 | Brand/internal boundary | pass | 10 | No private brand terms, raw paths, source fields, or internal markers detected. |
-| Client goal | pass | 10 | Goal: course_sales |
-| Delivery duration | pass | 10 | Duration: 30 days; calendar rows: 30. |
+| Client goal | pass | 10 | Goal: lead_generation |
+| Delivery duration | review | 10 | Duration: 30 days; calendar rows: 0. |
 | Platform weights | pass | 10 | Weighted platform rows: 5. |
-| Content calendar | pass | 10 | Calendar rows: 30. |
+| Content calendar | review | 10 | Calendar rows: 0. |
 | Account matrix | pass | 10 | Account roles and owners are present. |
 | Review and forecast | pass | 10 | Forecast model uses assumptions and signal ranges. |
 | Risk boundary | pass | 10 | Risk rules cover claims, messages, and forecast limits. |
@@ -34,7 +34,8 @@ status: passed
 
 ## Recommended Fixes
 
-- No required fixes.
+- Duration: 30 days; calendar rows: 0.
+- Calendar rows: 0.
 
 ## Audited Client Files
 

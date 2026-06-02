@@ -1,0 +1,259 @@
+{
+  "generated_at": "2026-06-02T05:31:22+00:00",
+  "pack_count": 7,
+  "deliverable_count": 7,
+  "needs_revision_count": 0,
+  "average_score": 97,
+  "export_zip_requested": true,
+  "zip_exported_count": 7,
+  "packs": [
+    {
+      "pack_id": "AI-SaaS-LeadGen-30D",
+      "passed": true,
+      "decision": "deliverable",
+      "score": 80,
+      "failed_check_count": 2,
+      "critical_failure_count": 0,
+      "recommended_fixes": [
+        "Duration: 30 days; calendar rows: 0.",
+        "Calendar rows: 0."
+      ],
+      "report": {
+        "json": {
+          "name": "Delivery-QA-Report.json",
+          "path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/ai-saas-leadgen-30d/Delivery-QA-Report.json",
+          "size": 2803,
+          "visibility": "client_delivery_qa",
+          "preview_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Fai-saas-leadgen-30d%2FDelivery-QA-Report.json&mode=preview",
+          "download_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Fai-saas-leadgen-30d%2FDelivery-QA-Report.json&mode=download"
+        },
+        "markdown": {
+          "name": "Delivery-QA-Report.md",
+          "path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/ai-saas-leadgen-30d/Delivery-QA-Report.md",
+          "size": 1737,
+          "visibility": "client_delivery_qa",
+          "preview_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Fai-saas-leadgen-30d%2FDelivery-QA-Report.md&mode=preview",
+          "download_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Fai-saas-leadgen-30d%2FDelivery-QA-Report.md&mode=download"
+        }
+      },
+      "zip_exported": true,
+      "archive": {
+        "name": "ai-saas-leadgen-30d-client-delivery.zip",
+        "path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/ai-saas-leadgen-30d/ai-saas-leadgen-30d-client-delivery.zip",
+        "size": 7956,
+        "visibility": "client_delivery_archive",
+        "download_url": "/api/client-packs/archive?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Fai-saas-leadgen-30d%2Fai-saas-leadgen-30d-client-delivery.zip&mode=download"
+      }
+    },
+    {
+      "pack_id": "education-course-pilot",
+      "passed": true,
+      "decision": "deliverable",
+      "score": 100,
+      "failed_check_count": 0,
+      "critical_failure_count": 0,
+      "recommended_fixes": [],
+      "report": {
+        "json": {
+          "name": "Delivery-QA-Report.json",
+          "path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/education-course-pilot/Delivery-QA-Report.json",
+          "size": 2730,
+          "visibility": "client_delivery_qa",
+          "preview_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Feducation-course-pilot%2FDelivery-QA-Report.json&mode=preview",
+          "download_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Feducation-course-pilot%2FDelivery-QA-Report.json&mode=download"
+        },
+        "markdown": {
+          "name": "Delivery-QA-Report.md",
+          "path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/education-course-pilot/Delivery-QA-Report.md",
+          "size": 1700,
+          "visibility": "client_delivery_qa",
+          "preview_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Feducation-course-pilot%2FDelivery-QA-Report.md&mode=preview",
+          "download_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Feducation-course-pilot%2FDelivery-QA-Report.md&mode=download"
+        }
+      },
+      "zip_exported": true,
+      "archive": {
+        "name": "education-course-pilot-client-delivery.zip",
+        "path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/education-course-pilot/education-course-pilot-client-delivery.zip",
+        "size": 4007,
+        "visibility": "client_delivery_archive",
+        "download_url": "/api/client-packs/archive?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Feducation-course-pilot%2Feducation-course-pilot-client-delivery.zip&mode=download"
+      }
+    },
+    {
+      "pack_id": "local-service-pilot",
+      "passed": true,
+      "decision": "deliverable",
+      "score": 100,
+      "failed_check_count": 0,
+      "critical_failure_count": 0,
+      "recommended_fixes": [],
+      "report": {
+        "json": {
+          "name": "Delivery-QA-Report.json",
+          "path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/local-service-pilot/Delivery-QA-Report.json",
+          "size": 2737,
+          "visibility": "client_delivery_qa",
+          "preview_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Flocal-service-pilot%2FDelivery-QA-Report.json&mode=preview",
+          "download_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Flocal-service-pilot%2FDelivery-QA-Report.json&mode=download"
+        },
+        "markdown": {
+          "name": "Delivery-QA-Report.md",
+          "path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/local-service-pilot/Delivery-QA-Report.md",
+          "size": 1704,
+          "visibility": "client_delivery_qa",
+          "preview_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Flocal-service-pilot%2FDelivery-QA-Report.md&mode=preview",
+          "download_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Flocal-service-pilot%2FDelivery-QA-Report.md&mode=download"
+        }
+      },
+      "zip_exported": true,
+      "archive": {
+        "name": "local-service-pilot-client-delivery.zip",
+        "path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/local-service-pilot/local-service-pilot-client-delivery.zip",
+        "size": 4005,
+        "visibility": "client_delivery_archive",
+        "download_url": "/api/client-packs/archive?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Flocal-service-pilot%2Flocal-service-pilot-client-delivery.zip&mode=download"
+      }
+    },
+    {
+      "pack_id": "ai-saas-pilot",
+      "passed": true,
+      "decision": "deliverable",
+      "score": 100,
+      "failed_check_count": 0,
+      "critical_failure_count": 0,
+      "recommended_fixes": [],
+      "report": {
+        "json": {
+          "name": "Delivery-QA-Report.json",
+          "path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/ai-saas-pilot/Delivery-QA-Report.json",
+          "size": 2724,
+          "visibility": "client_delivery_qa",
+          "preview_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Fai-saas-pilot%2FDelivery-QA-Report.json&mode=preview",
+          "download_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Fai-saas-pilot%2FDelivery-QA-Report.json&mode=download"
+        },
+        "markdown": {
+          "name": "Delivery-QA-Report.md",
+          "path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/ai-saas-pilot/Delivery-QA-Report.md",
+          "size": 1685,
+          "visibility": "client_delivery_qa",
+          "preview_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Fai-saas-pilot%2FDelivery-QA-Report.md&mode=preview",
+          "download_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Fai-saas-pilot%2FDelivery-QA-Report.md&mode=download"
+        }
+      },
+      "zip_exported": true,
+      "archive": {
+        "name": "ai-saas-pilot-client-delivery.zip",
+        "path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/ai-saas-pilot/ai-saas-pilot-client-delivery.zip",
+        "size": 3990,
+        "visibility": "client_delivery_archive",
+        "download_url": "/api/client-packs/archive?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Fai-saas-pilot%2Fai-saas-pilot-client-delivery.zip&mode=download"
+      }
+    },
+    {
+      "pack_id": "local-service-leadgen-30d",
+      "passed": true,
+      "decision": "deliverable",
+      "score": 100,
+      "failed_check_count": 0,
+      "critical_failure_count": 0,
+      "recommended_fixes": [],
+      "report": {
+        "json": {
+          "name": "Delivery-QA-Report.json",
+          "path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/local-service-leadgen-30d/Delivery-QA-Report.json",
+          "size": 2736,
+          "visibility": "client_delivery_qa",
+          "preview_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Flocal-service-leadgen-30d%2FDelivery-QA-Report.json&mode=preview",
+          "download_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Flocal-service-leadgen-30d%2FDelivery-QA-Report.json&mode=download"
+        },
+        "markdown": {
+          "name": "Delivery-QA-Report.md",
+          "path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/local-service-leadgen-30d/Delivery-QA-Report.md",
+          "size": 1709,
+          "visibility": "client_delivery_qa",
+          "preview_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Flocal-service-leadgen-30d%2FDelivery-QA-Report.md&mode=preview",
+          "download_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Flocal-service-leadgen-30d%2FDelivery-QA-Report.md&mode=download"
+        }
+      },
+      "zip_exported": true,
+      "archive": {
+        "name": "local-service-leadgen-30d-client-delivery.zip",
+        "path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/local-service-leadgen-30d/local-service-leadgen-30d-client-delivery.zip",
+        "size": 4012,
+        "visibility": "client_delivery_archive",
+        "download_url": "/api/client-packs/archive?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Flocal-service-leadgen-30d%2Flocal-service-leadgen-30d-client-delivery.zip&mode=download"
+      }
+    },
+    {
+      "pack_id": "edu-course-trial-30d",
+      "passed": true,
+      "decision": "deliverable",
+      "score": 100,
+      "failed_check_count": 0,
+      "critical_failure_count": 0,
+      "recommended_fixes": [],
+      "report": {
+        "json": {
+          "name": "Delivery-QA-Report.json",
+          "path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/edu-course-trial-30d/Delivery-QA-Report.json",
+          "size": 2734,
+          "visibility": "client_delivery_qa",
+          "preview_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Fedu-course-trial-30d%2FDelivery-QA-Report.json&mode=preview",
+          "download_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Fedu-course-trial-30d%2FDelivery-QA-Report.json&mode=download"
+        },
+        "markdown": {
+          "name": "Delivery-QA-Report.md",
+          "path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/edu-course-trial-30d/Delivery-QA-Report.md",
+          "size": 1702,
+          "visibility": "client_delivery_qa",
+          "preview_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Fedu-course-trial-30d%2FDelivery-QA-Report.md&mode=preview",
+          "download_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Fedu-course-trial-30d%2FDelivery-QA-Report.md&mode=download"
+        }
+      },
+      "zip_exported": true,
+      "archive": {
+        "name": "edu-course-trial-30d-client-delivery.zip",
+        "path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/edu-course-trial-30d/edu-course-trial-30d-client-delivery.zip",
+        "size": 3990,
+        "visibility": "client_delivery_archive",
+        "download_url": "/api/client-packs/archive?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Fedu-course-trial-30d%2Fedu-course-trial-30d-client-delivery.zip&mode=download"
+      }
+    },
+    {
+      "pack_id": "xbe-ecom-30d",
+      "passed": true,
+      "decision": "deliverable",
+      "score": 100,
+      "failed_check_count": 0,
+      "critical_failure_count": 0,
+      "recommended_fixes": [],
+      "report": {
+        "json": {
+          "name": "Delivery-QA-Report.json",
+          "path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/xbe-ecom-30d/Delivery-QA-Report.json",
+          "size": 2725,
+          "visibility": "client_delivery_qa",
+          "preview_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Fxbe-ecom-30d%2FDelivery-QA-Report.json&mode=preview",
+          "download_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Fxbe-ecom-30d%2FDelivery-QA-Report.json&mode=download"
+        },
+        "markdown": {
+          "name": "Delivery-QA-Report.md",
+          "path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/xbe-ecom-30d/Delivery-QA-Report.md",
+          "size": 1685,
+          "visibility": "client_delivery_qa",
+          "preview_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Fxbe-ecom-30d%2FDelivery-QA-Report.md&mode=preview",
+          "download_url": "/api/client-packs/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Fxbe-ecom-30d%2FDelivery-QA-Report.md&mode=download"
+        }
+      },
+      "zip_exported": true,
+      "archive": {
+        "name": "xbe-ecom-30d-client-delivery.zip",
+        "path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/xbe-ecom-30d/xbe-ecom-30d-client-delivery.zip",
+        "size": 4019,
+        "visibility": "client_delivery_archive",
+        "download_url": "/api/client-packs/archive?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fclient_packs%2Fxbe-ecom-30d%2Fxbe-ecom-30d-client-delivery.zip&mode=download"
+      }
+    }
+  ]
+}

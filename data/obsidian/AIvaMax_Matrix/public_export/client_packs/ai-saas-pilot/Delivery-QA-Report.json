@@ -1,5 +1,5 @@
 {
-  "pack_id": "education-course-pilot",
+  "pack_id": "ai-saas-pilot",
   "generated_at": "2026-06-02T05:31:22+00:00",
   "passed": true,
   "decision": "deliverable",
@@ -27,7 +27,7 @@
       "passed": true,
       "weight": 10,
       "critical": false,
-      "detail": "Goal: course_sales"
+      "detail": "Goal: lead_generation"
     },
     {
       "id": "delivery_duration",

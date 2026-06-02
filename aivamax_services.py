@@ -303,6 +303,7 @@ def get_status(
             "aivamax_run_course_factory",
             "aivamax_generate_client_pack",
             "aivamax_client_pack_delivery_qa",
+            "aivamax_client_pack_batch_delivery_qa",
             "aivamax_export_client_pack_zip",
         ],
         "mcp_modes": ["http-json", "stdio-jsonrpc"],
@@ -416,6 +417,13 @@ def client_pack_public_files(pack_dir: Path) -> list[Path]:
     return [pack_dir / name for name in CLIENT_PACK_PUBLIC_FILENAMES if (pack_dir / name).is_file()]
 
 
+def client_pack_dirs(ctx: ServiceContext) -> list[Path]:
+    root = client_pack_root(ctx)
+    if not root.exists():
+        return []
+    return sorted([path for path in root.iterdir() if path.is_dir()], key=lambda path: path.stat().st_mtime, reverse=True)
+
+
 def client_pack_file_record(path: Path) -> dict[str, Any]:
     relative = relpath(path)
     visibility = "client_delivery" if is_client_pack_public_file(path) else "internal"
@@ -483,6 +491,35 @@ def client_pack_report_paths(ctx: ServiceContext, pack_id: str) -> tuple[Path, P
     return report_dir / "Delivery-QA-Report.json", report_dir / "Delivery-QA-Report.md"
 
 
+def client_pack_batch_report_paths(ctx: ServiceContext) -> tuple[Path, Path]:
+    report_dir = client_pack_export_root(ctx)
+    return report_dir / "Delivery-QA-Summary.json", report_dir / "Delivery-QA-Summary.md"
+
+
+def latest_client_pack_batch_report(ctx: ServiceContext) -> dict[str, Any] | None:
+    json_path, md_path = client_pack_batch_report_paths(ctx)
+    if not json_path.exists() and not md_path.exists():
+        return None
+    report: dict[str, Any] = {}
+    if json_path.exists():
+        try:
+            data = json.loads(json_path.read_text(encoding="utf-8"))
+            if isinstance(data, dict):
+                report.update({
+                    "generated_at": data.get("generated_at"),
+                    "pack_count": data.get("pack_count"),
+                    "deliverable_count": data.get("deliverable_count"),
+                    "needs_revision_count": data.get("needs_revision_count"),
+                    "average_score": data.get("average_score"),
+                })
+        except json.JSONDecodeError:
+            report["json_error"] = "invalid_json"
+        report["json"] = client_pack_report_record(json_path)
+    if md_path.exists():
+        report["markdown"] = client_pack_report_record(md_path)
+    return report
+
+
 def latest_client_pack_qa_report(ctx: ServiceContext, pack_id: str) -> dict[str, Any] | None:
     json_path, md_path = client_pack_report_paths(ctx, pack_id)
     if not json_path.exists() and not md_path.exists():
@@ -517,33 +554,31 @@ def list_client_packs(
     ctx = make_context(data_dir, brand_config_path)
     root = client_pack_root(ctx)
     packs: list[dict[str, Any]] = []
-    if root.exists():
-        pack_dirs = sorted([path for path in root.iterdir() if path.is_dir()], key=lambda path: path.stat().st_mtime, reverse=True)
-        for pack_dir in pack_dirs:
-            files = sorted([path for path in pack_dir.iterdir() if path.is_file()])
-            manifest = read_client_pack_manifest(pack_dir)
-            public_files = client_pack_public_files(pack_dir)
-            file_records = [client_pack_file_record(path) for path in public_files]
-            pack_id = str(manifest.get("pack_id") or pack_dir.name)
-            archive = latest_client_pack_archive(ctx, pack_id)
-            qa_report = latest_client_pack_qa_report(ctx, pack_id)
-            packs.append({
-                "pack_id": pack_id,
-                "path": relpath(pack_dir),
-                "generated_at": manifest.get("generated_at"),
-                "industry": manifest.get("industry", ""),
-                "product": manifest.get("product", ""),
-                "market": manifest.get("market", ""),
-                "goal": manifest.get("goal", ""),
-                "days": manifest.get("days"),
-                "file_count": len(files),
-                "client_file_count": len(file_records),
-                "internal_file_count": len(files) - len(file_records),
-                "files": file_records,
-                "archive": archive,
-                "qa_report": qa_report,
-            })
-    result = {"root": relpath(root), "pack_count": len(packs), "packs": packs}
+    for pack_dir in client_pack_dirs(ctx):
+        files = sorted([path for path in pack_dir.iterdir() if path.is_file()])
+        manifest = read_client_pack_manifest(pack_dir)
+        public_files = client_pack_public_files(pack_dir)
+        file_records = [client_pack_file_record(path) for path in public_files]
+        pack_id = str(manifest.get("pack_id") or pack_dir.name)
+        archive = latest_client_pack_archive(ctx, pack_id)
+        qa_report = latest_client_pack_qa_report(ctx, pack_id)
+        packs.append({
+            "pack_id": pack_id,
+            "path": relpath(pack_dir),
+            "generated_at": manifest.get("generated_at"),
+            "industry": manifest.get("industry", ""),
+            "product": manifest.get("product", ""),
+            "market": manifest.get("market", ""),
+            "goal": manifest.get("goal", ""),
+            "days": manifest.get("days"),
+            "file_count": len(files),
+            "client_file_count": len(file_records),
+            "internal_file_count": len(files) - len(file_records),
+            "files": file_records,
+            "archive": archive,
+            "qa_report": qa_report,
+        })
+    result = {"root": relpath(root), "pack_count": len(packs), "packs": packs, "batch_report": latest_client_pack_batch_report(ctx)}
     return service_response(
         action="aivamax_list_client_packs",
         role=caller_role,
@@ -652,7 +687,8 @@ def resolve_client_pack_report_file(
         candidate.relative_to(root)
     except ValueError as exc:
         raise PermissionError("Client pack QA report must be under AIvaMax_Matrix/public_export/client_packs.") from exc
-    if not candidate.is_file() or candidate.name not in {"Delivery-QA-Report.json", "Delivery-QA-Report.md"}:
+    allowed_names = {"Delivery-QA-Report.json", "Delivery-QA-Report.md", "Delivery-QA-Summary.json", "Delivery-QA-Summary.md"}
+    if not candidate.is_file() or candidate.name not in allowed_names:
         raise PermissionError("Only exported Delivery QA report files can be previewed or downloaded.")
     return candidate
 
@@ -869,6 +905,63 @@ def persist_client_pack_qa_report(qa: dict[str, Any], ctx: ServiceContext) -> di
     }
 
 
+def render_client_pack_batch_qa_markdown(summary: dict[str, Any], brand_config: dict[str, Any]) -> str:
+    brand = brand_config.get("public_brand", "AIvaMax")
+    rows = "\n".join(
+        f"| {item.get('pack_id')} | {item.get('decision')} | {item.get('score')} | {item.get('failed_check_count')} | {item.get('zip_exported', False)} |"
+        for item in summary.get("packs", [])
+    )
+    revision_items = [item for item in summary.get("packs", []) if item.get("decision") != "deliverable"]
+    revision_lines = "\n".join(
+        f"- {item.get('pack_id')}: {', '.join(item.get('recommended_fixes', [])[:3]) or 'Review failed checks.'}"
+        for item in revision_items
+    ) or "- No packages require revision."
+    return scrub_text(f"""---
+type: client_pack_delivery_qa_summary
+public_brand: {brand}
+visibility: client_delivery_qa
+status: {'passed' if summary.get('needs_revision_count', 0) == 0 else 'needs_revision'}
+---
+
+# {brand} Client Pack Delivery QA Summary
+
+| Field | Value |
+| --- | --- |
+| Generated at | {summary.get("generated_at")} |
+| Pack count | {summary.get("pack_count")} |
+| Deliverable | {summary.get("deliverable_count")} |
+| Needs revision | {summary.get("needs_revision_count")} |
+| Average score | {summary.get("average_score")} |
+| ZIP export requested | {summary.get("export_zip_requested")} |
+| ZIP exported | {summary.get("zip_exported_count")} |
+
+## Package Results
+
+| Pack | Decision | Score | Failed checks | ZIP exported |
+| --- | --- | --- | --- | --- |
+{rows}
+
+## Revision Queue
+
+{revision_lines}
+
+## Boundary
+
+This summary is generated from client-facing Delivery QA reports. It does not include source traces, internal README files, manifests, or private source material.
+""", brand_config)
+
+
+def persist_client_pack_batch_qa_report(summary: dict[str, Any], ctx: ServiceContext) -> dict[str, Any]:
+    json_path, md_path = client_pack_batch_report_paths(ctx)
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    md_path.write_text(render_client_pack_batch_qa_markdown(summary, ctx.brand_config), encoding="utf-8")
+    return {
+        "json": client_pack_report_record(json_path),
+        "markdown": client_pack_report_record(md_path),
+    }
+
+
 def client_pack_delivery_qa(
     request: dict[str, Any] | None = None,
     *,
@@ -891,6 +984,71 @@ def client_pack_delivery_qa(
         result=result,
         public_paths=[result["report"]["markdown"]["path"], result["report"]["json"]["path"]],
         audit={"passed": bool(result.get("passed")), "score": result.get("score", 0), "failed_check_count": result.get("failed_check_count", 0)},
+    )
+
+
+def client_pack_batch_delivery_qa(
+    request: dict[str, Any] | None = None,
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    request = request or {}
+    export_zip = bool(request.get("export_zip", False))
+    pack_results: list[dict[str, Any]] = []
+    zip_exported_count = 0
+    for pack_dir in client_pack_dirs(ctx):
+        qa = build_client_pack_delivery_qa(pack_dir, ctx)
+        qa["report"] = persist_client_pack_qa_report(qa, ctx)
+        pack_result = {
+            "pack_id": qa.get("pack_id"),
+            "passed": qa.get("passed"),
+            "decision": qa.get("decision"),
+            "score": qa.get("score"),
+            "failed_check_count": qa.get("failed_check_count"),
+            "critical_failure_count": qa.get("critical_failure_count"),
+            "recommended_fixes": qa.get("recommended_fixes", []),
+            "report": qa.get("report"),
+            "zip_exported": False,
+        }
+        if export_zip and qa.get("passed"):
+            zip_result = export_client_pack_zip(
+                {"pack_id": qa.get("pack_id")},
+                data_dir=ctx.data_dir,
+                brand_config_path=ctx.brand_config_path,
+                role=caller_role,
+            )
+            if zip_result.get("ok"):
+                pack_result["zip_exported"] = True
+                pack_result["archive"] = zip_result.get("result", {}).get("archive")
+                zip_exported_count += 1
+            else:
+                pack_result["zip_error"] = zip_result.get("error")
+        pack_results.append(pack_result)
+    pack_count = len(pack_results)
+    deliverable_count = sum(1 for item in pack_results if item.get("passed"))
+    needs_revision_count = pack_count - deliverable_count
+    average_score = round(sum(int(item.get("score") or 0) for item in pack_results) / pack_count) if pack_count else 0
+    summary = {
+        "generated_at": cli.now_iso(),
+        "pack_count": pack_count,
+        "deliverable_count": deliverable_count,
+        "needs_revision_count": needs_revision_count,
+        "average_score": average_score,
+        "export_zip_requested": export_zip,
+        "zip_exported_count": zip_exported_count,
+        "packs": pack_results,
+    }
+    summary["report"] = persist_client_pack_batch_qa_report(summary, ctx)
+    return service_response(
+        action="aivamax_client_pack_batch_delivery_qa",
+        role=caller_role,
+        result=summary,
+        public_paths=[summary["report"]["markdown"]["path"], summary["report"]["json"]["path"]],
+        audit={"passed": needs_revision_count == 0, "average_score": average_score, "needs_revision_count": needs_revision_count},
     )
 
 
@@ -2146,6 +2304,7 @@ def render_skill(role: str) -> str:
             "aivamax_run_course_factory",
             "aivamax_generate_client_pack",
             "aivamax_client_pack_delivery_qa",
+            "aivamax_client_pack_batch_delivery_qa",
             "aivamax_export_client_pack_zip",
         ])
     if role == STUDENT_PUBLIC:

@@ -175,6 +175,7 @@ class AIvaMaxCLITest(unittest.TestCase):
             self.assertIn("Client Scenario Editor", html)
             self.assertIn("Generate Pack", html)
             self.assertIn("Run QA", html)
+            self.assertIn("Run Batch QA", html)
             self.assertIn("Export ZIP", html)
             self.assertIn("Client Delivery Packs", html)
         finally:
@@ -293,6 +294,7 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("aivamax_run_course_factory", tool_names)
         self.assertIn("aivamax_generate_client_pack", tool_names)
         self.assertIn("aivamax_client_pack_delivery_qa", tool_names)
+        self.assertIn("aivamax_client_pack_batch_delivery_qa", tool_names)
         self.assertIn("aivamax_export_client_pack_zip", tool_names)
         self.assertIn("inputSchema", tools[0])
         status = mcp.call_tool(
@@ -365,6 +367,14 @@ class AIvaMaxCLITest(unittest.TestCase):
         )
         self.assertFalse(blocked_qa["ok"])
         self.assertEqual(blocked_qa["error"], "permission_denied")
+        blocked_batch_qa = mcp.call_tool(
+            "aivamax_client_pack_batch_delivery_qa",
+            {"role": "student_public", "export_zip": True},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_batch_qa["ok"])
+        self.assertEqual(blocked_batch_qa["error"], "permission_denied")
         blocked_zip = mcp.call_tool(
             "aivamax_export_client_pack_zip",
             {"role": "student_public", "pack_id": "AI-SaaS-Pilot"},
@@ -1086,6 +1096,22 @@ platform: Instagram
         terms = {item["term"] for item in result["violations"]}
         self.assertIn("public_sop_depth", terms)
 
+    def test_course_inventory_prefers_projects_with_public_sop(self) -> None:
+        data_dir = self.make_test_dir("inventory") / "data"
+        matrix_root = data_dir / "obsidian" / "AIvaMax_Matrix"
+        real_project = matrix_root / "50_Projects" / "sample-real-project"
+        samples = matrix_root / "50_Projects" / "Samples"
+        course = matrix_root / "70_Courses" / "Course" / "module"
+        (real_project / "public").mkdir(parents=True)
+        samples.mkdir(parents=True)
+        course.mkdir(parents=True)
+        (real_project / "public" / "PublicCourseSOP.md").write_text("# AIvaMax SOP\n", encoding="utf-8")
+        (samples / "00_Client-Brief.md").write_text("# AIvaMax Sample Pack\n", encoding="utf-8")
+
+        inventory = core.course_inventory(data_dir)
+
+        self.assertEqual(inventory["latest_project"], core.relpath(real_project))
+
     def test_course_release_module_files_are_course_delivery_depth(self) -> None:
         files = cli.render_course_grade_module_files(
             brand="AIvaMax",
@@ -1582,6 +1608,13 @@ Module {number} production output
                 role="student_public",
             )
         with self.assertRaises(PermissionError):
+            services.client_pack_batch_delivery_qa(
+                {"export_zip": True},
+                data_dir=data_dir,
+                brand_config_path=ROOT / "config" / "brand_config.json",
+                role="student_public",
+            )
+        with self.assertRaises(PermissionError):
             services.export_client_pack_zip(
                 {"pack_id": "AI-SaaS-Pilot"},
                 data_dir=data_dir,
@@ -1767,6 +1800,33 @@ Module {number} production output
             self.assertTrue(report["passed"], report)
             self.assertEqual(len(report["client_packs"]), 3)
 
+            request = urllib.request.Request(
+                base + "/api/actions/client-pack-batch-qa",
+                data=json.dumps({"export_zip": True}).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(request, timeout=60) as response:
+                batch_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(batch_payload["ok"], batch_payload)
+            batch_result = batch_payload["result"]
+            self.assertGreaterEqual(batch_result["pack_count"], 4)
+            self.assertGreaterEqual(batch_result["deliverable_count"], 3)
+            self.assertGreaterEqual(batch_result["needs_revision_count"], 1)
+            self.assertGreaterEqual(batch_result["zip_exported_count"], 3)
+            self.assertIn("report", batch_result)
+            self.assertTrue(any(item["pack_id"] == "broken-pack" and not item["passed"] for item in batch_result["packs"]))
+            self.assertTrue(all("path" not in item for item in batch_result["packs"]))
+            with urllib.request.urlopen(base + batch_result["report"]["markdown"]["preview_url"], timeout=20) as response:
+                batch_markdown = response.read().decode("utf-8")
+            self.assertIn("Client Pack Delivery QA Summary", batch_markdown)
+            self.assertIn("broken-pack", batch_markdown)
+            with urllib.request.urlopen(base + batch_result["report"]["json"]["preview_url"], timeout=20) as response:
+                batch_json = json.loads(response.read().decode("utf-8"))
+            self.assertGreaterEqual(batch_json["pack_count"], 4)
+            self.assertNotIn("source_path", json.dumps(batch_json, ensure_ascii=False))
+            self.assertNotIn("raw_path", json.dumps(batch_json, ensure_ascii=False))
+
             with urllib.request.urlopen(base + "/api/course-factory", timeout=20) as response:
                 factory_payload = json.loads(response.read().decode("utf-8"))
             self.assertTrue(factory_payload["ok"], factory_payload)
@@ -1776,6 +1836,8 @@ Module {number} production output
                 packs_payload = json.loads(response.read().decode("utf-8"))
             self.assertTrue(packs_payload["ok"], packs_payload)
             self.assertGreaterEqual(packs_payload["result"]["pack_count"], 3)
+            self.assertIn("batch_report", packs_payload["result"])
+            self.assertIn("markdown", packs_payload["result"]["batch_report"])
             first_pack = packs_payload["result"]["packs"][0]
             public_files = [item for item in first_pack["files"] if item["visibility"] == "client_delivery"]
             self.assertTrue(public_files)

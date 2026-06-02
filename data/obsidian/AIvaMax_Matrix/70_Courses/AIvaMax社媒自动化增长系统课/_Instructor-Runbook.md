@@ -2,22 +2,33 @@
 type: instructor_runbook
 public_brand: AIvaMax
 course_name: AIvaMax社媒自动化增长系统课
-status: draft
-visibility: internal
+status: release_candidate
 ---
 
-# Instructor Runbook
+# 讲师交付手册
 
-## Teaching Flow
+## 开课定位
+这门课不是教学生追求动作量，而是训练他们建立一套判断系统：先理解平台逻辑，再准备账号和内容，再做轻量验证，最后用复盘和风险记录决定下一步。
 
-1. Start with the public-safe growth map.
-2. Show how project intake controls all later decisions.
-3. Teach account roles before any execution tasks.
-4. Separate course language from internal operating notes.
-5. Use the risk review checklist before showing comments or messages.
+## 课堂节奏
+| 阶段 | 时间 | 讲师任务 | 学员任务 |
+|---|---:|---|---|
+| 开场定位 | 10 分钟 | 说明课程边界和交付物 | 写下自己的目标平台和产品 |
+| 平台逻辑 | 25 分钟 | 讲内容入口、用户画像、主页承接 | 画出自己的转化路径 |
+| 账号准备 | 30 分钟 | 带学员过账号与素材检查表 | 完成执行前检查 |
+| 14 天节奏 | 45 分钟 | 拆第 1-7 天、第 8-14 天动作 | 填逐日执行表 |
+| 评论区线索 | 35 分钟 | 演示线索归类和人审问题 | 完成模拟评论判断 |
+| 风险边界 | 35 分钟 | 讲红黄绿边界和暂停机制 | 改写一个黄色动作 |
+| 案例实验 | 45 分钟 | 组织小组案例判断 | 输出复盘结论 |
+| 考核收口 | 20 分钟 | 说明评分 Rubric 和作业要求 | 提交课程作业 |
 
-## Instructor Notes
+## 讲师话术
+- “我们今天训练的不是动作速度，而是判断质量。”
+- “任何异常先记录，再判断；没有复盘记录，就没有下一阶段依据。”
+- “公开课程只讲平台逻辑、风险边界、人审和复盘，不讲绕过限制的做法。”
+- “黄色动作的重点不是扩大，而是补齐上限、暂停条件和人工审核。”
 
-- Avoid promising traffic, leads, revenue, or account safety as guaranteed outcomes.
-- Explain that automation is for repeatable workflow support, not platform-limit evasion.
-- Every direct follow-up example should include human review.
+## 答疑边界
+- 可以回答：平台内容偏好、账号准备、复盘指标、暂停条件、案例判断。
+- 不回答：规避检测、绕过限制、批量滥用、未经同意的高频触达。
+- 遇到高风险提问：改写为合规的人审流程、低频验证或直接放弃。

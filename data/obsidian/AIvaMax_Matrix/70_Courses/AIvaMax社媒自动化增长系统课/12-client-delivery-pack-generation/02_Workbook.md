@@ -2,51 +2,134 @@
 type: workbook
 public_brand: AIvaMax
 module_id: 12-client-delivery-pack-generation
-module_number: 12
-status: draft_v2
-visibility: internal
-risk_level: medium
+status: course_ready_draft
 ---
 
-# Workbook - Module 12: Client Delivery Pack Generation
+# 学员练习册
 
-## Student Task
+## 练习册使用说明
+每份作业都可以打印或复制到 Obsidian。学员必须写出判断依据，不允许只写“继续执行”或“暂停”。
 
-Students assemble a client pack with seven sections: brief, strategy, account matrix, platform weights, calendar, forecast, and risk boundary.
+## 作业模板 1: TaskBrief 补全
+| 字段 | 学员填写 | 自评 | 讲师反馈 |
+|---|---|---|---|
+| 目标平台 | | | |
+| 产品或课程 | | | |
+| 账号数量 | | | |
+| 账号阶段 | | | |
+| 内容素材 | | | |
+| 风险偏好 | | | |
+| 暂停条件 | | | |
 
-## Context Setup
+评分提示: 不是填满就通过，必须能解释判断依据、风险边界和下一步动作。
 
-Before filling the worksheet, define one project. Use a real or realistic product, one target audience, one primary market, one campaign duration, and one measurable business goal.
+## 作业模板 2: 平台用户画像
+| 字段 | 学员填写 | 自评 | 讲师反馈 |
+|---|---|---|---|
+| 核心用户 | | | |
+| 典型问题 | | | |
+| 内容入口 | | | |
+| 主页承接 | | | |
+| 转化路径 | | | |
 
-## Worksheet
+评分提示: 不是填满就通过，必须能解释判断依据、风险边界和下一步动作。
 
-| Field | Student answer | Review note |
-| --- | --- | --- |
-| Project context |  |  |
-| Primary decision |  |  |
-| Supporting evidence |  |  |
-| Output draft |  |  |
-| Risk or review gate |  |  |
-| Next action |  |  |
+## 作业模板 3: 账号分层检查
+| 字段 | 学员填写 | 自评 | 讲师反馈 |
+|---|---|---|---|
+| 账号编号 | | | |
+| 账号阶段 | | | |
+| 资料完整度 | | | |
+| 环境稳定性 | | | |
+| 允许动作 | | | |
+| 暂停条件 | | | |
 
-## Evidence And Assumptions
+评分提示: 不是填满就通过，必须能解释判断依据、风险边界和下一步动作。
 
-| Question | Student answer |
-| --- | --- |
-| What evidence supports this decision? | |
-| What is still an assumption? | |
-| What would change the recommendation? | |
-| What should not be shown in a public lesson or client document? | |
-| Who approves the final output? | |
+## 作业模板 4: 14 天逐日计划
+| 字段 | 学员填写 | 自评 | 讲师反馈 |
+|---|---|---|---|
+| 第 1 天 | | | |
+| 第 3 天 | | | |
+| 第 5 天 | | | |
+| 第 7 天 | | | |
+| 第 10 天 | | | |
+| 第 14 天 | | | |
 
-## Review Checklist
+评分提示: 不是填满就通过，必须能解释判断依据、风险边界和下一步动作。
 
-- The answer names a specific audience and goal.
-- The worksheet is filled with project-specific details, not generic wording.
-- Any claim about results, reach, leads, or conversion is marked as observed, estimated, or illustrative.
-- Sensitive communication or high-risk execution includes a human review owner.
-- The final output can be reused in a course module, SOP, or client delivery pack without exposing internal source traces.
+## 作业模板 5: 评论信号判断
+| 字段 | 学员填写 | 自评 | 讲师反馈 |
+|---|---|---|---|
+| 模拟评论 | | | |
+| 信号类型 | | | |
+| 是否记录 | | | |
+| 是否回复 | | | |
+| 是否复盘 | | | |
 
-## Submission Standard
+评分提示: 不是填满就通过，必须能解释判断依据、风险边界和下一步动作。
 
-The submission must be specific enough for another operator or instructor to review without asking for missing context.
+## 作业模板 6: 风险边界改写
+| 字段 | 学员填写 | 自评 | 讲师反馈 |
+|---|---|---|---|
+| 原始想法 | | | |
+| 风险颜色 | | | |
+| 改写方式 | | | |
+| 动作上限 | | | |
+| 人工复核 | | | |
+
+评分提示: 不是填满就通过，必须能解释判断依据、风险边界和下一步动作。
+
+## 作业模板 7: 异常处理
+| 字段 | 学员填写 | 自评 | 讲师反馈 |
+|---|---|---|---|
+| 异常类型 | | | |
+| 第一动作 | | | |
+| 排查问题 | | | |
+| 恢复条件 | | | |
+| 记录人 | | | |
+
+评分提示: 不是填满就通过，必须能解释判断依据、风险边界和下一步动作。
+
+## 作业模板 8: 第 7 天中期复盘
+| 字段 | 学员填写 | 自评 | 讲师反馈 |
+|---|---|---|---|
+| 活跃账号 | | | |
+| 异常账号 | | | |
+| 有效入口 | | | |
+| 高意向信号 | | | |
+| 下一步判断 | | | |
+
+评分提示: 不是填满就通过，必须能解释判断依据、风险边界和下一步动作。
+
+## 作业模板 9: 第 14 天最终复盘
+| 字段 | 学员填写 | 自评 | 讲师反馈 |
+|---|---|---|---|
+| 账号稳定性 | | | |
+| 内容相关性 | | | |
+| 风险事件 | | | |
+| 线索质量 | | | |
+| 下一阶段条件 | | | |
+
+评分提示: 不是填满就通过，必须能解释判断依据、风险边界和下一步动作。
+
+## 作业模板 10: 案例实验报告
+| 字段 | 学员填写 | 自评 | 讲师反馈 |
+|---|---|---|---|
+| case_id | | | |
+| 场景 | | | |
+| 证据 | | | |
+| 判断 | | | |
+| 动作 | | | |
+| 复盘结论 | | | |
+
+评分提示: 不是填满就通过，必须能解释判断依据、风险边界和下一步动作。
+
+
+## 提交清单
+- [ ] TaskBrief 已补全。
+- [ ] 14 天逐日计划已写完。
+- [ ] 至少 5 条评论信号已完成判断。
+- [ ] 至少 3 个风险动作已完成改写。
+- [ ] 第 7 天复盘和第 14 天复盘都有结论。
+- [ ] 案例实验报告包含证据、判断、动作和复盘。

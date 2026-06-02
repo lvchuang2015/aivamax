@@ -1,24 +1,27 @@
 ---
-type: student_workbook
+type: student_workbook_index
 public_brand: AIvaMax
 course_name: AIvaMax社媒自动化增长系统课
-status: draft
-visibility: internal
+status: release_candidate
 ---
 
-# Student Workbook
+# 学员总练习册
 
-## Core Assignments
+## 使用方式
+学员先完成模块练习册，再把结果汇总到这里。讲师根据复盘评分表判断是否通过。
 
-1. Fill the project input schema.
-2. Choose a primary marketing goal.
-3. Draft a 3-role account matrix.
-4. Select platform weights for one industry.
-5. Build a 7-day content and review rhythm.
-6. Rewrite one risky follow-up message into a human-reviewed version.
+## 必交作业
+| 作业 | 来源文件 | 交付标准 |
+|---|---|---|
+| TaskBrief 补全 | 02_Workbook | 目标、账号、素材、风险条件完整 |
+| 14 天逐日计划 | 02_Workbook | 每天有目标、动作、上限、指标、交付物 |
+| 评论信号判断 | 02_Workbook | 能区分问题型、比较型、痛点型和负面型 |
+| 风险边界改写 | 02_Workbook | 能把黄色动作改成有上限的人审流程 |
+| 第 7 天复盘 | 02_Workbook | 能判断继续、降级、暂停或换入口 |
+| 第 14 天最终判断 | 04_Assessment | 能说明是否进入下一阶段 |
+| 案例实验报告 | 05_Case-Lab | 有证据、判断、动作和复盘结论 |
 
-## Reflection Questions
-
-- Which part of the workflow should remain manual?
-- Which metric decides whether to pause or scale?
-- Which content angle produced the strongest qualified interaction?
+## 评分提醒
+- 及格不是写得多，而是边界清楚、记录完整、判断能自洽。
+- 优秀作业必须能解释“为什么先暂停”“为什么不放大”“为什么换入口”。
+- 所有案例使用模拟或脱敏素材。
