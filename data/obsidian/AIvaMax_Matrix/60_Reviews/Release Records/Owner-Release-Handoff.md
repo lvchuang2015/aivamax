@@ -9,7 +9,7 @@ status: ready_for_owner_review
 
 | Field | Value |
 | --- | --- |
-| Generated at | 2026-06-02T09:14:05+00:00 |
+| Generated at | 2026-06-02T13:03:14+00:00 |
 | Handoff status | ready_for_owner_review |
 | Release ID | REL-20260602061539 |
 | Release decision | pending_review |
@@ -41,10 +41,11 @@ status: ready_for_owner_review
 | Priority | Action | Command |
 | --- | --- | --- |
 | 4 | Generate or refresh owner review ZIP package | aivamax.ps1 release-owner-review-package |
-| 5 | Refresh owner handoff dashboard | aivamax.ps1 release-owner-handoff |
-| 6 | Refresh owner evidence snapshot | aivamax.ps1 release-evidence-snapshot |
-| 7 | Dry-run owner approval path before signoff | aivamax.ps1 release-decision-dry-run --decision approved --json |
-| 8 | After owner approval, run guarded post-approval workflow | aivamax.ps1 release-post-approval-workflow |
+| 5 | Generate owner decision runbook | aivamax.ps1 release-owner-decision-runbook |
+| 6 | Refresh owner handoff dashboard | aivamax.ps1 release-owner-handoff |
+| 7 | Refresh owner evidence snapshot | aivamax.ps1 release-evidence-snapshot |
+| 8 | Dry-run owner approval path before signoff | aivamax.ps1 release-decision-dry-run --decision approved --json |
+| 9 | After owner approval, run guarded post-approval workflow | aivamax.ps1 release-post-approval-workflow |
 
 ## Boundary
 

@@ -37,6 +37,7 @@ from aivamax_services import (
     release_decision_dry_run,
     release_evidence_snapshot,
     release_owner_review_package,
+    release_owner_decision_runbook,
     release_post_approval_workflow,
     release_review_pack,
     release_owner_handoff,
@@ -315,6 +316,22 @@ TOOL_DEFINITIONS = [
                 "version": {"type": "string"},
                 "notes": {"type": "string"},
                 "confirmation": {"type": "string"},
+                "require_ready": {"type": "boolean", "default": True},
+            },
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "aivamax_release_owner_decision_runbook",
+        "description": "Generate the AIvaMax owner decision runbook with approval/rejection dry-runs and guarded next steps, without approving or distributing.",
+        "allowed_roles": ["owner_admin", "team_operator"],
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "role": {"type": "string"},
+                "signer": {"type": "string"},
+                "version": {"type": "string"},
+                "notes": {"type": "string"},
                 "require_ready": {"type": "boolean", "default": True},
             },
             "additionalProperties": False,
@@ -628,6 +645,8 @@ def call_tool(
             return release_evidence_snapshot(arguments, **common)
         if name == "aivamax_release_owner_review_package":
             return release_owner_review_package(arguments, **common)
+        if name == "aivamax_release_owner_decision_runbook":
+            return release_owner_decision_runbook(arguments, **common)
         if name == "aivamax_release_distribution_status":
             return release_distribution_status(arguments, **common)
         if name == "aivamax_release_distribution_package":

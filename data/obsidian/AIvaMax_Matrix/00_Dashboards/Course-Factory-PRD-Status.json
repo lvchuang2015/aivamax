@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-02T09:14:04+00:00",
+  "generated_at": "2026-06-02T13:03:32+00:00",
   "public_brand": "AIvaMax",
   "acceptance_status": "ready_for_owner_review",
   "summary": {
@@ -146,7 +146,7 @@
       "primary_file": {
         "name": "Owner-Release-Handoff.json",
         "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Owner-Release-Handoff.json",
-        "size": 7141,
+        "size": 7933,
         "visibility": "release_record",
         "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Release-Handoff.json&mode=preview",
         "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Release-Handoff.json&mode=download",
@@ -156,7 +156,7 @@
         {
           "name": "Owner-Release-Handoff.json",
           "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Owner-Release-Handoff.json",
-          "size": 7141,
+          "size": 7933,
           "visibility": "release_record",
           "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Release-Handoff.json&mode=preview",
           "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Release-Handoff.json&mode=download",
@@ -165,7 +165,7 @@
         {
           "name": "Owner-Release-Handoff.md",
           "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Owner-Release-Handoff.md",
-          "size": 3559,
+          "size": 4025,
           "visibility": "release_record",
           "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Release-Handoff.md&mode=preview",
           "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Release-Handoff.md&mode=download",
@@ -183,7 +183,7 @@
       "primary_file": {
         "name": "Release-Decision-Dry-Run.json",
         "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-Decision-Dry-Run.json",
-        "size": 3596,
+        "size": 3610,
         "visibility": "release_record",
         "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Decision-Dry-Run.json&mode=preview",
         "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Decision-Dry-Run.json&mode=download",
@@ -193,7 +193,7 @@
         {
           "name": "Release-Decision-Dry-Run.json",
           "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-Decision-Dry-Run.json",
-          "size": 3596,
+          "size": 3610,
           "visibility": "release_record",
           "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Decision-Dry-Run.json&mode=preview",
           "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Decision-Dry-Run.json&mode=download",
@@ -220,7 +220,7 @@
       "primary_file": {
         "name": "Release-Evidence-Snapshot.json",
         "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-Evidence-Snapshot.json",
-        "size": 11387,
+        "size": 11388,
         "visibility": "release_record",
         "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Evidence-Snapshot.json&mode=preview",
         "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Evidence-Snapshot.json&mode=download",
@@ -230,7 +230,7 @@
         {
           "name": "Release-Evidence-Snapshot.json",
           "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-Evidence-Snapshot.json",
-          "size": 11387,
+          "size": 11388,
           "visibility": "release_record",
           "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Evidence-Snapshot.json&mode=preview",
           "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Evidence-Snapshot.json&mode=download",
@@ -239,7 +239,7 @@
         {
           "name": "Release-Evidence-Snapshot.md",
           "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-Evidence-Snapshot.md",
-          "size": 3888,
+          "size": 3889,
           "visibility": "release_record",
           "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Evidence-Snapshot.md&mode=preview",
           "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Evidence-Snapshot.md&mode=download",
@@ -257,7 +257,7 @@
       "primary_file": {
         "name": "Owner-Review-Package-Manifest.json",
         "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Owner-Review-Package-Manifest.json",
-        "size": 10150,
+        "size": 10151,
         "visibility": "release_record",
         "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Review-Package-Manifest.json&mode=preview",
         "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Review-Package-Manifest.json&mode=download",
@@ -267,7 +267,7 @@
         {
           "name": "Owner-Review-Package-Manifest.json",
           "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Owner-Review-Package-Manifest.json",
-          "size": 10150,
+          "size": 10151,
           "visibility": "release_record",
           "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Review-Package-Manifest.json&mode=preview",
           "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Review-Package-Manifest.json&mode=download",
@@ -285,10 +285,47 @@
         {
           "name": "AIvaMax-Owner-Review-Package.zip",
           "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/AIvaMax-Owner-Review-Package.zip",
-          "size": 101612,
+          "size": 103412,
           "visibility": "release_record",
           "preview_url": null,
           "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FAIvaMax-Owner-Review-Package.zip&mode=download",
+          "exists": true
+        }
+      ]
+    },
+    {
+      "id": "owner_decision_runbook",
+      "title": "Owner decision runbook",
+      "command": "aivamax.ps1 release-owner-decision-runbook",
+      "status": "ready_for_owner_decision",
+      "existing_file_count": 2,
+      "required_file_count": 2,
+      "primary_file": {
+        "name": "Owner-Decision-Runbook.json",
+        "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Owner-Decision-Runbook.json",
+        "size": 12236,
+        "visibility": "release_record",
+        "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Decision-Runbook.json&mode=preview",
+        "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Decision-Runbook.json&mode=download",
+        "exists": true
+      },
+      "files": [
+        {
+          "name": "Owner-Decision-Runbook.json",
+          "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Owner-Decision-Runbook.json",
+          "size": 12236,
+          "visibility": "release_record",
+          "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Decision-Runbook.json&mode=preview",
+          "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Decision-Runbook.json&mode=download",
+          "exists": true
+        },
+        {
+          "name": "Owner-Decision-Runbook.md",
+          "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Owner-Decision-Runbook.md",
+          "size": 5805,
+          "visibility": "release_record",
+          "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Decision-Runbook.md&mode=preview",
+          "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Decision-Runbook.md&mode=download",
           "exists": true
         }
       ]
@@ -346,21 +383,26 @@
     },
     {
       "priority": 5,
+      "title": "Generate owner decision runbook",
+      "command": "aivamax.ps1 release-owner-decision-runbook"
+    },
+    {
+      "priority": 6,
       "title": "Refresh owner handoff dashboard",
       "command": "aivamax.ps1 release-owner-handoff"
     },
     {
-      "priority": 6,
+      "priority": 7,
       "title": "Refresh owner evidence snapshot",
       "command": "aivamax.ps1 release-evidence-snapshot"
     },
     {
-      "priority": 7,
+      "priority": 8,
       "title": "Dry-run owner approval path before signoff",
       "command": "aivamax.ps1 release-decision-dry-run --decision approved --json"
     },
     {
-      "priority": 8,
+      "priority": 9,
       "title": "After owner approval, run guarded post-approval workflow",
       "command": "aivamax.ps1 release-post-approval-workflow"
     }

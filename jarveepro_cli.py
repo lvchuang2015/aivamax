@@ -7502,6 +7502,33 @@ def run_release_owner_review_package(args: argparse.Namespace) -> int:
     return 0 if result.get("ok") else 1
 
 
+def run_release_owner_decision_runbook(args: argparse.Namespace) -> int:
+    from aivamax_services import release_owner_decision_runbook
+
+    result = release_owner_decision_runbook(
+        {
+            "signer": args.signer,
+            "version": args.version,
+            "notes": args.notes,
+            "require_ready": args.require_ready,
+        },
+        data_dir=Path(args.data_dir),
+        brand_config_path=Path(args.brand_config),
+        role=args.role,
+    )
+    if args.json:
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+    else:
+        payload = result.get("result", {})
+        release = payload.get("release", {})
+        runbook = payload.get("runbook", {})
+        print(f"Owner decision runbook: {payload.get('runbook_status')}")
+        print(f"Release ID: {release.get('release_id')} | decision={release.get('decision')} | distribution={release.get('distribution_status')}")
+        if runbook.get("markdown"):
+            print(f"Runbook: {runbook['markdown'].get('path')}")
+    return 0 if result.get("ok") else 1
+
+
 def run_release_distribution_package(args: argparse.Namespace) -> int:
     from aivamax_services import release_distribution_package
 
@@ -7895,6 +7922,15 @@ def build_parser() -> argparse.ArgumentParser:
     release_owner_review_package_parser.add_argument("--require-ready", action=argparse.BooleanOptionalAction, default=True)
     release_owner_review_package_parser.add_argument("--json", action="store_true")
     release_owner_review_package_parser.set_defaults(func=run_release_owner_review_package)
+
+    release_owner_decision_runbook_parser = sub.add_parser("release-owner-decision-runbook", help="Generate the AIvaMax owner decision runbook without approving or distributing.")
+    release_owner_decision_runbook_parser.add_argument("--role", default="owner_admin", choices=["owner_admin", "team_operator", "instructor_private", "student_public"])
+    release_owner_decision_runbook_parser.add_argument("--signer", default="owner_admin")
+    release_owner_decision_runbook_parser.add_argument("--version", default="course-factory-v1")
+    release_owner_decision_runbook_parser.add_argument("--notes", default="")
+    release_owner_decision_runbook_parser.add_argument("--require-ready", action=argparse.BooleanOptionalAction, default=True)
+    release_owner_decision_runbook_parser.add_argument("--json", action="store_true")
+    release_owner_decision_runbook_parser.set_defaults(func=run_release_owner_decision_runbook)
 
     release_distribution_package_parser = sub.add_parser("release-distribution-package", help="Generate the approved AIvaMax distribution package after approved signoff.")
     release_distribution_package_parser.add_argument("--role", default="owner_admin", choices=["owner_admin", "team_operator", "instructor_private", "student_public"])

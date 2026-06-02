@@ -274,6 +274,9 @@ class AIvaMaxCLITest(unittest.TestCase):
         release_owner_review_package_args = parser.parse_args(["release-owner-review-package"])
         self.assertEqual(release_owner_review_package_args.role, "owner_admin")
         self.assertEqual(release_owner_review_package_args.decision, "approved")
+        release_owner_decision_runbook_args = parser.parse_args(["release-owner-decision-runbook"])
+        self.assertEqual(release_owner_decision_runbook_args.role, "owner_admin")
+        self.assertEqual(release_owner_decision_runbook_args.version, "course-factory-v1")
         prd_status_args = parser.parse_args(["course-factory-prd-status"])
         self.assertEqual(prd_status_args.role, "owner_admin")
         release_distribution_args = parser.parse_args(["release-distribution-package"])
@@ -397,6 +400,7 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("aivamax_release_decision_dry_run", tool_names)
         self.assertIn("aivamax_release_evidence_snapshot", tool_names)
         self.assertIn("aivamax_release_owner_review_package", tool_names)
+        self.assertIn("aivamax_release_owner_decision_runbook", tool_names)
         self.assertIn("aivamax_release_distribution_status", tool_names)
         self.assertIn("aivamax_release_distribution_package", tool_names)
         self.assertIn("aivamax_release_distribution_delivery_record", tool_names)
@@ -629,6 +633,14 @@ class AIvaMaxCLITest(unittest.TestCase):
         )
         self.assertFalse(blocked_owner_review_package["ok"])
         self.assertEqual(blocked_owner_review_package["error"], "permission_denied")
+        blocked_owner_decision_runbook = mcp.call_tool(
+            "aivamax_release_owner_decision_runbook",
+            {"role": "student_public"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_owner_decision_runbook["ok"])
+        self.assertEqual(blocked_owner_decision_runbook["error"], "permission_denied")
         blocked_distribution = mcp.call_tool(
             "aivamax_release_distribution_package",
             {"role": "student_public"},
@@ -929,8 +941,10 @@ class AIvaMaxCLITest(unittest.TestCase):
         owner_tools = {item["id"]: item for item in result["owner_review_tools"]}
         self.assertIn("release_review_pack", owner_tools)
         self.assertIn("owner_review_package", owner_tools)
+        self.assertIn("owner_decision_runbook", owner_tools)
         self.assertIn("post_approval_workflow", owner_tools)
         self.assertEqual(owner_tools["owner_review_package"]["command"], "aivamax.ps1 release-owner-review-package")
+        self.assertEqual(owner_tools["owner_decision_runbook"]["command"], "aivamax.ps1 release-owner-decision-runbook")
         self.assertEqual(owner_tools["release_evidence_snapshot"]["command"], "aivamax.ps1 release-evidence-snapshot")
         self.assertIn("release-decision-dry-run", owner_tools["release_decision_dry_run"]["command"])
         next_commands = " ".join(item.get("command", "") for item in result["next_actions"])
@@ -947,6 +961,7 @@ class AIvaMaxCLITest(unittest.TestCase):
         )
         pending_commands = " ".join(item.get("command", "") for item in pending_actions)
         self.assertIn("release-owner-review-package", pending_commands)
+        self.assertIn("release-owner-decision-runbook", pending_commands)
         self.assertIn("release-evidence-snapshot", pending_commands)
         self.assertIn("release-decision-dry-run", pending_commands)
         self.assertIn("release-post-approval-workflow", pending_commands)
@@ -1017,6 +1032,8 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("aivamax_release_evidence_snapshot", team_skill)
         self.assertIn("aivamax_release_owner_review_package", owner_skill)
         self.assertIn("aivamax_release_owner_review_package", team_skill)
+        self.assertIn("aivamax_release_owner_decision_runbook", owner_skill)
+        self.assertIn("aivamax_release_owner_decision_runbook", team_skill)
         self.assertIn("aivamax_release_distribution_status", owner_skill)
         self.assertIn("aivamax_release_distribution_package", owner_skill)
         self.assertIn("aivamax_release_distribution_delivery_record", owner_skill)
@@ -2805,6 +2822,46 @@ Module {number} production output
                 latest_after_review_package = json.loads(response.read().decode("utf-8"))
             self.assertEqual(latest_after_review_package["result"]["release_id"], signoff["release_id"])
             self.assertEqual(latest_after_review_package["result"]["decision"], "pending_review")
+
+            runbook_request = urllib.request.Request(
+                base + "/api/actions/release-owner-decision-runbook",
+                data=json.dumps({
+                    "signer": "owner_admin",
+                    "version": "test-course-factory-v1",
+                    "notes": "Owner decision runbook only.",
+                    "require_ready": False,
+                }).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(runbook_request, timeout=60) as response:
+                runbook_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(runbook_payload["ok"], runbook_payload)
+            runbook = runbook_payload["result"]
+            self.assertEqual(runbook["release"]["release_id"], signoff["release_id"])
+            self.assertEqual(runbook["release"]["decision"], "pending_review")
+            self.assertIn(runbook["runbook_status"], {"ready_for_owner_decision", "review"})
+            self.assertEqual(runbook["owner_confirmation_phrases"]["approved"], "APPROVE AIVAMAX RELEASE")
+            self.assertEqual(runbook["owner_confirmation_phrases"]["rejected"], "REJECT AIVAMAX RELEASE")
+            self.assertFalse(runbook["post_approval_workflow"]["safe_to_run_now"])
+            self.assertTrue(any("release-post-approval-workflow" in item.get("command", "") for item in runbook["command_plan"]))
+            self.assertTrue(any(item.get("label") == "Owner review package archive" for item in runbook["evidence_to_review"]))
+            runbook_path = core.resolve_reported_path(runbook["runbook"]["markdown"]["path"])
+            self.assertTrue(runbook_path and runbook_path.exists())
+            runbook_markdown = runbook_path.read_text(encoding="utf-8")
+            self.assertIn("Owner Decision Runbook", runbook_markdown)
+            self.assertIn("Approval Path", runbook_markdown)
+            self.assertIn("Rejection Path", runbook_markdown)
+            self.assertIn("This runbook prepares the owner decision path only", runbook_markdown)
+            self.assert_public_clean(runbook_markdown)
+            with urllib.request.urlopen(base + "/api/release-owner-decision-runbook", timeout=60) as response:
+                get_runbook_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(get_runbook_payload["ok"], get_runbook_payload)
+            self.assertEqual(get_runbook_payload["result"]["release"]["release_id"], signoff["release_id"])
+            with urllib.request.urlopen(base + "/api/release-record/latest", timeout=20) as response:
+                latest_after_runbook = json.loads(response.read().decode("utf-8"))
+            self.assertEqual(latest_after_runbook["result"]["release_id"], signoff["release_id"])
+            self.assertEqual(latest_after_runbook["result"]["decision"], "pending_review")
 
             with urllib.request.urlopen(base + "/api/release-review-pack", timeout=20) as response:
                 get_review_pack_payload = json.loads(response.read().decode("utf-8"))

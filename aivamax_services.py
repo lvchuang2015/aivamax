@@ -164,6 +164,7 @@ MCP_TOOL_ROLE_ALLOWLIST: dict[str, set[str]] = {
     "aivamax_release_decision_dry_run": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_evidence_snapshot": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_owner_review_package": {OWNER_ADMIN, TEAM_OPERATOR},
+    "aivamax_release_owner_decision_runbook": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_distribution_status": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_distribution_package": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_distribution_delivery_record": {OWNER_ADMIN},
@@ -202,6 +203,7 @@ COURSE_FACTORY_SCENARIO_CONFIG = "90_Templates/Tables/course_factory_client_scen
 COURSE_FACTORY_RELEASE_STATUS_BASENAME = "Course-Factory-Release-Status"
 COURSE_FACTORY_PRD_STATUS_BASENAME = "Course-Factory-PRD-Status"
 FINAL_RELEASE_BUNDLE_BASENAME = "AIvaMax-Course-Factory-Final-Release"
+OWNER_DECISION_RUNBOOK_BASENAME = "Owner-Decision-Runbook"
 
 
 @dataclass(frozen=True)
@@ -839,6 +841,7 @@ def resolve_release_record_file(
         or candidate.name.startswith("Release-Evidence-Snapshot")
         or candidate.name.startswith("Owner-Review-Package")
         or candidate.name.startswith("AIvaMax-Owner-Review-Package")
+        or candidate.name.startswith("Owner-Decision-Runbook")
         or candidate.name.startswith("Post-Approval-Workflow")
     )
     if candidate.suffix.lower() not in {".json", ".md", ".zip"} or not allowed_name:
@@ -2652,6 +2655,14 @@ def course_factory_prd_owner_review_tools(ctx: ServiceContext) -> list[dict[str,
             "status_field": "package_status",
         },
         {
+            "id": "owner_decision_runbook",
+            "title": "Owner decision runbook",
+            "command": "aivamax.ps1 release-owner-decision-runbook",
+            "files": [f"{OWNER_DECISION_RUNBOOK_BASENAME}.json", f"{OWNER_DECISION_RUNBOOK_BASENAME}.md"],
+            "status_file": f"{OWNER_DECISION_RUNBOOK_BASENAME}.json",
+            "status_field": "runbook_status",
+        },
+        {
             "id": "post_approval_workflow",
             "title": "Post-approval workflow gate",
             "command": "aivamax.ps1 release-post-approval-workflow",
@@ -2770,10 +2781,11 @@ def course_factory_prd_status_next_actions(checks: list[dict[str, Any]]) -> list
         add(3, "Generate owner release review pack", "aivamax.ps1 release-review-pack")
     if status_by_id.get("owner_release_decision", {}).get("status") == "pending_owner":
         add(4, "Generate or refresh owner review ZIP package", "aivamax.ps1 release-owner-review-package")
-        add(5, "Refresh owner handoff dashboard", "aivamax.ps1 release-owner-handoff")
-        add(6, "Refresh owner evidence snapshot", "aivamax.ps1 release-evidence-snapshot")
-        add(7, "Dry-run owner approval path before signoff", "aivamax.ps1 release-decision-dry-run --decision approved --json")
-        add(8, "After owner approval, run guarded post-approval workflow", "aivamax.ps1 release-post-approval-workflow")
+        add(5, "Generate owner decision runbook", "aivamax.ps1 release-owner-decision-runbook")
+        add(6, "Refresh owner handoff dashboard", "aivamax.ps1 release-owner-handoff")
+        add(7, "Refresh owner evidence snapshot", "aivamax.ps1 release-evidence-snapshot")
+        add(8, "Dry-run owner approval path before signoff", "aivamax.ps1 release-decision-dry-run --decision approved --json")
+        add(9, "After owner approval, run guarded post-approval workflow", "aivamax.ps1 release-post-approval-workflow")
         return actions
     if status_by_id.get("approved_distribution_package", {}).get("status") == "review":
         add(5, "Generate approved package and delivery record after owner approval", "aivamax.ps1 release-post-approval-workflow")
@@ -4121,12 +4133,17 @@ def release_decision_dry_run(
             "Console approval or rejection still requires the exact owner confirmation phrase.",
         ],
     }
-    dry_run["report"] = persist_release_decision_dry_run(dry_run, ctx)
-    public_paths = [
-        dry_run["report"]["json"]["path"],
-        dry_run["report"]["markdown"]["path"],
-        *public_paths_from_result({"release_record": record.get("record", {}), "review_pack": review.get("pack", {})}),
-    ]
+    persist_report = request_bool(request, "persist", True)
+    public_paths = public_paths_from_result({"release_record": record.get("record", {}), "review_pack": review.get("pack", {})})
+    if persist_report:
+        dry_run["report"] = persist_release_decision_dry_run(dry_run, ctx)
+        public_paths = [
+            dry_run["report"]["json"]["path"],
+            dry_run["report"]["markdown"]["path"],
+            *public_paths,
+        ]
+    else:
+        dry_run["report"] = None
     return service_response(
         action="aivamax_release_decision_dry_run",
         role=caller_role,
@@ -4548,6 +4565,324 @@ def release_owner_review_package(
         result=manifest,
         public_paths=public_paths,
         audit={"passed": package_status == "ready_for_owner_review", "package_status": package_status, "release_id": (manifest.get("release") or {}).get("release_id")},
+    )
+
+
+def render_release_owner_decision_runbook_markdown(runbook: dict[str, Any], brand_config: dict[str, Any]) -> str:
+    brand = brand_config.get("public_brand", "AIvaMax")
+    phrase_rows = "\n".join(
+        f"| {decision} | `{phrase}` |"
+        for decision, phrase in runbook.get("owner_confirmation_phrases", {}).items()
+    ) or "| - | - |"
+    evidence_rows = "\n".join(
+        f"| {item.get('label')} | {item.get('status')} | {item.get('path') or '-'} | {item.get('preview_url') or '-'} | {item.get('download_url') or '-'} |"
+        for item in runbook.get("evidence_to_review", [])
+    ) or "| - | - | - | - | - |"
+    approval_rows = "\n".join(
+        f"| {item.get('stage')} | {item.get('label')} | {item.get('cli_command')} |"
+        for item in runbook.get("approval_path", {}).get("next_steps", [])
+    ) or "| - | - | - |"
+    rejection_rows = "\n".join(
+        f"| {item.get('stage')} | {item.get('label')} | {item.get('cli_command')} |"
+        for item in runbook.get("rejection_path", {}).get("next_steps", [])
+    ) or "| - | - | - |"
+    command_rows = "\n".join(
+        f"| {item.get('stage')} | {item.get('purpose')} | {item.get('command')} |"
+        for item in runbook.get("command_plan", [])
+    ) or "| - | - | - |"
+    guardrail_rows = "\n".join(f"- {item}" for item in runbook.get("guardrails", [])) or "- -"
+    return scrub_text(f"""---
+type: owner_decision_runbook
+public_brand: {brand}
+visibility: internal_release_record
+status: {runbook.get("runbook_status")}
+---
+
+# {brand} Owner Decision Runbook
+
+| Field | Value |
+| --- | --- |
+| Generated at | {runbook.get("generated_at")} |
+| Runbook status | {runbook.get("runbook_status")} |
+| Caller role | {runbook.get("caller_role")} |
+| Release ID | {runbook.get("release", {}).get("release_id")} |
+| Release decision | {runbook.get("release", {}).get("decision")} |
+| Review status | {runbook.get("release", {}).get("review_status")} |
+| Distribution status | {runbook.get("release", {}).get("distribution_status")} |
+| PRD acceptance | {runbook.get("prd", {}).get("acceptance_status")} |
+| Owner review package | {runbook.get("owner_review_package", {}).get("package_status")} |
+| Evidence files | {runbook.get("owner_review_package", {}).get("evidence_file_count")} |
+| Approved distribution exists | {runbook.get("distribution", {}).get("has_existing_distribution")} |
+| Delivery record exists | {runbook.get("distribution", {}).get("has_delivery_record")} |
+
+## Owner Confirmation Phrases
+
+| Decision | Required Console Phrase |
+| --- | --- |
+{phrase_rows}
+
+## Evidence To Review
+
+| Evidence | Status | Path | Preview | Download |
+| --- | --- | --- | --- | --- |
+{evidence_rows}
+
+## Command Plan
+
+| Stage | Purpose | Command |
+| --- | --- | --- |
+{command_rows}
+
+## Approval Path
+
+| Dry-run Field | Value |
+| --- | --- |
+| Status | {runbook.get("approval_path", {}).get("dry_run_status")} |
+| Service or CLI can record | {runbook.get("approval_path", {}).get("service_can_record")} |
+| Console can record without phrase | {runbook.get("approval_path", {}).get("console_can_record")} |
+| Required Console phrase | {runbook.get("approval_path", {}).get("required_confirmation") or "-"} |
+
+| Stage | Action | Command |
+| --- | --- | --- |
+{approval_rows}
+
+## Rejection Path
+
+| Dry-run Field | Value |
+| --- | --- |
+| Status | {runbook.get("rejection_path", {}).get("dry_run_status")} |
+| Service or CLI can record | {runbook.get("rejection_path", {}).get("service_can_record")} |
+| Console can record without phrase | {runbook.get("rejection_path", {}).get("console_can_record")} |
+| Required Console phrase | {runbook.get("rejection_path", {}).get("required_confirmation") or "-"} |
+
+| Stage | Action | Command |
+| --- | --- | --- |
+{rejection_rows}
+
+## Guardrails
+
+{guardrail_rows}
+
+## Boundary
+
+This runbook prepares the owner decision path only. It does not approve, reject, publish, distribute, generate an approved distribution package, or record delivery evidence.
+""", brand_config)
+
+
+def persist_release_owner_decision_runbook(runbook: dict[str, Any], ctx: ServiceContext) -> dict[str, Any]:
+    root = release_record_root(ctx)
+    root.mkdir(parents=True, exist_ok=True)
+    json_path = root / f"{OWNER_DECISION_RUNBOOK_BASENAME}.json"
+    md_path = root / f"{OWNER_DECISION_RUNBOOK_BASENAME}.md"
+    json_path.write_text(json.dumps(runbook, ensure_ascii=False, indent=2), encoding="utf-8")
+    md_path.write_text(render_release_owner_decision_runbook_markdown(runbook, ctx.brand_config), encoding="utf-8")
+    return {
+        "json": release_record_file_record(json_path),
+        "markdown": release_record_file_record(md_path),
+    }
+
+
+def release_owner_decision_runbook(
+    request: dict[str, Any] | None = None,
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    request = request or {}
+    version = str(request.get("version") or "course-factory-v1")
+    signer = str(request.get("signer") or OWNER_ADMIN)
+    require_ready = request_bool(request, "require_ready", True)
+    package_payload = release_owner_review_package(
+        {
+            "decision": request.get("decision") or "approved",
+            "signer": signer,
+            "version": version,
+            "notes": request.get("notes") or "Owner decision runbook evidence refresh.",
+            "confirmation": request.get("confirmation") or "",
+            "require_ready": require_ready,
+        },
+        data_dir=ctx.data_dir,
+        brand_config_path=ctx.brand_config_path,
+        role=caller_role,
+    )
+    distribution_payload = release_distribution_status(request, data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+    prd_payload = course_factory_prd_status(request, data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+    approval_payload = release_decision_dry_run(
+        {
+            "decision": "approved",
+            "signer": signer,
+            "version": version,
+            "notes": "Owner approval path dry-run for decision runbook.",
+            "confirmation": request.get("approval_confirmation") or "",
+            "require_ready": require_ready,
+            "persist": False,
+        },
+        data_dir=ctx.data_dir,
+        brand_config_path=ctx.brand_config_path,
+        role=OWNER_ADMIN,
+    )
+    rejection_payload = release_decision_dry_run(
+        {
+            "decision": "rejected",
+            "signer": signer,
+            "version": version,
+            "notes": "Owner rejection path dry-run for decision runbook.",
+            "confirmation": request.get("rejection_confirmation") or "",
+            "require_ready": False,
+            "persist": False,
+        },
+        data_dir=ctx.data_dir,
+        brand_config_path=ctx.brand_config_path,
+        role=OWNER_ADMIN,
+    )
+    failed = [
+        payload.get("action", "unknown")
+        for payload in [package_payload, distribution_payload, prd_payload, approval_payload, rejection_payload]
+        if not payload.get("ok")
+    ]
+    if failed:
+        return service_response(
+            action="aivamax_release_owner_decision_runbook",
+            role=caller_role,
+            ok=False,
+            error="runbook_source_failed",
+            result={"failed_sources": failed},
+            warnings=[str(payload.get("error")) for payload in [package_payload, distribution_payload, prd_payload, approval_payload, rejection_payload] if not payload.get("ok")],
+        )
+    package = package_payload.get("result", {})
+    distribution = distribution_payload.get("result", {})
+    prd = prd_payload.get("result", {})
+    approval = approval_payload.get("result", {})
+    rejection = rejection_payload.get("result", {})
+    release = package.get("release", {})
+    decision = str(release.get("decision") or distribution.get("decision") or "unknown")
+    if decision == "pending_review" and package.get("package_status") == "ready_for_owner_review" and prd.get("acceptance_status") == "ready_for_owner_review":
+        runbook_status = "ready_for_owner_decision"
+    elif decision == "approved":
+        runbook_status = "approved_recorded"
+    elif decision == "rejected":
+        runbook_status = "rejected_needs_remediation"
+    else:
+        runbook_status = "review"
+
+    post_approval_report = {
+        "json": release_record_candidate_file(ctx, "Post-Approval-Workflow.json"),
+        "markdown": release_record_candidate_file(ctx, "Post-Approval-Workflow.md"),
+    }
+    evidence_to_review = [
+        {"label": "Owner review package archive", "status": package.get("package_status"), **((package.get("files") or {}).get("archive") or {})},
+        {"label": "Owner review checklist", "status": package.get("package_status"), **((package.get("files") or {}).get("checklist") or {})},
+        {"label": "Owner review manifest", "status": package.get("package_status"), **((package.get("files") or {}).get("manifest") or {})},
+        {"label": "Evidence snapshot", "status": (package.get("evidence_snapshot") or {}).get("status") or package.get("package_status"), **((package.get("evidence_snapshot") or {}).get("markdown") or {})},
+        {"label": "Post-approval workflow report", "status": read_json_file(release_record_root(ctx) / "Post-Approval-Workflow.json").get("workflow_status", "missing"), **post_approval_report["markdown"]},
+    ]
+    command_plan = [
+        {
+            "stage": "refresh_review_package",
+            "purpose": "Refresh owner evidence package before final decision",
+            "command": ".\\aivamax.ps1 release-owner-review-package",
+        },
+        {
+            "stage": "review_runbook",
+            "purpose": "Open this runbook and verify evidence links, hashes, and confirmation phrases",
+            "command": ".\\aivamax.ps1 release-owner-decision-runbook",
+        },
+        {
+            "stage": "approval_dry_run",
+            "purpose": "Preview approval path without writing a signoff record",
+            "command": ".\\aivamax.ps1 release-decision-dry-run --decision approved --json",
+        },
+        {
+            "stage": "rejection_dry_run",
+            "purpose": "Preview rejection path without writing a signoff record",
+            "command": ".\\aivamax.ps1 release-decision-dry-run --decision rejected --json",
+        },
+        {
+            "stage": "after_approval",
+            "purpose": "Generate approved distribution and delivery evidence after owner approval only",
+            "command": ".\\aivamax.ps1 release-post-approval-workflow",
+        },
+    ]
+    runbook = {
+        "generated_at": cli.now_iso(),
+        "public_brand": ctx.brand_config.get("public_brand", "AIvaMax"),
+        "runbook_status": runbook_status,
+        "caller_role": caller_role,
+        "owner_role": OWNER_ADMIN,
+        "release": release,
+        "prd": {
+            "acceptance_status": prd.get("acceptance_status"),
+            "summary": prd.get("summary", {}),
+            "report": prd.get("report", {}),
+        },
+        "owner_review_package": {
+            "package_status": package.get("package_status"),
+            "evidence_file_count": package.get("evidence_file_count"),
+            "archive": package.get("archive"),
+            "files": package.get("files"),
+        },
+        "distribution": {
+            "distribution_status": distribution.get("distribution_status"),
+            "can_generate": distribution.get("can_generate"),
+            "has_existing_distribution": distribution.get("has_existing_distribution"),
+            "has_delivery_record": distribution.get("has_delivery_record"),
+            "required_action": distribution.get("required_action"),
+        },
+        "owner_confirmation_phrases": OWNER_RELEASE_CONFIRMATIONS,
+        "approval_path": {
+            "dry_run_status": approval.get("dry_run_status"),
+            "service_can_record": (approval.get("service_channel") or {}).get("can_record"),
+            "console_can_record": (approval.get("console_channel") or {}).get("can_record"),
+            "required_confirmation": (approval.get("owner_confirmation") or {}).get("required_phrase"),
+            "blockers": approval.get("blockers", {}),
+            "next_steps": approval.get("next_steps", []),
+        },
+        "rejection_path": {
+            "dry_run_status": rejection.get("dry_run_status"),
+            "service_can_record": (rejection.get("service_channel") or {}).get("can_record"),
+            "console_can_record": (rejection.get("console_channel") or {}).get("can_record"),
+            "required_confirmation": (rejection.get("owner_confirmation") or {}).get("required_phrase"),
+            "blockers": rejection.get("blockers", {}),
+            "next_steps": rejection.get("next_steps", []),
+        },
+        "post_approval_workflow": {
+            "command": ".\\aivamax.ps1 release-post-approval-workflow",
+            "existing_report": post_approval_report,
+            "safe_to_run_now": decision == "approved" and bool(distribution.get("can_generate") or distribution.get("has_existing_distribution")),
+        },
+        "evidence_to_review": evidence_to_review,
+        "command_plan": command_plan,
+        "guardrails": [
+            "Runbook generation does not approve or reject the release.",
+            "Runbook generation does not call the post-approval workflow.",
+            "Approved and rejected decisions remain owner_admin-only.",
+            "Console final decisions require the exact confirmation phrase.",
+            "Approved distribution remains blocked until the latest release signoff is approved and hash-matched.",
+        ],
+    }
+    runbook["runbook"] = persist_release_owner_decision_runbook(runbook, ctx)
+    public_paths = [
+        runbook["runbook"]["json"]["path"],
+        runbook["runbook"]["markdown"]["path"],
+        *public_paths_from_result({
+            "owner_review_package": runbook.get("owner_review_package", {}),
+            "post_approval_workflow": runbook.get("post_approval_workflow", {}),
+        }),
+    ]
+    public_paths = [
+        path
+        for path in sorted(set(public_paths))
+        if (core.resolve_reported_path(path) and core.resolve_reported_path(path).exists())
+    ]
+    return service_response(
+        action="aivamax_release_owner_decision_runbook",
+        role=caller_role,
+        result=runbook,
+        public_paths=public_paths,
+        audit={"passed": runbook_status in {"ready_for_owner_decision", "approved_recorded"}, "runbook_status": runbook_status, "release_id": release.get("release_id")},
     )
 
 
@@ -6132,6 +6467,7 @@ def render_skill(role: str) -> str:
             "aivamax_release_decision_dry_run",
             "aivamax_release_evidence_snapshot",
             "aivamax_release_owner_review_package",
+            "aivamax_release_owner_decision_runbook",
             "aivamax_release_distribution_status",
             "aivamax_release_distribution_package",
             "aivamax_generate_client_pack",

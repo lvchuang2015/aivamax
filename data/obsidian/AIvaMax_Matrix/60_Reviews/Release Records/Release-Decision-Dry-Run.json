@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-02T09:14:05+00:00",
+  "generated_at": "2026-06-02T13:03:15+00:00",
   "public_brand": "AIvaMax",
   "dry_run": true,
   "dry_run_status": "approval_ready",
@@ -20,7 +20,7 @@
     "decision": "approved",
     "signer": "owner_admin",
     "version": "course-factory-v1",
-    "notes": "Evidence snapshot dry-run.",
+    "notes": "Owner decision runbook evidence refresh.",
     "would_create_new_release_record": true,
     "would_replace_latest_release_record": true,
     "would_generate_distribution_package": false,

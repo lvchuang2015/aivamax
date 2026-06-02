@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-02T09:14:05+00:00",
+  "generated_at": "2026-06-02T13:03:14+00:00",
   "public_brand": "AIvaMax",
   "handoff_status": "ready_for_owner_review",
   "release": {
@@ -21,7 +21,7 @@
       "json": {
         "name": "Course-Factory-PRD-Status.json",
         "path": "data/obsidian/AIvaMax_Matrix/00_Dashboards/Course-Factory-PRD-Status.json",
-        "size": 17682,
+        "size": 19051,
         "visibility": "internal_dashboard",
         "preview_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-PRD-Status.json&mode=preview",
         "download_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-PRD-Status.json&mode=download"
@@ -29,7 +29,7 @@
       "markdown": {
         "name": "Course-Factory-PRD-Status.md",
         "path": "data/obsidian/AIvaMax_Matrix/00_Dashboards/Course-Factory-PRD-Status.md",
-        "size": 3525,
+        "size": 3786,
         "visibility": "internal_dashboard",
         "preview_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-PRD-Status.md&mode=preview",
         "download_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-PRD-Status.md&mode=download"
@@ -122,21 +122,26 @@
     },
     {
       "priority": 5,
+      "title": "Generate owner decision runbook",
+      "command": "aivamax.ps1 release-owner-decision-runbook"
+    },
+    {
+      "priority": 6,
       "title": "Refresh owner handoff dashboard",
       "command": "aivamax.ps1 release-owner-handoff"
     },
     {
-      "priority": 6,
+      "priority": 7,
       "title": "Refresh owner evidence snapshot",
       "command": "aivamax.ps1 release-evidence-snapshot"
     },
     {
-      "priority": 7,
+      "priority": 8,
       "title": "Dry-run owner approval path before signoff",
       "command": "aivamax.ps1 release-decision-dry-run --decision approved --json"
     },
     {
-      "priority": 8,
+      "priority": 9,
       "title": "After owner approval, run guarded post-approval workflow",
       "command": "aivamax.ps1 release-post-approval-workflow"
     }

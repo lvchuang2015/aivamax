@@ -42,6 +42,7 @@ from aivamax_services import (
     release_decision_dry_run,
     release_evidence_snapshot,
     release_owner_handoff,
+    release_owner_decision_runbook,
     release_owner_review_package,
     release_post_approval_workflow,
     release_review_pack,
@@ -153,6 +154,7 @@ def console_html() -> str:
       <button onclick="runAction('release-decision-dry-run')">Decision Dry Run</button>
       <button onclick="runAction('release-evidence-snapshot')">Evidence Snapshot</button>
       <button onclick="runAction('release-owner-review-package')">Owner Review Package</button>
+      <button onclick="runAction('release-owner-decision-runbook')">Owner Decision Runbook</button>
       <button onclick="runAction('release-distribution-package')">Distribution Package</button>
       <button onclick="runAction('release-distribution-delivery-record')">Delivery Record</button>
       <button onclick="runAction('release-post-approval-workflow')">Post Approval Workflow</button>
@@ -900,6 +902,10 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                 payload = release_owner_review_package({"decision": "approved"}, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.NOT_FOUND, payload)
                 return
+            if route == "/api/release-owner-decision-runbook":
+                payload = release_owner_decision_runbook(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.NOT_FOUND, payload)
+                return
             if route == "/api/release-distribution-package":
                 payload = release_distribution_status(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.NOT_FOUND, payload)
@@ -1083,6 +1089,15 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                     return
                 body.setdefault("decision", "approved")
                 payload = release_owner_review_package(body, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.INTERNAL_SERVER_ERROR, payload)
+                return
+            if route == "/api/actions/release-owner-decision-runbook":
+                try:
+                    body = read_json_body(self)
+                except ValueError as exc:
+                    json_response(self, HTTPStatus.BAD_REQUEST, {"ok": False, "error": "invalid_json", "message": str(exc)})
+                    return
+                payload = release_owner_decision_runbook(body, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.INTERNAL_SERVER_ERROR, payload)
                 return
             if route == "/api/actions/release-distribution-package":

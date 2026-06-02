@@ -1,0 +1,253 @@
+{
+  "generated_at": "2026-06-02T13:03:19+00:00",
+  "public_brand": "AIvaMax",
+  "runbook_status": "ready_for_owner_decision",
+  "caller_role": "owner_admin",
+  "owner_role": "owner_admin",
+  "release": {
+    "release_id": "REL-20260602061539",
+    "decision": "pending_review",
+    "review_status": "awaiting_owner_approval",
+    "distribution_status": "release_not_approved",
+    "ready_to_release": true,
+    "can_generate_distribution": false
+  },
+  "prd": {
+    "acceptance_status": "ready_for_owner_review",
+    "summary": {
+      "passed": 8,
+      "pending_owner": 3,
+      "review": 0,
+      "total": 11
+    },
+    "report": {
+      "json": {
+        "name": "Course-Factory-PRD-Status.json",
+        "path": "data/obsidian/AIvaMax_Matrix/00_Dashboards/Course-Factory-PRD-Status.json",
+        "size": 19051,
+        "visibility": "internal_dashboard",
+        "preview_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-PRD-Status.json&mode=preview",
+        "download_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-PRD-Status.json&mode=download"
+      },
+      "markdown": {
+        "name": "Course-Factory-PRD-Status.md",
+        "path": "data/obsidian/AIvaMax_Matrix/00_Dashboards/Course-Factory-PRD-Status.md",
+        "size": 3786,
+        "visibility": "internal_dashboard",
+        "preview_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-PRD-Status.md&mode=preview",
+        "download_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-PRD-Status.md&mode=download"
+      }
+    }
+  },
+  "owner_review_package": {
+    "package_status": "ready_for_owner_review",
+    "evidence_file_count": 15,
+    "archive": {
+      "name": "AIvaMax-Owner-Review-Package.zip",
+      "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/AIvaMax-Owner-Review-Package.zip",
+      "size": 103412,
+      "sha256": "9d347c6676520221cde2793f9df61e984a01f5152ab413d7f29ce1bb7302a039"
+    },
+    "files": {
+      "manifest": {
+        "name": "Owner-Review-Package-Manifest.json",
+        "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Owner-Review-Package-Manifest.json",
+        "size": 8507,
+        "visibility": "release_record",
+        "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Review-Package-Manifest.json&mode=preview",
+        "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Review-Package-Manifest.json&mode=download"
+      },
+      "checklist": {
+        "name": "Owner-Review-Package-Checklist.md",
+        "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Owner-Review-Package-Checklist.md",
+        "size": 3100,
+        "visibility": "release_record",
+        "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Review-Package-Checklist.md&mode=preview",
+        "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Review-Package-Checklist.md&mode=download"
+      },
+      "archive": {
+        "name": "AIvaMax-Owner-Review-Package.zip",
+        "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/AIvaMax-Owner-Review-Package.zip",
+        "size": 103412,
+        "visibility": "release_record",
+        "preview_url": null,
+        "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FAIvaMax-Owner-Review-Package.zip&mode=download"
+      }
+    }
+  },
+  "distribution": {
+    "distribution_status": "release_not_approved",
+    "can_generate": false,
+    "has_existing_distribution": false,
+    "has_delivery_record": false,
+    "required_action": "Run release-review-pack and record an approved signoff before distribution."
+  },
+  "owner_confirmation_phrases": {
+    "approved": "APPROVE AIVAMAX RELEASE",
+    "rejected": "REJECT AIVAMAX RELEASE"
+  },
+  "approval_path": {
+    "dry_run_status": "approval_ready",
+    "service_can_record": true,
+    "console_can_record": false,
+    "required_confirmation": "APPROVE AIVAMAX RELEASE",
+    "blockers": {
+      "service_or_cli": [],
+      "console": [
+        "owner_confirmation_required"
+      ]
+    },
+    "next_steps": [
+      {
+        "stage": "record_decision",
+        "label": "Record owner approval",
+        "cli_command": ".\\aivamax.ps1 release-signoff-record --decision approved --signer owner_admin --version course-factory-v1 --notes \"Owner approved after review.\""
+      },
+      {
+        "stage": "after_approval",
+        "label": "Generate approved distribution package",
+        "cli_command": ".\\aivamax.ps1 release-distribution-package"
+      },
+      {
+        "stage": "after_distribution",
+        "label": "Record delivery evidence after handoff",
+        "cli_command": ".\\aivamax.ps1 release-distribution-delivery-record --recipient-label internal_distribution_recipient --delivery-channel manual_handoff --notes \"Approved distribution package handed off.\""
+      }
+    ]
+  },
+  "rejection_path": {
+    "dry_run_status": "rejection_ready",
+    "service_can_record": true,
+    "console_can_record": false,
+    "required_confirmation": "REJECT AIVAMAX RELEASE",
+    "blockers": {
+      "service_or_cli": [],
+      "console": [
+        "owner_confirmation_required"
+      ]
+    },
+    "next_steps": [
+      {
+        "stage": "record_decision",
+        "label": "Record owner rejection",
+        "cli_command": ".\\aivamax.ps1 release-signoff-record --decision rejected --signer owner_admin --version course-factory-v1 --notes \"Owner rejected; remediation required.\""
+      },
+      {
+        "stage": "after_rejection",
+        "label": "Refresh release readiness after remediation",
+        "cli_command": ".\\aivamax.ps1 course-factory-release-status"
+      }
+    ]
+  },
+  "post_approval_workflow": {
+    "command": ".\\aivamax.ps1 release-post-approval-workflow",
+    "existing_report": {
+      "json": {
+        "name": "Post-Approval-Workflow.json",
+        "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Post-Approval-Workflow.json",
+        "size": 2278,
+        "visibility": "release_record",
+        "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FPost-Approval-Workflow.json&mode=preview",
+        "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FPost-Approval-Workflow.json&mode=download",
+        "exists": true
+      },
+      "markdown": {
+        "name": "Post-Approval-Workflow.md",
+        "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Post-Approval-Workflow.md",
+        "size": 980,
+        "visibility": "release_record",
+        "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FPost-Approval-Workflow.md&mode=preview",
+        "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FPost-Approval-Workflow.md&mode=download",
+        "exists": true
+      }
+    },
+    "safe_to_run_now": false
+  },
+  "evidence_to_review": [
+    {
+      "label": "Owner review package archive",
+      "status": "ready_for_owner_review",
+      "name": "AIvaMax-Owner-Review-Package.zip",
+      "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/AIvaMax-Owner-Review-Package.zip",
+      "size": 103412,
+      "visibility": "release_record",
+      "preview_url": null,
+      "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FAIvaMax-Owner-Review-Package.zip&mode=download"
+    },
+    {
+      "label": "Owner review checklist",
+      "status": "ready_for_owner_review",
+      "name": "Owner-Review-Package-Checklist.md",
+      "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Owner-Review-Package-Checklist.md",
+      "size": 3100,
+      "visibility": "release_record",
+      "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Review-Package-Checklist.md&mode=preview",
+      "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Review-Package-Checklist.md&mode=download"
+    },
+    {
+      "label": "Owner review manifest",
+      "status": "ready_for_owner_review",
+      "name": "Owner-Review-Package-Manifest.json",
+      "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Owner-Review-Package-Manifest.json",
+      "size": 8507,
+      "visibility": "release_record",
+      "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Review-Package-Manifest.json&mode=preview",
+      "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Review-Package-Manifest.json&mode=download"
+    },
+    {
+      "label": "Evidence snapshot",
+      "status": "ready_for_owner_review",
+      "name": "Release-Evidence-Snapshot.md",
+      "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-Evidence-Snapshot.md",
+      "size": 3889,
+      "visibility": "release_record",
+      "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Evidence-Snapshot.md&mode=preview",
+      "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Evidence-Snapshot.md&mode=download"
+    },
+    {
+      "label": "Post-approval workflow report",
+      "status": "blocked_pre_approval",
+      "name": "Post-Approval-Workflow.md",
+      "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Post-Approval-Workflow.md",
+      "size": 980,
+      "visibility": "release_record",
+      "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FPost-Approval-Workflow.md&mode=preview",
+      "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FPost-Approval-Workflow.md&mode=download",
+      "exists": true
+    }
+  ],
+  "command_plan": [
+    {
+      "stage": "refresh_review_package",
+      "purpose": "Refresh owner evidence package before final decision",
+      "command": ".\\aivamax.ps1 release-owner-review-package"
+    },
+    {
+      "stage": "review_runbook",
+      "purpose": "Open this runbook and verify evidence links, hashes, and confirmation phrases",
+      "command": ".\\aivamax.ps1 release-owner-decision-runbook"
+    },
+    {
+      "stage": "approval_dry_run",
+      "purpose": "Preview approval path without writing a signoff record",
+      "command": ".\\aivamax.ps1 release-decision-dry-run --decision approved --json"
+    },
+    {
+      "stage": "rejection_dry_run",
+      "purpose": "Preview rejection path without writing a signoff record",
+      "command": ".\\aivamax.ps1 release-decision-dry-run --decision rejected --json"
+    },
+    {
+      "stage": "after_approval",
+      "purpose": "Generate approved distribution and delivery evidence after owner approval only",
+      "command": ".\\aivamax.ps1 release-post-approval-workflow"
+    }
+  ],
+  "guardrails": [
+    "Runbook generation does not approve or reject the release.",
+    "Runbook generation does not call the post-approval workflow.",
+    "Approved and rejected decisions remain owner_admin-only.",
+    "Console final decisions require the exact confirmation phrase.",
+    "Approved distribution remains blocked until the latest release signoff is approved and hash-matched."
+  ]
+}

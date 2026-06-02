@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-02T09:14:05+00:00",
+  "generated_at": "2026-06-02T13:03:15+00:00",
   "public_brand": "AIvaMax",
   "package_status": "ready_for_owner_review",
   "release": {
@@ -71,16 +71,16 @@
       "label": "PRD status JSON",
       "group": "release_review",
       "path": "data/obsidian/AIvaMax_Matrix/00_Dashboards/Course-Factory-PRD-Status.json",
-      "size": 17682,
-      "sha256": "30d84602a40fa0c1854a2a00571e3e72ad3e91e931fac5397f1888cef6ad31a1",
+      "size": 19051,
+      "sha256": "e2be808ef8c60b20852c08ae78f947a9f75d3b3854d64326ce6479e5e25e05d4",
       "archive_path": "evidence/release-review/Course-Factory-PRD-Status.json"
     },
     {
       "label": "PRD status Markdown",
       "group": "release_review",
       "path": "data/obsidian/AIvaMax_Matrix/00_Dashboards/Course-Factory-PRD-Status.md",
-      "size": 3525,
-      "sha256": "1a7db7dce227aed1252ecd68a7267a799c8ffbfe296030562b980f3689095cc4",
+      "size": 3786,
+      "sha256": "4633fac33fcdd1720359ad475c3cb3e8c7b1e251bcc414fa3a41185857b9b177",
       "archive_path": "evidence/release-review/Course-Factory-PRD-Status.md"
     },
     {
@@ -88,7 +88,7 @@
       "group": "release_review",
       "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-Review-Pack.json",
       "size": 10861,
-      "sha256": "9382ad872aff470ba78f2988b75f1c5e2a08c5d3286eb8eb50586d82d7c8f09c",
+      "sha256": "6f34e728cf9d84807c13f6e057c03a1c883220233a02151b0d0e50a5b0d80181",
       "archive_path": "evidence/release-review/Release-Review-Pack.json"
     },
     {
@@ -96,31 +96,31 @@
       "group": "release_review",
       "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-Review-Pack.md",
       "size": 5428,
-      "sha256": "5a2321ab78586f047a320f541c8a78139ff8150874e852a719c3fc21599c8433",
+      "sha256": "1ce011070b800552da635cb01dd73f014fe0ce3254f9ca8e5413151bbeedf083",
       "archive_path": "evidence/release-review/Release-Review-Pack.md"
     },
     {
       "label": "Owner handoff JSON",
       "group": "release_review",
       "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Owner-Release-Handoff.json",
-      "size": 7782,
-      "sha256": "9161b3f0ddfe9e20e20f58586cee596046c230514712f86e3904b07eaaf8d6bc",
+      "size": 7933,
+      "sha256": "c763632bb88dcaea2209b7445a951eecdf90abd546f5058733b8dbda39a41cc1",
       "archive_path": "evidence/release-review/Owner-Release-Handoff.json"
     },
     {
       "label": "Owner handoff Markdown",
       "group": "release_review",
       "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Owner-Release-Handoff.md",
-      "size": 3939,
-      "sha256": "82774f9952b6499a1ddc64a77a7c58e18aa4dbccbdb7855d4c0252c425b3f6be",
+      "size": 4025,
+      "sha256": "170906ad4f8a27476cf449b34e1308aa28dbb569547162cac8f14467f520af54",
       "archive_path": "evidence/release-review/Owner-Release-Handoff.md"
     },
     {
       "label": "Decision dry-run JSON",
       "group": "release_review",
       "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-Decision-Dry-Run.json",
-      "size": 3596,
-      "sha256": "9a0475da0fa8ae3aa4164512068dd6b3599a65c7c28948fd3e17179ef1e8fe33",
+      "size": 3610,
+      "sha256": "90f88df84b905e322430a361c4d813002569b5d79dad28f60667451182b53ce5",
       "archive_path": "evidence/release-review/Release-Decision-Dry-Run.json"
     },
     {
@@ -128,7 +128,7 @@
       "group": "release_review",
       "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-Decision-Dry-Run.md",
       "size": 2020,
-      "sha256": "9edbf0b8ca8faaade3e62b39e60f5eb4fdbced1adf2caf3122e2b0de39a5ca7c",
+      "sha256": "cae998e06ab6cc5ee8cafa8157e4bdcb1b9de536197d97c885f0bc46331f87da",
       "archive_path": "evidence/release-review/Release-Decision-Dry-Run.md"
     },
     {
@@ -160,7 +160,7 @@
       "group": "review_evidence",
       "path": "data/obsidian/AIvaMax_Matrix/00_Dashboards/Course-Factory-Release-Status.md",
       "size": 1664,
-      "sha256": "cce4c285333c4b05288c4a50668f13e54ee8183a9469cdcc1bcb93dabb25c34a",
+      "sha256": "06030f7b14c3f23a8d1001f3cae6bce1f6e1d182e274c12db033af88de82e684",
       "archive_path": "evidence/review-evidence/Course-Factory-Release-Status.md"
     },
     {
@@ -168,7 +168,7 @@
       "group": "review_evidence",
       "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-History-Dashboard.md",
       "size": 789,
-      "sha256": "4409a8add325d4e9f8fb9abc4df4c27ba00e01bfc403dddef279a1072fad1b24",
+      "sha256": "44fe175c2da293960c5bca7dad437421a39a810e5a8493e8be783d4bd226f627",
       "archive_path": "evidence/review-evidence/Release-History-Dashboard.md"
     }
   ],
@@ -181,8 +181,8 @@
   "archive": {
     "name": "AIvaMax-Owner-Review-Package.zip",
     "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/AIvaMax-Owner-Review-Package.zip",
-    "size": 103205,
-    "sha256": "2574079459b6e904070faaa308486f53130673cefc4f735447b27a7f4874ea49"
+    "size": 103412,
+    "sha256": "9d347c6676520221cde2793f9df61e984a01f5152ab413d7f29ce1bb7302a039"
   },
   "files": {
     "manifest": {
@@ -204,7 +204,7 @@
     "archive": {
       "name": "AIvaMax-Owner-Review-Package.zip",
       "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/AIvaMax-Owner-Review-Package.zip",
-      "size": 103205,
+      "size": 103412,
       "visibility": "release_record",
       "preview_url": null,
       "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FAIvaMax-Owner-Review-Package.zip&mode=download"
