@@ -161,6 +161,7 @@ MCP_TOOL_ROLE_ALLOWLIST: dict[str, set[str]] = {
     "aivamax_release_history": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_review_pack": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_owner_handoff": {OWNER_ADMIN, TEAM_OPERATOR},
+    "aivamax_release_decision_dry_run": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_distribution_status": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_distribution_package": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_distribution_delivery_record": {OWNER_ADMIN},
@@ -830,6 +831,7 @@ def resolve_release_record_file(
         or candidate.name.startswith("Release-History-Dashboard")
         or candidate.name.startswith("Release-Review-Pack")
         or candidate.name.startswith("Owner-Release-Handoff")
+        or candidate.name.startswith("Release-Decision-Dry-Run")
     )
     if candidate.suffix.lower() not in {".json", ".md"} or not allowed_name:
         raise PermissionError("Release record file is not allowlisted.")
@@ -3721,6 +3723,298 @@ def release_owner_handoff(
     )
 
 
+def render_release_decision_dry_run_markdown(dry_run: dict[str, Any], brand_config: dict[str, Any]) -> str:
+    brand = brand_config.get("public_brand", "AIvaMax")
+    gate_rows = "\n".join(
+        f"| {name} | {item.get('status')} | {item.get('detail')} |"
+        for name, item in dry_run.get("gates", {}).items()
+    ) or "| - | - | - |"
+    blocker_rows = "\n".join(
+        f"| {channel} | {', '.join(blockers) if blockers else 'none'} |"
+        for channel, blockers in dry_run.get("blockers", {}).items()
+    ) or "| - | - |"
+    next_rows = "\n".join(
+        f"| {item.get('stage')} | {item.get('label')} | {item.get('cli_command')} |"
+        for item in dry_run.get("next_steps", [])
+    ) or "| - | - | - |"
+    return scrub_text(f"""---
+type: release_decision_dry_run
+public_brand: {brand}
+visibility: internal_release_record
+status: {dry_run.get("dry_run_status")}
+---
+
+# {brand} Release Decision Dry Run
+
+| Field | Value |
+| --- | --- |
+| Generated at | {dry_run.get("generated_at")} |
+| Dry run status | {dry_run.get("dry_run_status")} |
+| Requested decision | {dry_run.get("requested_decision")} |
+| Current release ID | {dry_run.get("current_release", {}).get("release_id")} |
+| Current decision | {dry_run.get("current_release", {}).get("decision")} |
+| Ready to release | {dry_run.get("current_release", {}).get("ready_to_release")} |
+| Service/CLI can record | {dry_run.get("service_channel", {}).get("can_record")} |
+| Console can record | {dry_run.get("console_channel", {}).get("can_record")} |
+| Required confirmation | {dry_run.get("owner_confirmation", {}).get("required_phrase") or "-"} |
+| Confirmation valid | {dry_run.get("owner_confirmation", {}).get("valid")} |
+
+## Gates
+
+| Gate | Status | Detail |
+| --- | --- | --- |
+{gate_rows}
+
+## Blockers
+
+| Channel | Blockers |
+| --- | --- |
+{blocker_rows}
+
+## Next Steps
+
+| Stage | Action | Command |
+| --- | --- | --- |
+{next_rows}
+
+## Boundary
+
+This dry run predicts the owner decision path. It does not approve, reject, create a signoff record, publish, distribute, or record delivery evidence.
+""", brand_config)
+
+
+def persist_release_decision_dry_run(dry_run: dict[str, Any], ctx: ServiceContext) -> dict[str, Any]:
+    root = release_record_root(ctx)
+    root.mkdir(parents=True, exist_ok=True)
+    json_path = root / "Release-Decision-Dry-Run.json"
+    md_path = root / "Release-Decision-Dry-Run.md"
+    json_path.write_text(json.dumps(dry_run, ensure_ascii=False, indent=2), encoding="utf-8")
+    md_path.write_text(render_release_decision_dry_run_markdown(dry_run, ctx.brand_config), encoding="utf-8")
+    return {
+        "json": release_record_file_record(json_path),
+        "markdown": release_record_file_record(md_path),
+    }
+
+
+def release_decision_dry_run_next_steps(decision: str, service_can_record: bool) -> list[dict[str, str]]:
+    if not service_can_record:
+        return [
+            {
+                "stage": "before_decision",
+                "label": "Review dry-run blockers",
+                "cli_command": ".\\aivamax.ps1 release-decision-dry-run --decision approved --json",
+            }
+        ]
+    if decision == "approved":
+        return [
+            {
+                "stage": "record_decision",
+                "label": "Record owner approval",
+                "cli_command": ".\\aivamax.ps1 release-signoff-record --decision approved --signer owner_admin --version course-factory-v1 --notes \"Owner approved after review.\"",
+            },
+            {
+                "stage": "after_approval",
+                "label": "Generate approved distribution package",
+                "cli_command": ".\\aivamax.ps1 release-distribution-package",
+            },
+            {
+                "stage": "after_distribution",
+                "label": "Record delivery evidence after handoff",
+                "cli_command": ".\\aivamax.ps1 release-distribution-delivery-record --recipient-label internal_distribution_recipient --delivery-channel manual_handoff --notes \"Approved distribution package handed off.\"",
+            },
+        ]
+    if decision == "rejected":
+        return [
+            {
+                "stage": "record_decision",
+                "label": "Record owner rejection",
+                "cli_command": ".\\aivamax.ps1 release-signoff-record --decision rejected --signer owner_admin --version course-factory-v1 --notes \"Owner rejected; remediation required.\"",
+            },
+            {
+                "stage": "after_rejection",
+                "label": "Refresh release readiness after remediation",
+                "cli_command": ".\\aivamax.ps1 course-factory-release-status",
+            },
+        ]
+    return [
+        {
+            "stage": "record_decision",
+            "label": "Record pending review evidence",
+            "cli_command": ".\\aivamax.ps1 release-signoff-record --decision pending_review --signer owner_admin --version course-factory-v1 --notes \"Pending owner review.\"",
+        },
+        {
+            "stage": "after_pending_review",
+            "label": "Generate owner review pack",
+            "cli_command": ".\\aivamax.ps1 release-review-pack",
+        },
+    ]
+
+
+def release_decision_dry_run(
+    request: dict[str, Any] | None = None,
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    request = request or {}
+    try:
+        decision = normalize_signoff_decision(request.get("decision") or "approved")
+    except ValueError as exc:
+        return service_response(action="aivamax_release_decision_dry_run", role=caller_role, ok=False, error="invalid_decision", warnings=[str(exc)])
+
+    latest_payload = latest_release_record(data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+    if not latest_payload.get("ok"):
+        return service_response(
+            action="aivamax_release_decision_dry_run",
+            role=caller_role,
+            ok=False,
+            error=latest_payload.get("error", "no_release_record"),
+            warnings=latest_payload.get("warnings", []),
+        )
+    record = latest_payload.get("result", {})
+    review_payload = release_review_pack(request, data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+    distribution_payload = release_distribution_status(request, data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+    review = review_payload.get("result", {}) if review_payload.get("ok") else {}
+    distribution = distribution_payload.get("result", {}) if distribution_payload.get("ok") else {}
+
+    require_ready = request_bool(request, "require_ready", True)
+    ready_to_release = bool(record.get("ready_to_release")) and bool(review.get("ready_to_release", True))
+    archive_path = core.resolve_reported_path((record.get("bundle") or {}).get("archive_path"))
+    archive_exists = bool(archive_path and archive_path.exists())
+    expected_sha = str((record.get("bundle") or {}).get("sha256") or "")
+    actual_sha = sha256_file(archive_path) if archive_exists and archive_path else ""
+    bundle_hash_matches = bool(expected_sha and actual_sha and expected_sha == actual_sha)
+    role_can_record = signoff_decision_allowed_for_role(decision, caller_role)
+    required_confirmation = OWNER_RELEASE_CONFIRMATIONS.get(decision)
+    provided_confirmation = str(request.get("confirmation") or "").strip()
+    confirmation_valid = not required_confirmation or provided_confirmation == required_confirmation
+
+    service_blockers: list[str] = []
+    if not role_can_record:
+        service_blockers.append("owner_approval_required")
+    if require_ready and not ready_to_release:
+        service_blockers.append("release_not_ready")
+    if not archive_exists:
+        service_blockers.append("current_release_archive_missing")
+    if expected_sha and archive_exists and not bundle_hash_matches:
+        service_blockers.append("current_release_hash_mismatch")
+
+    console_blockers = list(service_blockers)
+    if required_confirmation and not confirmation_valid:
+        console_blockers.append("owner_confirmation_required")
+
+    service_can_record = not service_blockers
+    console_can_record = not console_blockers
+    if service_can_record and decision == "approved":
+        dry_run_status = "approval_ready"
+    elif service_can_record and decision == "rejected":
+        dry_run_status = "rejection_ready"
+    elif service_can_record:
+        dry_run_status = "pending_review_ready"
+    else:
+        dry_run_status = "blocked"
+
+    dry_run = {
+        "generated_at": cli.now_iso(),
+        "public_brand": ctx.brand_config.get("public_brand", "AIvaMax"),
+        "dry_run": True,
+        "dry_run_status": dry_run_status,
+        "requested_decision": decision,
+        "require_ready": require_ready,
+        "caller_role": caller_role,
+        "current_release": {
+            "release_id": record.get("release_id"),
+            "decision": record.get("decision"),
+            "review_status": review.get("review_status"),
+            "distribution_status": distribution.get("distribution_status"),
+            "ready_to_release": ready_to_release,
+            "version": record.get("version"),
+            "bundle_sha256": expected_sha,
+            "bundle_archive": (record.get("bundle") or {}).get("archive_path"),
+        },
+        "intended_record": {
+            "decision": decision,
+            "signer": scrub_text(str(request.get("signer") or caller_role), ctx.brand_config),
+            "version": scrub_text(str(request.get("version") or record.get("version") or "course-factory-v1"), ctx.brand_config),
+            "notes": scrub_text(str(request.get("notes") or ""), ctx.brand_config),
+            "would_create_new_release_record": True,
+            "would_replace_latest_release_record": True,
+            "would_generate_distribution_package": False,
+            "would_record_delivery_evidence": False,
+        },
+        "owner_confirmation": {
+            "required_for_console": bool(required_confirmation),
+            "required_phrase": required_confirmation,
+            "provided": bool(provided_confirmation),
+            "valid": confirmation_valid,
+        },
+        "service_channel": {
+            "name": "service_or_cli",
+            "can_record": service_can_record,
+            "requires_confirmation_phrase": False,
+        },
+        "console_channel": {
+            "name": "console",
+            "can_record": console_can_record,
+            "requires_confirmation_phrase": bool(required_confirmation),
+        },
+        "gates": {
+            "role_permission": {
+                "status": "passed" if role_can_record else "blocked",
+                "detail": f"caller_role={caller_role}, final_decision_owner={OWNER_ADMIN}",
+            },
+            "release_ready": {
+                "status": "passed" if ready_to_release else "blocked",
+                "detail": f"require_ready={require_ready}, ready_to_release={ready_to_release}",
+            },
+            "bundle_archive": {
+                "status": "passed" if archive_exists else "blocked",
+                "detail": (record.get("bundle") or {}).get("archive_path") or "missing archive path",
+            },
+            "bundle_hash": {
+                "status": "passed" if bundle_hash_matches else "blocked",
+                "detail": f"expected={expected_sha[:12]}, actual={actual_sha[:12]}",
+            },
+            "console_confirmation": {
+                "status": "passed" if confirmation_valid else "blocked",
+                "detail": "confirmation valid" if confirmation_valid else "confirmation phrase required for Console final decision",
+            },
+        },
+        "blockers": {
+            "service_or_cli": service_blockers,
+            "console": console_blockers,
+        },
+        "distribution_effect": {
+            "would_unlock_distribution": decision == "approved" and service_can_record,
+            "current_distribution_status": distribution.get("distribution_status"),
+            "post_decision_expected_status": "ready_to_generate" if decision == "approved" and service_can_record else ("rejected_needs_remediation" if decision == "rejected" and service_can_record else "awaiting_owner_approval"),
+        },
+        "next_steps": release_decision_dry_run_next_steps(decision, service_can_record),
+        "guardrails": [
+            "Dry run does not call release_signoff_record.",
+            "Dry run does not generate the approved distribution package.",
+            "Dry run does not record delivery evidence.",
+            "Console approval or rejection still requires the exact owner confirmation phrase.",
+        ],
+    }
+    dry_run["report"] = persist_release_decision_dry_run(dry_run, ctx)
+    public_paths = [
+        dry_run["report"]["json"]["path"],
+        dry_run["report"]["markdown"]["path"],
+        *public_paths_from_result({"release_record": record.get("record", {}), "review_pack": review.get("pack", {})}),
+    ]
+    return service_response(
+        action="aivamax_release_decision_dry_run",
+        role=caller_role,
+        result=dry_run,
+        public_paths=public_paths,
+        audit={"passed": service_can_record, "dry_run_status": dry_run_status, "decision": decision},
+    )
+
+
 def render_distribution_checklist_markdown(manifest: dict[str, Any], brand_config: dict[str, Any]) -> str:
     brand = brand_config.get("public_brand", "AIvaMax")
     gate_rows = "\n".join(
@@ -5116,6 +5410,7 @@ def render_skill(role: str) -> str:
             "aivamax_release_history",
             "aivamax_release_review_pack",
             "aivamax_release_owner_handoff",
+            "aivamax_release_decision_dry_run",
             "aivamax_release_distribution_status",
             "aivamax_release_distribution_package",
             "aivamax_generate_client_pack",

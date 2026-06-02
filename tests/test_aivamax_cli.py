@@ -265,6 +265,9 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertEqual(release_review_pack_args.role, "owner_admin")
         release_owner_handoff_args = parser.parse_args(["release-owner-handoff"])
         self.assertEqual(release_owner_handoff_args.role, "owner_admin")
+        release_decision_dry_run_args = parser.parse_args(["release-decision-dry-run"])
+        self.assertEqual(release_decision_dry_run_args.role, "owner_admin")
+        self.assertEqual(release_decision_dry_run_args.decision, "approved")
         prd_status_args = parser.parse_args(["course-factory-prd-status"])
         self.assertEqual(prd_status_args.role, "owner_admin")
         release_distribution_args = parser.parse_args(["release-distribution-package"])
@@ -382,6 +385,7 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("aivamax_release_history", tool_names)
         self.assertIn("aivamax_release_review_pack", tool_names)
         self.assertIn("aivamax_release_owner_handoff", tool_names)
+        self.assertIn("aivamax_release_decision_dry_run", tool_names)
         self.assertIn("aivamax_release_distribution_status", tool_names)
         self.assertIn("aivamax_release_distribution_package", tool_names)
         self.assertIn("aivamax_release_distribution_delivery_record", tool_names)
@@ -589,6 +593,14 @@ class AIvaMaxCLITest(unittest.TestCase):
         )
         self.assertFalse(blocked_owner_handoff["ok"])
         self.assertEqual(blocked_owner_handoff["error"], "permission_denied")
+        blocked_decision_dry_run = mcp.call_tool(
+            "aivamax_release_decision_dry_run",
+            {"role": "student_public", "decision": "approved"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_decision_dry_run["ok"])
+        self.assertEqual(blocked_decision_dry_run["error"], "permission_denied")
         blocked_distribution = mcp.call_tool(
             "aivamax_release_distribution_package",
             {"role": "student_public"},
@@ -691,6 +703,19 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertFalse(blocked_delivery["ok"])
         self.assertEqual(blocked_delivery["error"], "distribution_not_approved")
         self.assertFalse((release_root / "Latest-Distribution-Delivery-Record.json").exists())
+        team_dry_run = services.release_decision_dry_run(
+            {"decision": "approved", "signer": "team_operator"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="team_operator",
+        )
+        self.assertTrue(team_dry_run["ok"], team_dry_run)
+        self.assertEqual(team_dry_run["result"]["requested_decision"], "approved")
+        self.assertFalse(team_dry_run["result"]["service_channel"]["can_record"])
+        self.assertIn("owner_approval_required", team_dry_run["result"]["blockers"]["service_or_cli"])
+        team_dry_run_path = core.resolve_reported_path(team_dry_run["result"]["report"]["markdown"]["path"])
+        self.assertTrue(team_dry_run_path and team_dry_run_path.exists())
+        self.assert_public_clean(team_dry_run_path.read_text(encoding="utf-8"))
 
         record["decision"] = "approved"
         latest_path.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -889,6 +914,8 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("aivamax_course_factory_prd_status", team_skill)
         self.assertIn("aivamax_release_owner_handoff", owner_skill)
         self.assertIn("aivamax_release_owner_handoff", team_skill)
+        self.assertIn("aivamax_release_decision_dry_run", owner_skill)
+        self.assertIn("aivamax_release_decision_dry_run", team_skill)
         self.assertIn("aivamax_release_distribution_status", owner_skill)
         self.assertIn("aivamax_release_distribution_package", owner_skill)
         self.assertIn("aivamax_release_distribution_delivery_record", owner_skill)
@@ -2555,6 +2582,48 @@ Module {number} production output
                 get_handoff_payload = json.loads(response.read().decode("utf-8"))
             self.assertTrue(get_handoff_payload["ok"], get_handoff_payload)
             self.assertEqual(get_handoff_payload["result"]["release"]["release_id"], signoff["release_id"])
+
+            dry_run_request = urllib.request.Request(
+                base + "/api/actions/release-decision-dry-run",
+                data=json.dumps({
+                    "decision": "approved",
+                    "signer": "owner_admin",
+                    "version": "test-course-factory-v1",
+                    "notes": "Approval dry-run only.",
+                }).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(dry_run_request, timeout=60) as response:
+                dry_run_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(dry_run_payload["ok"], dry_run_payload)
+            dry_run = dry_run_payload["result"]
+            self.assertTrue(dry_run["dry_run"])
+            self.assertEqual(dry_run["requested_decision"], "approved")
+            self.assertEqual(dry_run["current_release"]["release_id"], signoff["release_id"])
+            self.assertIn(dry_run["dry_run_status"], {"approval_ready", "blocked"})
+            if dry_run["service_channel"]["can_record"]:
+                self.assertFalse(dry_run["blockers"]["service_or_cli"])
+            else:
+                self.assertTrue(dry_run["blockers"]["service_or_cli"])
+            self.assertFalse(dry_run["console_channel"]["can_record"])
+            self.assertIn("owner_confirmation_required", dry_run["blockers"]["console"])
+            self.assertFalse(dry_run["intended_record"]["would_generate_distribution_package"])
+            self.assertFalse(dry_run["intended_record"]["would_record_delivery_evidence"])
+            dry_run_path = core.resolve_reported_path(dry_run["report"]["markdown"]["path"])
+            self.assertTrue(dry_run_path and dry_run_path.exists())
+            dry_run_markdown = dry_run_path.read_text(encoding="utf-8")
+            self.assertIn("Release Decision Dry Run", dry_run_markdown)
+            self.assertIn("This dry run predicts the owner decision path", dry_run_markdown)
+            self.assert_public_clean(dry_run_markdown)
+            with urllib.request.urlopen(base + "/api/release-decision-dry-run", timeout=20) as response:
+                get_dry_run_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(get_dry_run_payload["ok"], get_dry_run_payload)
+            self.assertEqual(get_dry_run_payload["result"]["current_release"]["release_id"], signoff["release_id"])
+            with urllib.request.urlopen(base + "/api/release-record/latest", timeout=20) as response:
+                latest_after_dry_run = json.loads(response.read().decode("utf-8"))
+            self.assertEqual(latest_after_dry_run["result"]["release_id"], signoff["release_id"])
+            self.assertEqual(latest_after_dry_run["result"]["decision"], "pending_review")
 
             with urllib.request.urlopen(base + "/api/release-review-pack", timeout=20) as response:
                 get_review_pack_payload = json.loads(response.read().decode("utf-8"))

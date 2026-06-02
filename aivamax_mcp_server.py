@@ -34,6 +34,7 @@ from aivamax_services import (
     release_distribution_delivery_record,
     release_distribution_package,
     release_distribution_status,
+    release_decision_dry_run,
     release_review_pack,
     release_owner_handoff,
     release_signoff_record,
@@ -259,6 +260,24 @@ TOOL_DEFINITIONS = [
         "inputSchema": {
             "type": "object",
             "properties": {"role": {"type": "string"}},
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "aivamax_release_decision_dry_run",
+        "description": "Preview an AIvaMax owner release decision without writing a signoff record or distributing.",
+        "allowed_roles": ["owner_admin", "team_operator"],
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "role": {"type": "string"},
+                "decision": {"type": "string", "enum": ["pending_review", "approved", "rejected"], "default": "approved"},
+                "signer": {"type": "string"},
+                "version": {"type": "string"},
+                "notes": {"type": "string"},
+                "confirmation": {"type": "string"},
+                "require_ready": {"type": "boolean", "default": True},
+            },
             "additionalProperties": False,
         },
     },
@@ -547,6 +566,8 @@ def call_tool(
             return release_review_pack(arguments, **common)
         if name == "aivamax_release_owner_handoff":
             return release_owner_handoff(arguments, **common)
+        if name == "aivamax_release_decision_dry_run":
+            return release_decision_dry_run(arguments, **common)
         if name == "aivamax_release_distribution_status":
             return release_distribution_status(arguments, **common)
         if name == "aivamax_release_distribution_package":

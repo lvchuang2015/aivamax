@@ -1,0 +1,101 @@
+{
+  "generated_at": "2026-06-02T08:28:04+00:00",
+  "public_brand": "AIvaMax",
+  "dry_run": true,
+  "dry_run_status": "approval_ready",
+  "requested_decision": "approved",
+  "require_ready": true,
+  "caller_role": "owner_admin",
+  "current_release": {
+    "release_id": "REL-20260602061539",
+    "decision": "pending_review",
+    "review_status": "awaiting_owner_approval",
+    "distribution_status": "release_not_approved",
+    "ready_to_release": true,
+    "version": "course-factory-v1",
+    "bundle_sha256": "b226e8ac0db5769328c7754ab034c184212000950414ca4fc6ef2b992d324e26",
+    "bundle_archive": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release.zip"
+  },
+  "intended_record": {
+    "decision": "approved",
+    "signer": "owner_admin",
+    "version": "course-factory-v1",
+    "notes": "",
+    "would_create_new_release_record": true,
+    "would_replace_latest_release_record": true,
+    "would_generate_distribution_package": false,
+    "would_record_delivery_evidence": false
+  },
+  "owner_confirmation": {
+    "required_for_console": true,
+    "required_phrase": "APPROVE AIVAMAX RELEASE",
+    "provided": false,
+    "valid": false
+  },
+  "service_channel": {
+    "name": "service_or_cli",
+    "can_record": true,
+    "requires_confirmation_phrase": false
+  },
+  "console_channel": {
+    "name": "console",
+    "can_record": false,
+    "requires_confirmation_phrase": true
+  },
+  "gates": {
+    "role_permission": {
+      "status": "passed",
+      "detail": "caller_role=owner_admin, final_decision_owner=owner_admin"
+    },
+    "release_ready": {
+      "status": "passed",
+      "detail": "require_ready=True, ready_to_release=True"
+    },
+    "bundle_archive": {
+      "status": "passed",
+      "detail": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release.zip"
+    },
+    "bundle_hash": {
+      "status": "passed",
+      "detail": "expected=b226e8ac0db5, actual=b226e8ac0db5"
+    },
+    "console_confirmation": {
+      "status": "blocked",
+      "detail": "confirmation phrase required for Console final decision"
+    }
+  },
+  "blockers": {
+    "service_or_cli": [],
+    "console": [
+      "owner_confirmation_required"
+    ]
+  },
+  "distribution_effect": {
+    "would_unlock_distribution": true,
+    "current_distribution_status": "release_not_approved",
+    "post_decision_expected_status": "ready_to_generate"
+  },
+  "next_steps": [
+    {
+      "stage": "record_decision",
+      "label": "Record owner approval",
+      "cli_command": ".\\aivamax.ps1 release-signoff-record --decision approved --signer owner_admin --version course-factory-v1 --notes \"Owner approved after review.\""
+    },
+    {
+      "stage": "after_approval",
+      "label": "Generate approved distribution package",
+      "cli_command": ".\\aivamax.ps1 release-distribution-package"
+    },
+    {
+      "stage": "after_distribution",
+      "label": "Record delivery evidence after handoff",
+      "cli_command": ".\\aivamax.ps1 release-distribution-delivery-record --recipient-label internal_distribution_recipient --delivery-channel manual_handoff --notes \"Approved distribution package handed off.\""
+    }
+  ],
+  "guardrails": [
+    "Dry run does not call release_signoff_record.",
+    "Dry run does not generate the approved distribution package.",
+    "Dry run does not record delivery evidence.",
+    "Console approval or rejection still requires the exact owner confirmation phrase."
+  ]
+}

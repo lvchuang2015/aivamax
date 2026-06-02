@@ -7414,6 +7414,36 @@ def run_release_owner_handoff(args: argparse.Namespace) -> int:
     return 0 if result.get("ok") else 1
 
 
+def run_release_decision_dry_run(args: argparse.Namespace) -> int:
+    from aivamax_services import release_decision_dry_run
+
+    request = {
+        "decision": args.decision,
+        "signer": args.signer,
+        "version": args.version,
+        "notes": args.notes,
+        "confirmation": args.confirmation,
+        "require_ready": args.require_ready,
+    }
+    result = release_decision_dry_run(
+        request,
+        data_dir=Path(args.data_dir),
+        brand_config_path=Path(args.brand_config),
+        role=args.role,
+    )
+    if args.json:
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+    else:
+        payload = result.get("result", {})
+        print(f"Release decision dry run: {payload.get('dry_run_status')}")
+        print(f"Decision: {payload.get('requested_decision')} | release={payload.get('current_release', {}).get('release_id')}")
+        print(f"Service/CLI can record: {payload.get('service_channel', {}).get('can_record')} | Console can record: {payload.get('console_channel', {}).get('can_record')}")
+        report = payload.get("report", {})
+        if report.get("markdown"):
+            print(f"Report: {report['markdown'].get('path')}")
+    return 0 if result.get("ok") else 1
+
+
 def run_release_distribution_package(args: argparse.Namespace) -> int:
     from aivamax_services import release_distribution_package
 
@@ -7747,6 +7777,17 @@ def build_parser() -> argparse.ArgumentParser:
     release_owner_handoff_parser.add_argument("--role", default="owner_admin", choices=["owner_admin", "team_operator", "instructor_private", "student_public"])
     release_owner_handoff_parser.add_argument("--json", action="store_true")
     release_owner_handoff_parser.set_defaults(func=run_release_owner_handoff)
+
+    release_decision_dry_run_parser = sub.add_parser("release-decision-dry-run", help="Preview owner release decision impact without writing a signoff record.")
+    release_decision_dry_run_parser.add_argument("--role", default="owner_admin", choices=["owner_admin", "team_operator", "instructor_private", "student_public"])
+    release_decision_dry_run_parser.add_argument("--decision", default="approved", choices=["pending_review", "approved", "rejected"])
+    release_decision_dry_run_parser.add_argument("--signer", default="owner_admin")
+    release_decision_dry_run_parser.add_argument("--version", default="course-factory-v1")
+    release_decision_dry_run_parser.add_argument("--notes", default="")
+    release_decision_dry_run_parser.add_argument("--confirmation", default="")
+    release_decision_dry_run_parser.add_argument("--require-ready", action=argparse.BooleanOptionalAction, default=True)
+    release_decision_dry_run_parser.add_argument("--json", action="store_true")
+    release_decision_dry_run_parser.set_defaults(func=run_release_decision_dry_run)
 
     release_distribution_package_parser = sub.add_parser("release-distribution-package", help="Generate the approved AIvaMax distribution package after approved signoff.")
     release_distribution_package_parser.add_argument("--role", default="owner_admin", choices=["owner_admin", "team_operator", "instructor_private", "student_public"])
