@@ -36,6 +36,7 @@ from aivamax_services import (
     release_distribution_status,
     release_decision_dry_run,
     release_evidence_snapshot,
+    release_owner_review_package,
     release_review_pack,
     release_owner_handoff,
     release_signoff_record,
@@ -285,6 +286,24 @@ TOOL_DEFINITIONS = [
     {
         "name": "aivamax_release_evidence_snapshot",
         "description": "Generate a hashed AIvaMax release evidence snapshot for owner review without approving or distributing.",
+        "allowed_roles": ["owner_admin", "team_operator"],
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "role": {"type": "string"},
+                "decision": {"type": "string", "enum": ["pending_review", "approved", "rejected"], "default": "approved"},
+                "signer": {"type": "string"},
+                "version": {"type": "string"},
+                "notes": {"type": "string"},
+                "confirmation": {"type": "string"},
+                "require_ready": {"type": "boolean", "default": True},
+            },
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "aivamax_release_owner_review_package",
+        "description": "Generate an internal AIvaMax owner review ZIP package without approving or distributing.",
         "allowed_roles": ["owner_admin", "team_operator"],
         "inputSchema": {
             "type": "object",
@@ -589,6 +608,8 @@ def call_tool(
             return release_decision_dry_run(arguments, **common)
         if name == "aivamax_release_evidence_snapshot":
             return release_evidence_snapshot(arguments, **common)
+        if name == "aivamax_release_owner_review_package":
+            return release_owner_review_package(arguments, **common)
         if name == "aivamax_release_distribution_status":
             return release_distribution_status(arguments, **common)
         if name == "aivamax_release_distribution_package":

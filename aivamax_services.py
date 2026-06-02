@@ -163,6 +163,7 @@ MCP_TOOL_ROLE_ALLOWLIST: dict[str, set[str]] = {
     "aivamax_release_owner_handoff": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_decision_dry_run": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_evidence_snapshot": {OWNER_ADMIN, TEAM_OPERATOR},
+    "aivamax_release_owner_review_package": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_distribution_status": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_distribution_package": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_distribution_delivery_record": {OWNER_ADMIN},
@@ -745,12 +746,13 @@ def distribution_file_record(path: Path) -> dict[str, Any]:
 def release_record_file_record(path: Path) -> dict[str, Any]:
     relative = relpath(path)
     quoted = quote(relative, safe="")
+    is_archive = path.suffix.lower() == ".zip"
     return {
         "name": path.name,
         "path": relative,
         "size": path.stat().st_size,
         "visibility": "release_record",
-        "preview_url": f"/api/release-record/file?path={quoted}&mode=preview",
+        "preview_url": None if is_archive else f"/api/release-record/file?path={quoted}&mode=preview",
         "download_url": f"/api/release-record/file?path={quoted}&mode=download",
     }
 
@@ -834,8 +836,10 @@ def resolve_release_record_file(
         or candidate.name.startswith("Owner-Release-Handoff")
         or candidate.name.startswith("Release-Decision-Dry-Run")
         or candidate.name.startswith("Release-Evidence-Snapshot")
+        or candidate.name.startswith("Owner-Review-Package")
+        or candidate.name.startswith("AIvaMax-Owner-Review-Package")
     )
-    if candidate.suffix.lower() not in {".json", ".md"} or not allowed_name:
+    if candidate.suffix.lower() not in {".json", ".md", ".zip"} or not allowed_name:
         raise PermissionError("Release record file is not allowlisted.")
     if not candidate.exists():
         raise FileNotFoundError(str(candidate))
@@ -4254,6 +4258,184 @@ def release_evidence_snapshot(
     )
 
 
+OWNER_REVIEW_PACKAGE_BASENAME = "AIvaMax-Owner-Review-Package"
+
+
+def owner_review_package_paths(ctx: ServiceContext) -> dict[str, Path]:
+    root = release_record_root(ctx)
+    return {
+        "root": root,
+        "manifest": root / "Owner-Review-Package-Manifest.json",
+        "checklist": root / "Owner-Review-Package-Checklist.md",
+        "archive": root / f"{OWNER_REVIEW_PACKAGE_BASENAME}.zip",
+    }
+
+
+def owner_review_archive_name(item: dict[str, Any], used: set[str]) -> str:
+    group = cli.slugify(str(item.get("group") or "evidence"), fallback="evidence", max_len=64)
+    source_name = Path(str(item.get("path") or item.get("label") or "evidence")).name
+    safe_name = re.sub(r'[<>:"/\\|?*\x00-\x1f]+', "-", source_name).strip(" .")
+    if not safe_name:
+        safe_name = "evidence.txt"
+    stem = Path(safe_name).stem
+    suffix = Path(safe_name).suffix or ".txt"
+    arcname = f"evidence/{group}/{stem}{suffix}"
+    counter = 2
+    while arcname in used:
+        arcname = f"evidence/{group}/{stem}-{counter}{suffix}"
+        counter += 1
+    used.add(arcname)
+    return arcname
+
+
+def render_owner_review_package_checklist(manifest: dict[str, Any], brand_config: dict[str, Any]) -> str:
+    brand = brand_config.get("public_brand", "AIvaMax")
+    evidence_rows = "\n".join(
+        f"| {item.get('group')} | {item.get('label')} | {item.get('archive_path')} | {str(item.get('sha256') or '')[:16]} |"
+        for item in manifest.get("evidence_files", [])
+    ) or "| - | - | - | - |"
+    return scrub_text(f"""---
+type: owner_review_package_checklist
+public_brand: {brand}
+visibility: internal_release_record
+status: {manifest.get("package_status")}
+---
+
+# {brand} Owner Review Package Checklist
+
+| Field | Value |
+| --- | --- |
+| Generated at | {manifest.get("generated_at")} |
+| Package status | {manifest.get("package_status")} |
+| Release ID | {manifest.get("release", {}).get("release_id")} |
+| Release decision | {manifest.get("release", {}).get("decision")} |
+| Distribution status | {manifest.get("release", {}).get("distribution_status")} |
+| Evidence files | {manifest.get("evidence_file_count")} |
+| Archive SHA256 | {manifest.get("archive", {}).get("sha256") or "-"} |
+
+## Owner Review Steps
+
+- [ ] Open the evidence snapshot and confirm `missing_file_count` is 0.
+- [ ] Open the final release archive and compare SHA256.
+- [ ] Review the release review pack and owner handoff.
+- [ ] Run decision dry-run or Console decision flow with the required confirmation phrase.
+- [ ] Record approved or rejected signoff only after human review.
+
+## Included Evidence
+
+| Group | Evidence | Package Path | SHA256 Prefix |
+| --- | --- | --- | --- |
+{evidence_rows}
+
+## Boundary
+
+This owner review package is internal evidence for human review. It is not an approved distribution package and does not approve, reject, publish, distribute, or record delivery evidence.
+""", brand_config)
+
+
+def persist_owner_review_package(manifest: dict[str, Any], ctx: ServiceContext) -> dict[str, Any]:
+    paths = owner_review_package_paths(ctx)
+    root = paths["root"]
+    root.mkdir(parents=True, exist_ok=True)
+    paths["manifest"].write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    paths["checklist"].write_text(render_owner_review_package_checklist(manifest, ctx.brand_config), encoding="utf-8")
+    with zipfile.ZipFile(paths["archive"], "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        archive.write(paths["manifest"], arcname=paths["manifest"].name)
+        archive.write(paths["checklist"], arcname=paths["checklist"].name)
+        for item in manifest.get("evidence_files", []):
+            path = core.resolve_reported_path(item.get("path"))
+            if path and path.exists() and path.is_file() and not is_blocked_path(path):
+                archive.write(path, arcname=item.get("archive_path"))
+    manifest["archive"] = {
+        "name": paths["archive"].name,
+        "path": relpath(paths["archive"]),
+        "size": paths["archive"].stat().st_size,
+        "sha256": sha256_file(paths["archive"]),
+    }
+    paths["manifest"].write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    paths["checklist"].write_text(render_owner_review_package_checklist(manifest, ctx.brand_config), encoding="utf-8")
+    return {
+        "manifest": release_record_file_record(paths["manifest"]),
+        "checklist": release_record_file_record(paths["checklist"]),
+        "archive": release_record_file_record(paths["archive"]),
+    }
+
+
+def release_owner_review_package(
+    request: dict[str, Any] | None = None,
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    request = request or {}
+    snapshot_payload = release_evidence_snapshot(request, data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+    if not snapshot_payload.get("ok"):
+        return service_response(
+            action="aivamax_release_owner_review_package",
+            role=caller_role,
+            ok=False,
+            error=snapshot_payload.get("error", "evidence_snapshot_failed"),
+            warnings=snapshot_payload.get("warnings", []),
+        )
+    snapshot = snapshot_payload.get("result", {})
+    archive_paths: set[str] = set()
+    evidence_files: list[dict[str, Any]] = []
+    for item in snapshot.get("evidence_files", []):
+        if not item.get("exists") or not item.get("path"):
+            continue
+        package_item = {
+            "label": item.get("label"),
+            "group": item.get("group"),
+            "path": item.get("path"),
+            "size": item.get("size"),
+            "sha256": item.get("sha256"),
+            "archive_path": owner_review_archive_name(item, archive_paths),
+        }
+        evidence_files.append(package_item)
+    package_status = "ready_for_owner_review" if snapshot.get("snapshot_status") == "ready_for_owner_review" and evidence_files else "review"
+    manifest = {
+        "generated_at": cli.now_iso(),
+        "public_brand": ctx.brand_config.get("public_brand", "AIvaMax"),
+        "package_status": package_status,
+        "release": snapshot.get("release", {}),
+        "prd": snapshot.get("prd", {}),
+        "decision_dry_run": snapshot.get("decision_dry_run", {}),
+        "evidence_snapshot": snapshot.get("snapshot", {}),
+        "evidence_file_count": len(evidence_files),
+        "evidence_files": evidence_files,
+        "guardrails": [
+            "Owner review package does not change the latest release decision.",
+            "Owner review package is not an approved distribution package.",
+            "Owner review package does not record delivery evidence.",
+            "Approved and rejected decisions still require owner_admin.",
+        ],
+    }
+    manifest["files"] = persist_owner_review_package(manifest, ctx)
+    paths = owner_review_package_paths(ctx)
+    paths["manifest"].write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    paths["checklist"].write_text(render_owner_review_package_checklist(manifest, ctx.brand_config), encoding="utf-8")
+    public_paths = [
+        manifest["files"]["manifest"]["path"],
+        manifest["files"]["checklist"]["path"],
+        manifest["files"]["archive"]["path"],
+        *[
+            item["path"]
+            for item in evidence_files
+            if item.get("path")
+        ],
+    ]
+    return service_response(
+        action="aivamax_release_owner_review_package",
+        role=caller_role,
+        result=manifest,
+        public_paths=public_paths,
+        audit={"passed": package_status == "ready_for_owner_review", "package_status": package_status, "release_id": (manifest.get("release") or {}).get("release_id")},
+    )
+
+
 def render_distribution_checklist_markdown(manifest: dict[str, Any], brand_config: dict[str, Any]) -> str:
     brand = brand_config.get("public_brand", "AIvaMax")
     gate_rows = "\n".join(
@@ -5651,6 +5833,7 @@ def render_skill(role: str) -> str:
             "aivamax_release_owner_handoff",
             "aivamax_release_decision_dry_run",
             "aivamax_release_evidence_snapshot",
+            "aivamax_release_owner_review_package",
             "aivamax_release_distribution_status",
             "aivamax_release_distribution_package",
             "aivamax_generate_client_pack",

@@ -271,6 +271,9 @@ class AIvaMaxCLITest(unittest.TestCase):
         release_evidence_snapshot_args = parser.parse_args(["release-evidence-snapshot"])
         self.assertEqual(release_evidence_snapshot_args.role, "owner_admin")
         self.assertEqual(release_evidence_snapshot_args.decision, "approved")
+        release_owner_review_package_args = parser.parse_args(["release-owner-review-package"])
+        self.assertEqual(release_owner_review_package_args.role, "owner_admin")
+        self.assertEqual(release_owner_review_package_args.decision, "approved")
         prd_status_args = parser.parse_args(["course-factory-prd-status"])
         self.assertEqual(prd_status_args.role, "owner_admin")
         release_distribution_args = parser.parse_args(["release-distribution-package"])
@@ -390,6 +393,7 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("aivamax_release_owner_handoff", tool_names)
         self.assertIn("aivamax_release_decision_dry_run", tool_names)
         self.assertIn("aivamax_release_evidence_snapshot", tool_names)
+        self.assertIn("aivamax_release_owner_review_package", tool_names)
         self.assertIn("aivamax_release_distribution_status", tool_names)
         self.assertIn("aivamax_release_distribution_package", tool_names)
         self.assertIn("aivamax_release_distribution_delivery_record", tool_names)
@@ -613,6 +617,14 @@ class AIvaMaxCLITest(unittest.TestCase):
         )
         self.assertFalse(blocked_evidence_snapshot["ok"])
         self.assertEqual(blocked_evidence_snapshot["error"], "permission_denied")
+        blocked_owner_review_package = mcp.call_tool(
+            "aivamax_release_owner_review_package",
+            {"role": "student_public", "decision": "approved"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_owner_review_package["ok"])
+        self.assertEqual(blocked_owner_review_package["error"], "permission_denied")
         blocked_distribution = mcp.call_tool(
             "aivamax_release_distribution_package",
             {"role": "student_public"},
@@ -930,6 +942,8 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("aivamax_release_decision_dry_run", team_skill)
         self.assertIn("aivamax_release_evidence_snapshot", owner_skill)
         self.assertIn("aivamax_release_evidence_snapshot", team_skill)
+        self.assertIn("aivamax_release_owner_review_package", owner_skill)
+        self.assertIn("aivamax_release_owner_review_package", team_skill)
         self.assertIn("aivamax_release_distribution_status", owner_skill)
         self.assertIn("aivamax_release_distribution_package", owner_skill)
         self.assertIn("aivamax_release_distribution_delivery_record", owner_skill)
@@ -2674,6 +2688,48 @@ Module {number} production output
                 latest_after_snapshot = json.loads(response.read().decode("utf-8"))
             self.assertEqual(latest_after_snapshot["result"]["release_id"], signoff["release_id"])
             self.assertEqual(latest_after_snapshot["result"]["decision"], "pending_review")
+
+            review_package_request = urllib.request.Request(
+                base + "/api/actions/release-owner-review-package",
+                data=json.dumps({
+                    "decision": "approved",
+                    "signer": "owner_admin",
+                    "version": "test-course-factory-v1",
+                    "notes": "Owner review package only.",
+                }).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(review_package_request, timeout=60) as response:
+                review_package_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(review_package_payload["ok"], review_package_payload)
+            review_package = review_package_payload["result"]
+            self.assertEqual(review_package["release"]["release_id"], signoff["release_id"])
+            self.assertEqual(review_package["release"]["decision"], "pending_review")
+            self.assertGreaterEqual(review_package["evidence_file_count"], snapshot["evidence_file_count"])
+            package_archive_path = core.resolve_reported_path(review_package["files"]["archive"]["path"])
+            package_checklist_path = core.resolve_reported_path(review_package["files"]["checklist"]["path"])
+            self.assertTrue(package_archive_path and package_archive_path.exists())
+            self.assertTrue(package_checklist_path and package_checklist_path.exists())
+            package_checklist = package_checklist_path.read_text(encoding="utf-8")
+            self.assertIn("Owner Review Package Checklist", package_checklist)
+            self.assertIn("not an approved distribution package", package_checklist)
+            self.assert_public_clean(package_checklist)
+            with zipfile.ZipFile(package_archive_path) as archive:
+                package_names = archive.namelist()
+            self.assertIn("Owner-Review-Package-Manifest.json", package_names)
+            self.assertIn("Owner-Review-Package-Checklist.md", package_names)
+            self.assertTrue(any(name.endswith("AIvaMax-Course-Factory-Final-Release.zip") for name in package_names))
+            with urllib.request.urlopen(base + review_package["files"]["archive"]["download_url"], timeout=20) as response:
+                self.assertGreater(len(response.read()), 1000)
+            with urllib.request.urlopen(base + "/api/release-owner-review-package", timeout=60) as response:
+                get_review_package_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(get_review_package_payload["ok"], get_review_package_payload)
+            self.assertEqual(get_review_package_payload["result"]["release"]["release_id"], signoff["release_id"])
+            with urllib.request.urlopen(base + "/api/release-record/latest", timeout=20) as response:
+                latest_after_review_package = json.loads(response.read().decode("utf-8"))
+            self.assertEqual(latest_after_review_package["result"]["release_id"], signoff["release_id"])
+            self.assertEqual(latest_after_review_package["result"]["decision"], "pending_review")
 
             with urllib.request.urlopen(base + "/api/release-review-pack", timeout=20) as response:
                 get_review_pack_payload = json.loads(response.read().decode("utf-8"))

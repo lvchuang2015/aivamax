@@ -42,6 +42,7 @@ from aivamax_services import (
     release_decision_dry_run,
     release_evidence_snapshot,
     release_owner_handoff,
+    release_owner_review_package,
     release_review_pack,
     release_signoff_record,
     role_inventory,
@@ -150,6 +151,7 @@ def console_html() -> str:
       <button onclick="runAction('release-owner-handoff')">Owner Handoff</button>
       <button onclick="runAction('release-decision-dry-run')">Decision Dry Run</button>
       <button onclick="runAction('release-evidence-snapshot')">Evidence Snapshot</button>
+      <button onclick="runAction('release-owner-review-package')">Owner Review Package</button>
       <button onclick="runAction('release-distribution-package')">Distribution Package</button>
       <button onclick="runAction('release-distribution-delivery-record')">Delivery Record</button>
       <button class="primary" onclick="refreshAll()">刷新状态</button>
@@ -774,7 +776,12 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                 except (PermissionError, FileNotFoundError) as exc:
                     json_response(self, HTTPStatus.FORBIDDEN, {"ok": False, "error": "blocked_release_record_file", "message": str(exc)})
                     return
-                content_type = "application/json; charset=utf-8" if file_path.suffix.lower() == ".json" else "text/markdown; charset=utf-8"
+                if file_path.suffix.lower() == ".zip":
+                    content_type = "application/zip"
+                elif file_path.suffix.lower() == ".json":
+                    content_type = "application/json; charset=utf-8"
+                else:
+                    content_type = "text/markdown; charset=utf-8"
                 binary_file_response(self, file_path, content_type, download=mode == "download")
                 return
             if route == "/api/client-packs/file":
@@ -885,6 +892,10 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                 return
             if route == "/api/release-evidence-snapshot":
                 payload = release_evidence_snapshot({"decision": "approved"}, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.NOT_FOUND, payload)
+                return
+            if route == "/api/release-owner-review-package":
+                payload = release_owner_review_package({"decision": "approved"}, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.NOT_FOUND, payload)
                 return
             if route == "/api/release-distribution-package":
@@ -1056,6 +1067,16 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                     return
                 body.setdefault("decision", "approved")
                 payload = release_evidence_snapshot(body, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.INTERNAL_SERVER_ERROR, payload)
+                return
+            if route == "/api/actions/release-owner-review-package":
+                try:
+                    body = read_json_body(self)
+                except ValueError as exc:
+                    json_response(self, HTTPStatus.BAD_REQUEST, {"ok": False, "error": "invalid_json", "message": str(exc)})
+                    return
+                body.setdefault("decision", "approved")
+                payload = release_owner_review_package(body, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.INTERNAL_SERVER_ERROR, payload)
                 return
             if route == "/api/actions/release-distribution-package":
