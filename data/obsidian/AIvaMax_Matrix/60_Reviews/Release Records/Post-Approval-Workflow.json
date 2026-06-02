@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-02T08:53:53+00:00",
+  "generated_at": "2026-06-02T08:56:35+00:00",
   "public_brand": "AIvaMax",
   "dry_run": false,
   "workflow_status": "blocked_pre_approval",
@@ -9,7 +9,7 @@
   "approved_package_generated": false,
   "delivery_recorded": false,
   "status": {
-    "generated_at": "2026-06-02T08:53:53+00:00",
+    "generated_at": "2026-06-02T08:56:35+00:00",
     "public_brand": "AIvaMax",
     "release_id": "REL-20260602061539",
     "decision": "pending_review",

@@ -926,10 +926,35 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertEqual(check_rows["vendor_source_index"]["status"], "passed")
         self.assertEqual(check_rows["aivamax_templates"]["status"], "passed")
         self.assertIn(result["acceptance_status"], {"review", "ready_for_owner_review", "accepted"})
+        owner_tools = {item["id"]: item for item in result["owner_review_tools"]}
+        self.assertIn("release_review_pack", owner_tools)
+        self.assertIn("owner_review_package", owner_tools)
+        self.assertIn("post_approval_workflow", owner_tools)
+        self.assertEqual(owner_tools["owner_review_package"]["command"], "aivamax.ps1 release-owner-review-package")
+        self.assertEqual(owner_tools["release_evidence_snapshot"]["command"], "aivamax.ps1 release-evidence-snapshot")
+        self.assertIn("release-decision-dry-run", owner_tools["release_decision_dry_run"]["command"])
+        next_commands = " ".join(item.get("command", "") for item in result["next_actions"])
+        self.assertIn("release-post-approval-workflow", next_commands)
+        pending_actions = services.course_factory_prd_status_next_actions(
+            [
+                {"id": "vendor_source_index", "status": "passed"},
+                {"id": "course_factory_release_ready", "status": "passed"},
+                {"id": "release_review_pack", "status": "passed"},
+                {"id": "owner_release_decision", "status": "pending_owner"},
+                {"id": "approved_distribution_package", "status": "pending_owner"},
+                {"id": "distribution_delivery_record", "status": "pending_owner"},
+            ]
+        )
+        pending_commands = " ".join(item.get("command", "") for item in pending_actions)
+        self.assertIn("release-owner-review-package", pending_commands)
+        self.assertIn("release-evidence-snapshot", pending_commands)
+        self.assertIn("release-decision-dry-run", pending_commands)
+        self.assertIn("release-post-approval-workflow", pending_commands)
         report_path = core.resolve_reported_path(result["report"]["markdown"]["path"])
         self.assertTrue(report_path and report_path.exists())
         report_text = report_path.read_text(encoding="utf-8")
         self.assertIn("Course Factory PRD Status", report_text)
+        self.assertIn("Owner Review Tools", report_text)
         dumped = json.dumps(result, ensure_ascii=False)
         self.assertNotIn("source_root", dumped)
         self.assertNotIn("source_path", dumped)

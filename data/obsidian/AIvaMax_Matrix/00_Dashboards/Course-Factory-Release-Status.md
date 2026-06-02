@@ -9,7 +9,7 @@ status: ready
 
 | Field | Value |
 | --- | --- |
-| Generated at | 2026-06-02T08:43:06+00:00 |
+| Generated at | 2026-06-02T09:08:40+00:00 |
 | Readiness | ready |
 | Ready to release | True |
 | Course | AIvaMax社媒自动化增长系统课 |

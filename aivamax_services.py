@@ -2593,6 +2593,96 @@ def scan_prd_public_leaks(ctx: ServiceContext) -> list[dict[str, Any]]:
     return hits
 
 
+def release_record_candidate_file(ctx: ServiceContext, filename: str) -> dict[str, Any]:
+    path = release_record_root(ctx) / filename
+    if path.exists() and path.is_file():
+        record = release_record_file_record(path)
+        record["exists"] = True
+        return record
+    return {
+        "name": filename,
+        "path": relpath(path),
+        "exists": False,
+        "visibility": "release_record",
+        "preview_url": None,
+        "download_url": None,
+    }
+
+
+def course_factory_prd_owner_review_tools(ctx: ServiceContext) -> list[dict[str, Any]]:
+    specs = [
+        {
+            "id": "release_review_pack",
+            "title": "Owner release review pack",
+            "command": "aivamax.ps1 release-review-pack",
+            "files": ["Release-Review-Pack.json", "Release-Review-Pack.md"],
+            "status_file": "Release-Review-Pack.json",
+            "status_field": "review_status",
+        },
+        {
+            "id": "owner_release_handoff",
+            "title": "Owner release handoff",
+            "command": "aivamax.ps1 release-owner-handoff",
+            "files": ["Owner-Release-Handoff.json", "Owner-Release-Handoff.md"],
+            "status_file": "Owner-Release-Handoff.json",
+            "status_field": "handoff_status",
+        },
+        {
+            "id": "release_decision_dry_run",
+            "title": "Release decision dry run",
+            "command": "aivamax.ps1 release-decision-dry-run --decision approved --json",
+            "files": ["Release-Decision-Dry-Run.json", "Release-Decision-Dry-Run.md"],
+            "status_file": "Release-Decision-Dry-Run.json",
+            "status_field": "dry_run_status",
+        },
+        {
+            "id": "release_evidence_snapshot",
+            "title": "Release evidence snapshot",
+            "command": "aivamax.ps1 release-evidence-snapshot",
+            "files": ["Release-Evidence-Snapshot.json", "Release-Evidence-Snapshot.md"],
+            "status_file": "Release-Evidence-Snapshot.json",
+            "status_field": "snapshot_status",
+        },
+        {
+            "id": "owner_review_package",
+            "title": "Owner review ZIP package",
+            "command": "aivamax.ps1 release-owner-review-package",
+            "files": ["Owner-Review-Package-Manifest.json", "Owner-Review-Package-Checklist.md", f"{OWNER_REVIEW_PACKAGE_BASENAME}.zip"],
+            "status_file": "Owner-Review-Package-Manifest.json",
+            "status_field": "package_status",
+        },
+        {
+            "id": "post_approval_workflow",
+            "title": "Post-approval workflow gate",
+            "command": "aivamax.ps1 release-post-approval-workflow",
+            "files": ["Post-Approval-Workflow.json", "Post-Approval-Workflow.md"],
+            "status_file": "Post-Approval-Workflow.json",
+            "status_field": "workflow_status",
+        },
+    ]
+    tools: list[dict[str, Any]] = []
+    for spec in specs:
+        files = [release_record_candidate_file(ctx, filename) for filename in spec["files"]]
+        existing_count = sum(1 for item in files if item.get("exists"))
+        status_payload = read_json_file(release_record_root(ctx) / str(spec["status_file"]))
+        artifact_status = str(status_payload.get(str(spec["status_field"])) or "")
+        if not artifact_status:
+            artifact_status = "generated" if existing_count == len(files) else ("partial" if existing_count else "missing")
+        tools.append(
+            {
+                "id": spec["id"],
+                "title": spec["title"],
+                "command": spec["command"],
+                "status": artifact_status,
+                "existing_file_count": existing_count,
+                "required_file_count": len(files),
+                "primary_file": files[0] if files else None,
+                "files": files,
+            }
+        )
+    return tools
+
+
 def render_course_factory_prd_status_markdown(report: dict[str, Any], brand_config: dict[str, Any]) -> str:
     brand = brand_config.get("public_brand", "AIvaMax")
     check_rows = "\n".join(
@@ -2603,6 +2693,10 @@ def render_course_factory_prd_status_markdown(report: dict[str, Any], brand_conf
         f"| {item.get('priority')} | {item.get('title')} | {item.get('command')} |"
         for item in report.get("next_actions", [])
     ) or "| - | - | - |"
+    tool_rows = "\n".join(
+        f"| {item.get('title')} | {item.get('status')} | {item.get('existing_file_count')}/{item.get('required_file_count')} | {item.get('command')} | {(item.get('primary_file') or {}).get('path') or '-'} |"
+        for item in report.get("owner_review_tools", [])
+    ) or "| - | - | - | - | - |"
     return scrub_text(f"""---
 type: course_factory_prd_status
 public_brand: {brand}
@@ -2634,6 +2728,12 @@ status: {report.get("acceptance_status")}
 | --- | --- | --- |
 {action_rows}
 
+## Owner Review Tools
+
+| Tool | Status | Files | Command | Primary File |
+| --- | --- | --- | --- | --- |
+{tool_rows}
+
 ## Boundary
 
 This dashboard tracks PRD acceptance evidence for the AIvaMax course factory. It does not approve, reject, publish, distribute, or expose vendor source material.
@@ -2654,21 +2754,33 @@ def persist_course_factory_prd_status_report(report: dict[str, Any], ctx: Servic
 def course_factory_prd_status_next_actions(checks: list[dict[str, Any]]) -> list[dict[str, Any]]:
     actions: list[dict[str, Any]] = []
     status_by_id = {item["id"]: item for item in checks}
+    seen_commands: set[str] = set()
+
+    def add(priority: int, title: str, command: str) -> None:
+        if command in seen_commands:
+            return
+        seen_commands.add(command)
+        actions.append({"priority": priority, "title": title, "command": command})
+
     if status_by_id.get("vendor_source_index", {}).get("status") != "passed":
-        actions.append({"priority": 1, "title": "Refresh vendor source index", "command": "aivamax.ps1 index-vendor-source"})
+        add(1, "Refresh vendor source index", "aivamax.ps1 index-vendor-source")
     if status_by_id.get("course_factory_release_ready", {}).get("status") != "passed":
-        actions.append({"priority": 2, "title": "Refresh course factory release readiness", "command": "aivamax.ps1 course-factory-release-status"})
+        add(2, "Refresh course factory release readiness", "aivamax.ps1 course-factory-release-status")
     if status_by_id.get("release_review_pack", {}).get("status") in {"review", "missing"}:
-        actions.append({"priority": 3, "title": "Generate owner release review pack", "command": "aivamax.ps1 release-review-pack"})
+        add(3, "Generate owner release review pack", "aivamax.ps1 release-review-pack")
     if status_by_id.get("owner_release_decision", {}).get("status") == "pending_owner":
-        actions.append({"priority": 4, "title": "Owner reviews release pack and records approval or rejection", "command": "aivamax.ps1 release-review-pack"})
+        add(4, "Generate or refresh owner review ZIP package", "aivamax.ps1 release-owner-review-package")
+        add(5, "Refresh owner handoff dashboard", "aivamax.ps1 release-owner-handoff")
+        add(6, "Refresh owner evidence snapshot", "aivamax.ps1 release-evidence-snapshot")
+        add(7, "Dry-run owner approval path before signoff", "aivamax.ps1 release-decision-dry-run --decision approved --json")
+        add(8, "After owner approval, run guarded post-approval workflow", "aivamax.ps1 release-post-approval-workflow")
         return actions
     if status_by_id.get("approved_distribution_package", {}).get("status") == "review":
-        actions.append({"priority": 5, "title": "Generate approved distribution package", "command": "aivamax.ps1 release-distribution-package"})
+        add(5, "Generate approved package and delivery record after owner approval", "aivamax.ps1 release-post-approval-workflow")
     if status_by_id.get("approved_distribution_package", {}).get("status") == "passed" and status_by_id.get("distribution_delivery_record", {}).get("status") == "pending_owner":
-        actions.append({"priority": 6, "title": "Record owner delivery evidence after handoff", "command": "aivamax.ps1 release-distribution-delivery-record"})
+        add(6, "Record owner delivery evidence after handoff", "aivamax.ps1 release-post-approval-workflow")
     if not actions:
-        actions.append({"priority": 1, "title": "Review PRD status and retain release evidence", "command": "aivamax.ps1 course-factory-prd-status"})
+        add(1, "Review PRD status and retain release evidence", "aivamax.ps1 course-factory-prd-status")
     return actions
 
 
@@ -2795,6 +2907,7 @@ def course_factory_prd_status(
         "acceptance_status": acceptance_status,
         "summary": summary,
         "checks": checks,
+        "owner_review_tools": course_factory_prd_owner_review_tools(ctx),
         "release": {
             "release_id": distribution.get("release_id") or review.get("release_id"),
             "decision": release_decision,
