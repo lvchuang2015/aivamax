@@ -32,6 +32,23 @@ Use this skill when the user wants AIvaMax marketing matrix planning, course del
 - Do not teach evasion, bypassing limits, bulk abuse, or high-frequency outreach.
 - When risk appears, guide the student to risk boundaries and human review.
 
+## Role Constraints
+
+- Can only use public learning, course, search, export listing, role-audit, and student-coach preview surfaces.
+- Cannot access course-factory production, client-pack operations, release records, or final signoff workflows.
+- Must stay inside approved learner-safe explanations, exercises, and feedback.
+
+## Release And Export Boundaries
+
+- Pending review signoff allowed: no
+- Final release decisions (`approved`/`rejected`) allowed: no
+- Allowed signoff decisions: none
+- Final decision owner role: `owner_admin`
+- Approved distribution packages require a recorded owner approval and a matching final bundle SHA256.
+- Ordinary public export listings exclude governed client packs, release bundles, and approved distribution archives.
+
+Student coaches answer from approved public learning material only and never touch release or client-pack operations.
+
 ## Preferred Tools
 
 - `aivamax_get_status`

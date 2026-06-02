@@ -108,6 +108,29 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
     },
 }
 
+ROLE_CONSTRAINTS: dict[str, list[str]] = {
+    OWNER_ADMIN: [
+        "Can record `pending_review`, `approved`, and `rejected` release signoff decisions.",
+        "Can create approved distribution packages only after release gates, owner signoff, and bundle hash checks pass.",
+        "Must keep supplier source material private and route governed exports through the dedicated release/client-pack APIs.",
+    ],
+    TEAM_OPERATOR: [
+        "Can prepare course factory outputs, client packs, final release bundles, pending review records, and review packs.",
+        "Cannot record `approved` or `rejected` final release signoff decisions; escalate those decisions to `owner_admin`.",
+        "Cannot bypass the approved-distribution guard; distribution remains blocked until owner approval is recorded.",
+    ],
+    INSTRUCTOR_PRIVATE: [
+        "Can review private teaching/course materials and client-facing pack outputs.",
+        "Cannot run course-factory production or record release signoff decisions.",
+        "Must keep internal execution material out of student-facing lessons, previews, and public exports.",
+    ],
+    STUDENT_PUBLIC: [
+        "Can only use public learning, course, search, export listing, role-audit, and student-coach preview surfaces.",
+        "Cannot access course-factory production, client-pack operations, release records, or final signoff workflows.",
+        "Must stay inside approved learner-safe explanations, exercises, and feedback.",
+    ],
+}
+
 BLOCKED_PATH_PARTS = [
     "data/raw",
     "data/pages",
@@ -155,6 +178,30 @@ def normalize_role(role: str | None) -> str:
     if role not in ROLES:
         raise ValueError(f"Unknown AIvaMax role: {role}")
     return role
+
+
+def role_constraints(role: str | None) -> list[str]:
+    role = normalize_role(role)
+    return list(ROLE_CONSTRAINTS[role])
+
+
+def role_release_decision_scope(role: str | None) -> dict[str, Any]:
+    role = normalize_role(role)
+    can_record_pending = "course_factory" in ROLE_PERMISSIONS[role]
+    can_record_final = role == OWNER_ADMIN
+    if can_record_final:
+        allowed_decisions = ["pending_review", "approved", "rejected"]
+    elif can_record_pending:
+        allowed_decisions = ["pending_review"]
+    else:
+        allowed_decisions = []
+    return {
+        "can_record_pending_review": can_record_pending,
+        "can_record_final_decision": can_record_final,
+        "allowed_signoff_decisions": allowed_decisions,
+        "final_decision_owner_role": OWNER_ADMIN,
+        "distribution_requires_approved_signoff": True,
+    }
 
 
 def make_context(data_dir: Path | str | None = None, brand_config_path: Path | str | None = None) -> ServiceContext:
@@ -4055,6 +4102,8 @@ def role_inventory(
             "skill": skill_name_for_role(item),
             "skill_path": relpath(ROOT / "skills" / skill_name_for_role(item) / "SKILL.md"),
             "permissions": sorted(ROLE_PERMISSIONS[item]),
+            "constraints": role_constraints(item),
+            "release_decision_scope": role_release_decision_scope(item),
             "audit_passed": bool(audit.get("ok")),
         })
     return service_response(
@@ -4099,6 +4148,22 @@ def render_skill(role: str) -> str:
         STUDENT_PUBLIC: "AIvaMax Student Coach",
     }[role]
     permissions = ", ".join(sorted(ROLE_PERMISSIONS[role]))
+    constraints = "\n".join(f"- {item}" for item in role_constraints(role))
+    release_scope = role_release_decision_scope(role)
+    release_boundary = "\n".join([
+        f"- Pending review signoff allowed: {'yes' if release_scope['can_record_pending_review'] else 'no'}",
+        f"- Final release decisions (`approved`/`rejected`) allowed: {'yes' if release_scope['can_record_final_decision'] else 'no'}",
+        f"- Allowed signoff decisions: {', '.join(release_scope['allowed_signoff_decisions']) or 'none'}",
+        f"- Final decision owner role: `{release_scope['final_decision_owner_role']}`",
+        "- Approved distribution packages require a recorded owner approval and a matching final bundle SHA256.",
+        "- Ordinary public export listings exclude governed client packs, release bundles, and approved distribution archives.",
+    ])
+    role_note = {
+        OWNER_ADMIN: "Owner admins make the final release decision after reviewing the release review pack, gates, bundle manifest, and client-pack QA.",
+        TEAM_OPERATOR: "Team operators prepare and repair release assets, then write `pending_review`; they must escalate `approved`/`rejected` decisions to `owner_admin`.",
+        INSTRUCTOR_PRIVATE: "Instructors review private course quality and client-facing outputs, but do not create final release decisions.",
+        STUDENT_PUBLIC: "Student coaches answer from approved public learning material only and never touch release or client-pack operations.",
+    }[role]
     student_rules = """
 - Only read public course assets and public exports.
 - Coach students through explanation, practice, homework feedback, and review.
@@ -4138,6 +4203,10 @@ def render_skill(role: str) -> str:
             "aivamax_repair_client_pack",
             "aivamax_repair_client_pack_batch",
             "aivamax_export_client_pack_zip",
+        ])
+    elif role == INSTRUCTOR_PRIVATE:
+        preferred_tools.extend([
+            "aivamax_student_coach_preview",
         ])
     if role == STUDENT_PUBLIC:
         preferred_tools.append("aivamax_student_coach_preview")
@@ -4182,6 +4251,16 @@ Use this skill when the user wants AIvaMax marketing matrix planning, course del
 
 {safety_rules.strip()}
 {student_rules}
+## Role Constraints
+
+{constraints}
+
+## Release And Export Boundaries
+
+{release_boundary}
+
+{role_note}
+
 ## Preferred Tools
 
 {tool_lines}

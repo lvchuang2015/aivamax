@@ -11,7 +11,7 @@ Use this skill when the user wants AIvaMax marketing matrix planning, course del
 
 - Role id: `instructor_private`
 - Public brand: `AIvaMax`
-- Allowed service permissions: agent_runs, courses, export_course, host_smoke_test, platforms, public_exports, release_gate, role_audit, run_audit, search_public_knowledge, status, student_coach_preview
+- Allowed service permissions: agent_runs, client_packs, courses, export_course, host_smoke_test, platforms, public_exports, release_gate, role_audit, run_audit, search_public_knowledge, status, student_coach_preview
 
 ## How To Use AIvaMax
 
@@ -28,6 +28,23 @@ Use this skill when the user wants AIvaMax marketing matrix planning, course del
 - Never copy internal-only execution material into student, course, sales, preview, or public export material.
 - All public delivery material must pass brand, artifact, quality, media, and case audits.
 
+## Role Constraints
+
+- Can review private teaching/course materials and client-facing pack outputs.
+- Cannot run course-factory production or record release signoff decisions.
+- Must keep internal execution material out of student-facing lessons, previews, and public exports.
+
+## Release And Export Boundaries
+
+- Pending review signoff allowed: no
+- Final release decisions (`approved`/`rejected`) allowed: no
+- Allowed signoff decisions: none
+- Final decision owner role: `owner_admin`
+- Approved distribution packages require a recorded owner approval and a matching final bundle SHA256.
+- Ordinary public export listings exclude governed client packs, release bundles, and approved distribution archives.
+
+Instructors review private course quality and client-facing outputs, but do not create final release decisions.
+
 ## Preferred Tools
 
 - `aivamax_get_status`
@@ -40,5 +57,6 @@ Use this skill when the user wants AIvaMax marketing matrix planning, course del
 - `aivamax_export_course`
 - `aivamax_get_runtime_status`
 - `aivamax_host_smoke_test`
+- `aivamax_student_coach_preview`
 
 Owner and team roles may also use `aivamax_run_matrix` when generating new project/course assets. Student-facing hosts should prefer `aivamax_student_coach_preview` for learner-safe answers.

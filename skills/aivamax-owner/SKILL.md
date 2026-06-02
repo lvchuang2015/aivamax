@@ -11,7 +11,7 @@ Use this skill when the user wants AIvaMax marketing matrix planning, course del
 
 - Role id: `owner_admin`
 - Public brand: `AIvaMax`
-- Allowed service permissions: agent_runs, courses, export_course, generate_platform_assets, host_smoke_test, material_review, mcp_config_export, platforms, public_exports, release_gate, role_audit, run_audit, run_matrix, search_public_knowledge, skill_export, status, student_coach_preview
+- Allowed service permissions: agent_runs, client_packs, course_factory, courses, export_course, generate_platform_assets, host_smoke_test, material_review, mcp_config_export, platforms, public_exports, release_gate, role_audit, run_audit, run_matrix, search_public_knowledge, skill_export, status, student_coach_preview
 
 ## How To Use AIvaMax
 
@@ -28,6 +28,23 @@ Use this skill when the user wants AIvaMax marketing matrix planning, course del
 - Never copy internal-only execution material into student, course, sales, preview, or public export material.
 - All public delivery material must pass brand, artifact, quality, media, and case audits.
 
+## Role Constraints
+
+- Can record `pending_review`, `approved`, and `rejected` release signoff decisions.
+- Can create approved distribution packages only after release gates, owner signoff, and bundle hash checks pass.
+- Must keep supplier source material private and route governed exports through the dedicated release/client-pack APIs.
+
+## Release And Export Boundaries
+
+- Pending review signoff allowed: yes
+- Final release decisions (`approved`/`rejected`) allowed: yes
+- Allowed signoff decisions: pending_review, approved, rejected
+- Final decision owner role: `owner_admin`
+- Approved distribution packages require a recorded owner approval and a matching final bundle SHA256.
+- Ordinary public export listings exclude governed client packs, release bundles, and approved distribution archives.
+
+Owner admins make the final release decision after reviewing the release review pack, gates, bundle manifest, and client-pack QA.
+
 ## Preferred Tools
 
 - `aivamax_get_status`
@@ -42,5 +59,19 @@ Use this skill when the user wants AIvaMax marketing matrix planning, course del
 - `aivamax_host_smoke_test`
 - `aivamax_run_matrix`
 - `aivamax_export_mcp_config`
+- `aivamax_get_course_factory_status`
+- `aivamax_run_course_factory`
+- `aivamax_course_factory_release_status`
+- `aivamax_final_release_bundle`
+- `aivamax_release_signoff_record`
+- `aivamax_release_history`
+- `aivamax_release_review_pack`
+- `aivamax_release_distribution_package`
+- `aivamax_generate_client_pack`
+- `aivamax_client_pack_delivery_qa`
+- `aivamax_client_pack_batch_delivery_qa`
+- `aivamax_repair_client_pack`
+- `aivamax_repair_client_pack_batch`
+- `aivamax_export_client_pack_zip`
 
 Owner and team roles may also use `aivamax_run_matrix` when generating new project/course assets. Student-facing hosts should prefer `aivamax_student_coach_preview` for learner-safe answers.
