@@ -385,6 +385,20 @@ class AIvaMaxCLITest(unittest.TestCase):
             brand_config_path=ROOT / "config" / "brand_config.json",
         )
         self.assertTrue(status["ok"])
+        student_status_tools = status["result"]["service"]["mcp_tools"]
+        self.assertIn("aivamax_student_coach_preview", student_status_tools)
+        self.assertNotIn("aivamax_run_matrix", student_status_tools)
+        self.assertNotIn("aivamax_list_client_packs", student_status_tools)
+        instructor_status = mcp.call_tool(
+            "aivamax_get_status",
+            {"role": "instructor_private"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertTrue(instructor_status["ok"])
+        instructor_status_tools = instructor_status["result"]["service"]["mcp_tools"]
+        self.assertIn("aivamax_list_client_packs", instructor_status_tools)
+        self.assertNotIn("aivamax_generate_client_pack", instructor_status_tools)
         instructor_client_packs = mcp.call_tool(
             "aivamax_list_client_packs",
             {"role": "instructor_private"},

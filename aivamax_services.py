@@ -131,6 +131,37 @@ ROLE_CONSTRAINTS: dict[str, list[str]] = {
     ],
 }
 
+MCP_TOOL_ROLE_ALLOWLIST: dict[str, set[str]] = {
+    "aivamax_get_status": ROLES,
+    "aivamax_list_platforms": ROLES,
+    "aivamax_list_courses": ROLES,
+    "aivamax_search_public_knowledge": ROLES,
+    "aivamax_run_matrix": {OWNER_ADMIN, TEAM_OPERATOR},
+    "aivamax_run_audit": {OWNER_ADMIN, TEAM_OPERATOR, INSTRUCTOR_PRIVATE},
+    "aivamax_export_course": {OWNER_ADMIN, TEAM_OPERATOR, INSTRUCTOR_PRIVATE},
+    "aivamax_get_latest_course": ROLES,
+    "aivamax_get_runtime_status": {OWNER_ADMIN, TEAM_OPERATOR, INSTRUCTOR_PRIVATE},
+    "aivamax_get_host_integration_status": ROLES,
+    "aivamax_host_smoke_test": {OWNER_ADMIN, TEAM_OPERATOR, INSTRUCTOR_PRIVATE},
+    "aivamax_export_mcp_config": {OWNER_ADMIN, TEAM_OPERATOR},
+    "aivamax_student_coach_preview": ROLES,
+    "aivamax_get_course_factory_status": {OWNER_ADMIN, TEAM_OPERATOR},
+    "aivamax_run_course_factory": {OWNER_ADMIN, TEAM_OPERATOR},
+    "aivamax_course_factory_release_status": {OWNER_ADMIN, TEAM_OPERATOR},
+    "aivamax_final_release_bundle": {OWNER_ADMIN, TEAM_OPERATOR},
+    "aivamax_release_signoff_record": {OWNER_ADMIN, TEAM_OPERATOR},
+    "aivamax_release_history": {OWNER_ADMIN, TEAM_OPERATOR},
+    "aivamax_release_review_pack": {OWNER_ADMIN, TEAM_OPERATOR},
+    "aivamax_release_distribution_package": {OWNER_ADMIN, TEAM_OPERATOR},
+    "aivamax_list_client_packs": {OWNER_ADMIN, TEAM_OPERATOR, INSTRUCTOR_PRIVATE},
+    "aivamax_generate_client_pack": {OWNER_ADMIN, TEAM_OPERATOR},
+    "aivamax_client_pack_delivery_qa": {OWNER_ADMIN, TEAM_OPERATOR},
+    "aivamax_client_pack_batch_delivery_qa": {OWNER_ADMIN, TEAM_OPERATOR},
+    "aivamax_repair_client_pack": {OWNER_ADMIN, TEAM_OPERATOR},
+    "aivamax_repair_client_pack_batch": {OWNER_ADMIN, TEAM_OPERATOR},
+    "aivamax_export_client_pack_zip": {OWNER_ADMIN, TEAM_OPERATOR},
+}
+
 BLOCKED_PATH_PARTS = [
     "data/raw",
     "data/pages",
@@ -202,6 +233,15 @@ def role_release_decision_scope(role: str | None) -> dict[str, Any]:
         "final_decision_owner_role": OWNER_ADMIN,
         "distribution_requires_approved_signoff": True,
     }
+
+
+def mcp_tools_for_role(role: str | None) -> list[str]:
+    role = normalize_role(role)
+    return [
+        tool
+        for tool, roles in MCP_TOOL_ROLE_ALLOWLIST.items()
+        if role in roles
+    ]
 
 
 def make_context(data_dir: Path | str | None = None, brand_config_path: Path | str | None = None) -> ServiceContext:
@@ -390,36 +430,9 @@ def get_status(
         "roles": sorted(ROLES),
         "current_role": role,
         "permissions": sorted(ROLE_PERMISSIONS[role]),
-        "mcp_tools": [
-            "aivamax_get_status",
-            "aivamax_list_platforms",
-            "aivamax_list_courses",
-            "aivamax_search_public_knowledge",
-            "aivamax_run_matrix",
-            "aivamax_run_audit",
-            "aivamax_export_course",
-            "aivamax_get_latest_course",
-            "aivamax_get_runtime_status",
-            "aivamax_get_host_integration_status",
-            "aivamax_host_smoke_test",
-            "aivamax_export_mcp_config",
-            "aivamax_student_coach_preview",
-            "aivamax_get_course_factory_status",
-            "aivamax_run_course_factory",
-            "aivamax_course_factory_release_status",
-            "aivamax_final_release_bundle",
-            "aivamax_release_signoff_record",
-            "aivamax_release_history",
-            "aivamax_release_review_pack",
-            "aivamax_release_distribution_package",
-            "aivamax_list_client_packs",
-            "aivamax_generate_client_pack",
-            "aivamax_client_pack_delivery_qa",
-            "aivamax_client_pack_batch_delivery_qa",
-            "aivamax_repair_client_pack",
-            "aivamax_repair_client_pack_batch",
-            "aivamax_export_client_pack_zip",
-        ],
+        "mcp_tools": mcp_tools_for_role(role),
+        "mcp_tool_scope": "role_allowed",
+        "mcp_total_tool_count": len(MCP_TOOL_ROLE_ALLOWLIST),
         "mcp_modes": ["http-json", "stdio-jsonrpc"],
         "skills": [
             "aivamax-owner",

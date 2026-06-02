@@ -242,6 +242,8 @@ aivamax_repair_client_pack_batch
 aivamax_export_client_pack_zip
 ```
 
+`get_status` reports `service.mcp_tools` as the current role's allowed tool list. Protocol-level `tools/list` may still return the full MCP capability catalog, but every call is rechecked by the service role permissions.
+
 The MCP layer never exposes arbitrary shell, arbitrary file reads, raw source mirrors, internal project folders, or internal evidence metadata.
 
 Benchmark course status:
