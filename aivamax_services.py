@@ -302,6 +302,7 @@ def get_status(
             "aivamax_get_course_factory_status",
             "aivamax_run_course_factory",
             "aivamax_generate_client_pack",
+            "aivamax_client_pack_delivery_qa",
             "aivamax_export_client_pack_zip",
         ],
         "mcp_modes": ["http-json", "stdio-jsonrpc"],
@@ -606,6 +607,147 @@ def audit_client_pack_public_files(public_files: list[Path], brand_config: dict[
     return violations
 
 
+def client_pack_check(check_id: str, label: str, passed: bool, detail: str, *, weight: int = 10, critical: bool = False) -> dict[str, Any]:
+    return {
+        "id": check_id,
+        "label": label,
+        "passed": bool(passed),
+        "weight": weight,
+        "critical": critical,
+        "detail": detail,
+    }
+
+
+def build_client_pack_delivery_qa(pack_dir: Path, ctx: ServiceContext) -> dict[str, Any]:
+    manifest = read_client_pack_manifest(pack_dir)
+    pack_id = str(manifest.get("pack_id") or pack_dir.name)
+    public_files = client_pack_public_files(pack_dir)
+    file_map = {path.name: path for path in public_files}
+    missing = [name for name in CLIENT_PACK_PUBLIC_FILENAMES if name not in file_map]
+    texts = {
+        name: path.read_text(encoding="utf-8", errors="ignore")
+        for name, path in file_map.items()
+    }
+    all_text = "\n".join(texts.values())
+    days = int(manifest.get("days") or 0) if str(manifest.get("days") or "").isdigit() else 0
+    calendar_text = texts.get("04_Content-Calendar.md", "")
+    calendar_days = len(re.findall(r"\|\s*Day\s+\d+\s*\|", calendar_text, flags=re.I))
+    platform_text = texts.get("03_Platform-Weights.md", "")
+    platform_rows = len(re.findall(r"\|\s*[^|\n]+\s*\|\s*\d+%\s*\|", platform_text))
+    thin_files = [name for name, text in texts.items() if len(text.strip()) < 200]
+    brand_violations = audit_client_pack_public_files(public_files, ctx.brand_config) if public_files else []
+
+    checks = [
+        client_pack_check(
+            "client_files_complete",
+            "Client file set",
+            not missing and len(public_files) == len(CLIENT_PACK_PUBLIC_FILENAMES),
+            f"{len(public_files)}/{len(CLIENT_PACK_PUBLIC_FILENAMES)} client-facing files present.",
+            critical=True,
+        ),
+        client_pack_check(
+            "brand_and_internal_boundary",
+            "Brand/internal boundary",
+            not brand_violations,
+            "No private brand terms, raw paths, source fields, or internal markers detected." if not brand_violations else f"{len(brand_violations)} boundary issues detected.",
+            critical=True,
+        ),
+        client_pack_check(
+            "client_goal",
+            "Client goal",
+            bool(manifest.get("goal")) and "Primary goal" in texts.get("00_Client-Brief.md", ""),
+            f"Goal: {manifest.get('goal') or 'missing'}",
+        ),
+        client_pack_check(
+            "delivery_duration",
+            "Delivery duration",
+            days > 0 and "Duration" in texts.get("00_Client-Brief.md", "") and calendar_days >= min(days, 7),
+            f"Duration: {days or 'missing'} days; calendar rows: {calendar_days}.",
+        ),
+        client_pack_check(
+            "platform_weights",
+            "Platform weights",
+            "Platform Weights" in platform_text and platform_rows >= 3,
+            f"Weighted platform rows: {platform_rows}.",
+        ),
+        client_pack_check(
+            "content_calendar",
+            "Content calendar",
+            "Calendar" in calendar_text and calendar_days >= min(days or 7, 7),
+            f"Calendar rows: {calendar_days}.",
+        ),
+        client_pack_check(
+            "account_matrix",
+            "Account matrix",
+            "Account Matrix" in texts.get("02_Account-Matrix.md", "") and "Role" in texts.get("02_Account-Matrix.md", ""),
+            "Account roles and owners are present." if "Account Matrix" in texts.get("02_Account-Matrix.md", "") else "Account matrix file is thin or missing.",
+        ),
+        client_pack_check(
+            "review_forecast",
+            "Review and forecast",
+            "Forecast" in texts.get("06_Review-Forecast.md", "") and "Lead signal" in texts.get("06_Review-Forecast.md", ""),
+            "Forecast model uses assumptions and signal ranges." if "Forecast" in texts.get("06_Review-Forecast.md", "") else "Forecast model is missing.",
+        ),
+        client_pack_check(
+            "risk_boundary",
+            "Risk boundary",
+            "Risk Boundary" in texts.get("07_Risk-Boundary.md", "") and "Messages" in texts.get("07_Risk-Boundary.md", "") and "Forecast" in texts.get("07_Risk-Boundary.md", ""),
+            "Risk rules cover claims, messages, and forecast limits." if "Risk Boundary" in texts.get("07_Risk-Boundary.md", "") else "Risk boundary is missing.",
+        ),
+        client_pack_check(
+            "client_readability",
+            "Client readability",
+            not thin_files and len(all_text) >= 2000,
+            "All client-facing files have enough substance." if not thin_files else f"Thin files: {', '.join(thin_files)}.",
+        ),
+    ]
+    total_weight = sum(item["weight"] for item in checks)
+    passed_weight = sum(item["weight"] for item in checks if item["passed"])
+    score = round((passed_weight / total_weight) * 100) if total_weight else 0
+    critical_failures = [item for item in checks if item["critical"] and not item["passed"]]
+    failed_checks = [item for item in checks if not item["passed"]]
+    passed = score >= 80 and not critical_failures
+    recommended_fixes = [item["detail"] for item in failed_checks]
+    return {
+        "pack_id": pack_id,
+        "path": relpath(pack_dir),
+        "passed": passed,
+        "decision": "deliverable" if passed else "needs_revision",
+        "score": score,
+        "checks": checks,
+        "critical_failure_count": len(critical_failures),
+        "failed_check_count": len(failed_checks),
+        "recommended_fixes": recommended_fixes,
+        "audited_files": [path.name for path in public_files],
+        "missing_files": missing,
+        "brand_violation_count": len(brand_violations),
+    }
+
+
+def client_pack_delivery_qa(
+    request: dict[str, Any] | None = None,
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    request = request or {}
+    try:
+        pack_dir = resolve_client_pack_dir(request, ctx)
+    except (PermissionError, FileNotFoundError, ValueError) as exc:
+        return service_response(action="aivamax_client_pack_delivery_qa", role=caller_role, ok=False, error="client_pack_not_found", warnings=[str(exc)])
+    result = build_client_pack_delivery_qa(pack_dir, ctx)
+    return service_response(
+        action="aivamax_client_pack_delivery_qa",
+        role=caller_role,
+        result=result,
+        public_paths=[result["path"]] if result.get("passed") else [],
+        audit={"passed": bool(result.get("passed")), "score": result.get("score", 0), "failed_check_count": result.get("failed_check_count", 0)},
+    )
+
+
 def export_client_pack_zip(
     request: dict[str, Any] | None = None,
     *,
@@ -647,6 +789,17 @@ def export_client_pack_zip(
             audit={"passed": False, "violation_count": len(brand_violations)},
         )
 
+    delivery_qa = build_client_pack_delivery_qa(pack_dir, ctx)
+    if not delivery_qa.get("passed"):
+        return service_response(
+            action="aivamax_export_client_pack_zip",
+            role=caller_role,
+            ok=False,
+            error="client_pack_qa_failed",
+            result={"pack_id": pack_id, "path": relpath(pack_dir), "delivery_qa": delivery_qa},
+            audit={"passed": False, "score": delivery_qa.get("score", 0), "failed_check_count": delivery_qa.get("failed_check_count", 0)},
+        )
+
     archive_dir = client_pack_export_root(ctx) / cli.slugify(pack_id, fallback="client-pack", max_len=72)
     archive_dir.mkdir(parents=True, exist_ok=True)
     archive_path = archive_dir / f"{cli.slugify(pack_id, fallback='client-pack', max_len=72)}-client-delivery.zip"
@@ -662,6 +815,7 @@ def export_client_pack_zip(
         "excluded_internal_files": ["08_Delivery-README.md", "manifest.json"],
         "brand_audit": {"passed": True, "violation_count": 0},
         "artifact_boundary": {"passed": True, "internal_files_excluded": True},
+        "delivery_qa": delivery_qa,
     }
     return service_response(
         action="aivamax_export_client_pack_zip",
@@ -1844,6 +1998,7 @@ def render_skill(role: str) -> str:
             "aivamax_get_course_factory_status",
             "aivamax_run_course_factory",
             "aivamax_generate_client_pack",
+            "aivamax_client_pack_delivery_qa",
             "aivamax_export_client_pack_zip",
         ])
     if role == STUDENT_PUBLIC:

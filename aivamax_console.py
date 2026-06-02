@@ -12,6 +12,7 @@ from aivamax_mcp_server import list_tools
 from aivamax_services import (
     OWNER_ADMIN,
     course_factory_status,
+    client_pack_delivery_qa,
     delete_course_factory_scenario,
     export_course,
     export_client_pack_zip,
@@ -369,6 +370,17 @@ def console_html() -> str:
         log.textContent = `Client pack ZIP export failed: ${err.message}`;
       }
     }
+    async function runPackQa(packId) {
+      const log = document.getElementById('actionLog');
+      log.textContent = `Running Delivery QA for ${packId}...`;
+      try {
+        const result = await postJson('/api/actions/client-pack-qa', { pack_id: packId });
+        log.textContent = JSON.stringify(result, null, 2);
+        await refreshAll();
+      } catch (err) {
+        log.textContent = `Client pack QA failed: ${err.message}`;
+      }
+    }
     function render(data, extra) {
       document.getElementById('status').textContent = `${data.public_brand} v${data.version} | ${data.generated_at} | ${data.data_dir}`;
       document.getElementById('metrics').innerHTML = [
@@ -434,7 +446,7 @@ def console_html() -> str:
       document.getElementById('clientPackRows').innerHTML = (packs.packs || []).slice(0, 8).map(pack => `
         <div class="card">
           <div class="row"><div><strong>${esc(pack.pack_id)}</strong><div class="path">${esc(pack.path)}</div></div><span class="pill">${esc(pack.client_file_count || 0)} files</span></div>
-          <div class="toolbar"><button class="primary" data-pack-id="${esc(pack.pack_id)}" onclick="exportPackZip(this.dataset.packId)">Export ZIP</button>${pack.archive ? ` <a href="${esc(pack.archive.download_url)}" target="_blank">Download ZIP</a>` : ''}</div>
+          <div class="toolbar"><button data-pack-id="${esc(pack.pack_id)}" onclick="runPackQa(this.dataset.packId)">Run QA</button> <button class="primary" data-pack-id="${esc(pack.pack_id)}" onclick="exportPackZip(this.dataset.packId)">Export ZIP</button>${pack.archive ? ` <a href="${esc(pack.archive.download_url)}" target="_blank">Download ZIP</a>` : ''}</div>
           <table>
             <thead><tr><th>File</th><th>Size</th><th>Links</th></tr></thead>
             <tbody>${(pack.files || []).filter(file => file.visibility === 'client_delivery').map(file => `
@@ -682,6 +694,15 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                     json_response(self, HTTPStatus.BAD_REQUEST, {"ok": False, "error": "invalid_json", "message": str(exc)})
                     return
                 payload = generate_client_pack_from_scenario(body, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.BAD_REQUEST, payload)
+                return
+            if route == "/api/actions/client-pack-qa":
+                try:
+                    body = read_json_body(self)
+                except ValueError as exc:
+                    json_response(self, HTTPStatus.BAD_REQUEST, {"ok": False, "error": "invalid_json", "message": str(exc)})
+                    return
+                payload = client_pack_delivery_qa(body, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.BAD_REQUEST, payload)
                 return
             if route == "/api/actions/client-pack-export-zip":

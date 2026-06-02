@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 from aivamax_services import (
     DEFAULT_BRAND_CONFIG,
     DEFAULT_DATA_DIR,
+    client_pack_delivery_qa,
     course_factory_status,
     export_course,
     export_client_pack_zip,
@@ -190,6 +191,20 @@ TOOL_DEFINITIONS = [
         },
     },
     {
+        "name": "aivamax_client_pack_delivery_qa",
+        "description": "Score one client delivery pack against AIvaMax delivery readiness gates before ZIP export.",
+        "allowed_roles": ["owner_admin", "team_operator"],
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "pack_id": {"type": "string"},
+                "path": {"type": "string"},
+                "role": {"type": "string"},
+            },
+            "additionalProperties": False,
+        },
+    },
+    {
         "name": "aivamax_get_latest_course",
         "description": "Return the latest public course target.",
         "allowed_roles": ["owner_admin", "team_operator", "instructor_private", "student_public"],
@@ -332,6 +347,8 @@ def call_tool(
             return generate_client_pack_from_scenario(arguments, **common)
         if name == "aivamax_export_client_pack_zip":
             return export_client_pack_zip(arguments, **common)
+        if name == "aivamax_client_pack_delivery_qa":
+            return client_pack_delivery_qa(arguments, **common)
         if name == "aivamax_get_latest_course":
             return latest_course(**common)
         if name == "aivamax_get_runtime_status":

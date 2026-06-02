@@ -174,6 +174,7 @@ class AIvaMaxCLITest(unittest.TestCase):
             self.assertIn("Run Course Factory", html)
             self.assertIn("Client Scenario Editor", html)
             self.assertIn("Generate Pack", html)
+            self.assertIn("Run QA", html)
             self.assertIn("Export ZIP", html)
             self.assertIn("Client Delivery Packs", html)
         finally:
@@ -291,6 +292,7 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("aivamax_get_course_factory_status", tool_names)
         self.assertIn("aivamax_run_course_factory", tool_names)
         self.assertIn("aivamax_generate_client_pack", tool_names)
+        self.assertIn("aivamax_client_pack_delivery_qa", tool_names)
         self.assertIn("aivamax_export_client_pack_zip", tool_names)
         self.assertIn("inputSchema", tools[0])
         status = mcp.call_tool(
@@ -355,6 +357,14 @@ class AIvaMaxCLITest(unittest.TestCase):
         )
         self.assertFalse(blocked_pack["ok"])
         self.assertEqual(blocked_pack["error"], "permission_denied")
+        blocked_qa = mcp.call_tool(
+            "aivamax_client_pack_delivery_qa",
+            {"role": "student_public", "pack_id": "AI-SaaS-Pilot"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_qa["ok"])
+        self.assertEqual(blocked_qa["error"], "permission_denied")
         blocked_zip = mcp.call_tool(
             "aivamax_export_client_pack_zip",
             {"role": "student_public", "pack_id": "AI-SaaS-Pilot"},
@@ -1565,6 +1575,13 @@ Module {number} production output
                 role="student_public",
             )
         with self.assertRaises(PermissionError):
+            services.client_pack_delivery_qa(
+                {"pack_id": "AI-SaaS-Pilot"},
+                data_dir=data_dir,
+                brand_config_path=ROOT / "config" / "brand_config.json",
+                role="student_public",
+            )
+        with self.assertRaises(PermissionError):
             services.export_client_pack_zip(
                 {"pack_id": "AI-SaaS-Pilot"},
                 data_dir=data_dir,
@@ -1578,6 +1595,43 @@ Module {number} production output
             role="owner_admin",
         )
         self.assertFalse(invalid["ok"])
+
+        broken_pack = data_dir / "obsidian" / "AIvaMax_Matrix" / "50_Projects" / "Samples" / "broken-pack"
+        broken_files = cli.render_client_pack_files(
+            argparse.Namespace(
+                client_code="Broken-Pack",
+                industry="AI SaaS",
+                product="broken delivery offer",
+                market="United States",
+                goal="lead_generation",
+                days=30,
+            ),
+            self.brand_config,
+            "broken-pack",
+        )
+        for name, content in broken_files.items():
+            target = broken_pack / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(content, encoding="utf-8")
+        for name in ["04_Content-Calendar.md", "06_Review-Forecast.md", "07_Risk-Boundary.md"]:
+            (broken_pack / name).write_text("# Thin\n", encoding="utf-8")
+        failed_qa = services.client_pack_delivery_qa(
+            {"pack_id": "broken-pack"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="owner_admin",
+        )
+        self.assertTrue(failed_qa["ok"], failed_qa)
+        self.assertFalse(failed_qa["result"]["passed"])
+        self.assertEqual(failed_qa["result"]["decision"], "needs_revision")
+        blocked_zip = services.export_client_pack_zip(
+            {"pack_id": "broken-pack"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="owner_admin",
+        )
+        self.assertFalse(blocked_zip["ok"], blocked_zip)
+        self.assertEqual(blocked_zip["error"], "client_pack_qa_failed")
 
         server = build_server(host="127.0.0.1", port=0, data_dir=data_dir, brand_config_path=ROOT / "config" / "brand_config.json")
         thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -1644,6 +1698,20 @@ Module {number} production output
             self.assertNotIn("manifest.json", generated_names)
 
             request = urllib.request.Request(
+                base + "/api/actions/client-pack-qa",
+                data=json.dumps({"pack_id": "ai-saas-pilot"}).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(request, timeout=30) as response:
+                qa_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(qa_payload["ok"], qa_payload)
+            self.assertTrue(qa_payload["result"]["passed"], qa_payload)
+            self.assertEqual(qa_payload["result"]["decision"], "deliverable")
+            self.assertGreaterEqual(qa_payload["result"]["score"], 80)
+            self.assertEqual(qa_payload["result"]["failed_check_count"], 0)
+
+            request = urllib.request.Request(
                 base + "/api/actions/client-pack-export-zip",
                 data=json.dumps({"pack_id": "ai-saas-pilot"}).encode("utf-8"),
                 headers={"Content-Type": "application/json"},
@@ -1664,6 +1732,8 @@ Module {number} production output
             ]
             self.assertEqual(zip_payload["result"]["included_files"], expected_client_files)
             self.assertTrue(zip_payload["result"]["artifact_boundary"]["internal_files_excluded"])
+            self.assertTrue(zip_payload["result"]["delivery_qa"]["passed"])
+            self.assertGreaterEqual(zip_payload["result"]["delivery_qa"]["score"], 80)
             with urllib.request.urlopen(base + zip_payload["result"]["archive"]["download_url"], timeout=20) as response:
                 archive_bytes = response.read()
             with zipfile.ZipFile(io.BytesIO(archive_bytes)) as archive:
