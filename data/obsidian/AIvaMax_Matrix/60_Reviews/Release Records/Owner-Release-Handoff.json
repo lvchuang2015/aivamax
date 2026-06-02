@@ -1,0 +1,130 @@
+{
+  "generated_at": "2026-06-02T08:17:15+00:00",
+  "public_brand": "AIvaMax",
+  "handoff_status": "ready_for_owner_review",
+  "release": {
+    "release_id": "REL-20260602061539",
+    "decision": "pending_review",
+    "review_status": "awaiting_owner_approval",
+    "distribution_status": "release_not_approved",
+    "ready_to_release": true
+  },
+  "prd": {
+    "acceptance_status": "ready_for_owner_review",
+    "summary": {
+      "passed": 8,
+      "pending_owner": 3,
+      "review": 0,
+      "total": 11
+    },
+    "report": {
+      "json": {
+        "name": "Course-Factory-PRD-Status.json",
+        "path": "data/obsidian/AIvaMax_Matrix/00_Dashboards/Course-Factory-PRD-Status.json",
+        "size": 3707,
+        "visibility": "internal_dashboard",
+        "preview_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-PRD-Status.json&mode=preview",
+        "download_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-PRD-Status.json&mode=download"
+      },
+      "markdown": {
+        "name": "Course-Factory-PRD-Status.md",
+        "path": "data/obsidian/AIvaMax_Matrix/00_Dashboards/Course-Factory-PRD-Status.md",
+        "size": 1886,
+        "visibility": "internal_dashboard",
+        "preview_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-PRD-Status.md&mode=preview",
+        "download_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-PRD-Status.md&mode=download"
+      }
+    }
+  },
+  "review_pack": {
+    "json": {
+      "name": "Release-Review-Pack.json",
+      "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-Review-Pack.json",
+      "size": 10861,
+      "visibility": "release_record",
+      "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Review-Pack.json&mode=preview",
+      "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Review-Pack.json&mode=download"
+    },
+    "markdown": {
+      "name": "Release-Review-Pack.md",
+      "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-Review-Pack.md",
+      "size": 5428,
+      "visibility": "release_record",
+      "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Review-Pack.md&mode=preview",
+      "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Review-Pack.md&mode=download"
+    }
+  },
+  "owner_confirmation_phrases": {
+    "approved": "APPROVE AIVAMAX RELEASE",
+    "rejected": "REJECT AIVAMAX RELEASE"
+  },
+  "evidence_files": [
+    {
+      "label": "Final release archive",
+      "name": "AIvaMax-Course-Factory-Final-Release.zip",
+      "path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release.zip",
+      "size": 87291,
+      "visibility": "final_release_bundle",
+      "preview_url": null,
+      "download_url": "/api/release-bundle/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Frelease_bundle%2FAIvaMax-Course-Factory-Final-Release.zip&mode=download"
+    },
+    {
+      "label": "Final release manifest",
+      "name": "AIvaMax-Course-Factory-Final-Release-Manifest.json",
+      "path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release-Manifest.json",
+      "size": 19461,
+      "visibility": "final_release_bundle",
+      "preview_url": "/api/release-bundle/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Frelease_bundle%2FAIvaMax-Course-Factory-Final-Release-Manifest.json&mode=preview",
+      "download_url": "/api/release-bundle/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Frelease_bundle%2FAIvaMax-Course-Factory-Final-Release-Manifest.json&mode=download"
+    },
+    {
+      "label": "Final signoff checklist",
+      "name": "AIvaMax-Course-Factory-Final-Release-Signoff-Checklist.md",
+      "path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release-Signoff-Checklist.md",
+      "size": 1798,
+      "visibility": "final_release_bundle",
+      "preview_url": "/api/release-bundle/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Frelease_bundle%2FAIvaMax-Course-Factory-Final-Release-Signoff-Checklist.md&mode=preview",
+      "download_url": "/api/release-bundle/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Frelease_bundle%2FAIvaMax-Course-Factory-Final-Release-Signoff-Checklist.md&mode=download"
+    },
+    {
+      "label": "Latest release record",
+      "name": "Latest-Release-Record.md",
+      "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Latest-Release-Record.md",
+      "size": 1874,
+      "visibility": "release_record",
+      "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FLatest-Release-Record.md&mode=preview",
+      "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FLatest-Release-Record.md&mode=download"
+    },
+    {
+      "label": "Release status report",
+      "name": "Course-Factory-Release-Status.md",
+      "path": "data/obsidian/AIvaMax_Matrix/00_Dashboards/Course-Factory-Release-Status.md",
+      "size": 1664,
+      "visibility": "internal_dashboard",
+      "preview_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-Release-Status.md&mode=preview",
+      "download_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-Release-Status.md&mode=download"
+    },
+    {
+      "label": "Release history dashboard",
+      "name": "Release-History-Dashboard.md",
+      "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-History-Dashboard.md",
+      "size": 789,
+      "visibility": "release_record",
+      "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-History-Dashboard.md&mode=preview",
+      "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-History-Dashboard.md&mode=download"
+    }
+  ],
+  "next_actions": [
+    {
+      "priority": 4,
+      "title": "Owner reviews release pack and records approval or rejection",
+      "command": "aivamax.ps1 release-review-pack"
+    }
+  ],
+  "guardrails": [
+    "This handoff does not approve or reject the release.",
+    "Approved and rejected signoff decisions still require owner_admin.",
+    "Formal distribution remains blocked until the latest release signoff is approved and hash-matched.",
+    "Delivery evidence can be recorded only after the approved distribution package is handed off."
+  ]
+}

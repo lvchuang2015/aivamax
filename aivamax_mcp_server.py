@@ -35,6 +35,7 @@ from aivamax_services import (
     release_distribution_package,
     release_distribution_status,
     release_review_pack,
+    release_owner_handoff,
     release_signoff_record,
     runtime_status,
     run_audit,
@@ -244,6 +245,16 @@ TOOL_DEFINITIONS = [
     {
         "name": "aivamax_release_review_pack",
         "description": "Generate the AIvaMax owner release review pack for human approval or rejection.",
+        "allowed_roles": ["owner_admin", "team_operator"],
+        "inputSchema": {
+            "type": "object",
+            "properties": {"role": {"type": "string"}},
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "aivamax_release_owner_handoff",
+        "description": "Generate the AIvaMax owner release handoff report without approving, rejecting, publishing, or distributing.",
         "allowed_roles": ["owner_admin", "team_operator"],
         "inputSchema": {
             "type": "object",
@@ -534,6 +545,8 @@ def call_tool(
             return release_history(**common)
         if name == "aivamax_release_review_pack":
             return release_review_pack(arguments, **common)
+        if name == "aivamax_release_owner_handoff":
+            return release_owner_handoff(arguments, **common)
         if name == "aivamax_release_distribution_status":
             return release_distribution_status(arguments, **common)
         if name == "aivamax_release_distribution_package":

@@ -160,6 +160,7 @@ MCP_TOOL_ROLE_ALLOWLIST: dict[str, set[str]] = {
     "aivamax_release_signoff_record": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_history": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_review_pack": {OWNER_ADMIN, TEAM_OPERATOR},
+    "aivamax_release_owner_handoff": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_distribution_status": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_distribution_package": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_distribution_delivery_record": {OWNER_ADMIN},
@@ -828,6 +829,7 @@ def resolve_release_record_file(
         or candidate.name.startswith("Latest-Distribution-Delivery-Record")
         or candidate.name.startswith("Release-History-Dashboard")
         or candidate.name.startswith("Release-Review-Pack")
+        or candidate.name.startswith("Owner-Release-Handoff")
     )
     if candidate.suffix.lower() not in {".json", ".md"} or not allowed_name:
         raise PermissionError("Release record file is not allowlisted.")
@@ -3570,6 +3572,155 @@ def release_review_pack(
     )
 
 
+def render_release_owner_handoff_markdown(handoff: dict[str, Any], brand_config: dict[str, Any]) -> str:
+    brand = brand_config.get("public_brand", "AIvaMax")
+    evidence_rows = "\n".join(
+        f"| {item.get('label')} | {item.get('path')} | {item.get('preview_url') or '-'} | {item.get('download_url') or '-'} |"
+        for item in handoff.get("evidence_files", [])
+    ) or "| - | - | - | - |"
+    action_rows = "\n".join(
+        f"| {item.get('priority')} | {item.get('title')} | {item.get('command')} |"
+        for item in handoff.get("next_actions", [])
+    ) or "| - | - | - |"
+    phrase_rows = "\n".join(
+        f"| {decision} | `{phrase}` |"
+        for decision, phrase in handoff.get("owner_confirmation_phrases", {}).items()
+    ) or "| - | - |"
+    return scrub_text(f"""---
+type: release_owner_handoff
+public_brand: {brand}
+visibility: internal_release_record
+status: {handoff.get("handoff_status")}
+---
+
+# {brand} Owner Release Handoff
+
+| Field | Value |
+| --- | --- |
+| Generated at | {handoff.get("generated_at")} |
+| Handoff status | {handoff.get("handoff_status")} |
+| Release ID | {handoff.get("release", {}).get("release_id")} |
+| Release decision | {handoff.get("release", {}).get("decision")} |
+| Review status | {handoff.get("release", {}).get("review_status")} |
+| Distribution status | {handoff.get("release", {}).get("distribution_status")} |
+| PRD acceptance | {handoff.get("prd", {}).get("acceptance_status")} |
+| PRD summary | passed={handoff.get("prd", {}).get("summary", {}).get("passed")}, pending_owner={handoff.get("prd", {}).get("summary", {}).get("pending_owner")}, review={handoff.get("prd", {}).get("summary", {}).get("review")} |
+
+## Owner Confirmation Phrases
+
+| Decision | Required Console Phrase |
+| --- | --- |
+{phrase_rows}
+
+## Evidence Files
+
+| Evidence | Path | Preview | Download |
+| --- | --- | --- | --- |
+{evidence_rows}
+
+## Next Actions
+
+| Priority | Action | Command |
+| --- | --- | --- |
+{action_rows}
+
+## Boundary
+
+This handoff prepares the owner review decision. It does not approve, reject, publish, distribute, or record delivery evidence automatically.
+""", brand_config)
+
+
+def persist_release_owner_handoff(handoff: dict[str, Any], ctx: ServiceContext) -> dict[str, Any]:
+    root = release_record_root(ctx)
+    root.mkdir(parents=True, exist_ok=True)
+    json_path = root / "Owner-Release-Handoff.json"
+    md_path = root / "Owner-Release-Handoff.md"
+    json_path.write_text(json.dumps(handoff, ensure_ascii=False, indent=2), encoding="utf-8")
+    md_path.write_text(render_release_owner_handoff_markdown(handoff, ctx.brand_config), encoding="utf-8")
+    return {
+        "json": release_record_file_record(json_path),
+        "markdown": release_record_file_record(md_path),
+    }
+
+
+def release_owner_handoff(
+    request: dict[str, Any] | None = None,
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    request = request or {}
+    prd_payload = course_factory_prd_status(request, data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+    review_payload = release_review_pack(request, data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+    distribution_payload = release_distribution_status(request, data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+    if not prd_payload.get("ok"):
+        return service_response(action="aivamax_release_owner_handoff", role=caller_role, ok=False, error=prd_payload.get("error", "prd_status_failed"), warnings=prd_payload.get("warnings", []))
+    if not review_payload.get("ok"):
+        return service_response(action="aivamax_release_owner_handoff", role=caller_role, ok=False, error=review_payload.get("error", "review_pack_failed"), warnings=review_payload.get("warnings", []))
+    if not distribution_payload.get("ok"):
+        return service_response(action="aivamax_release_owner_handoff", role=caller_role, ok=False, error=distribution_payload.get("error", "distribution_status_failed"), warnings=distribution_payload.get("warnings", []))
+    prd = prd_payload.get("result", {})
+    review = review_payload.get("result", {})
+    distribution = distribution_payload.get("result", {})
+    release_decision = str(distribution.get("decision") or review.get("latest_decision") or "unknown")
+    if release_decision == "pending_review" and prd.get("acceptance_status") == "ready_for_owner_review":
+        handoff_status = "ready_for_owner_review"
+    elif release_decision == "approved":
+        handoff_status = "approved_recorded"
+    elif release_decision == "rejected":
+        handoff_status = "rejected_needs_remediation"
+    else:
+        handoff_status = "review"
+    handoff = {
+        "generated_at": cli.now_iso(),
+        "public_brand": ctx.brand_config.get("public_brand", "AIvaMax"),
+        "handoff_status": handoff_status,
+        "release": {
+            "release_id": distribution.get("release_id") or review.get("release_id"),
+            "decision": release_decision,
+            "review_status": review.get("review_status"),
+            "distribution_status": distribution.get("distribution_status"),
+            "ready_to_release": bool(distribution.get("ready_to_release") or review.get("ready_to_release")),
+        },
+        "prd": {
+            "acceptance_status": prd.get("acceptance_status"),
+            "summary": prd.get("summary", {}),
+            "report": prd.get("report", {}),
+        },
+        "review_pack": review.get("pack", {}),
+        "owner_confirmation_phrases": review.get("owner_confirmation_phrases") or OWNER_RELEASE_CONFIRMATIONS,
+        "evidence_files": review.get("evidence_files", []),
+        "next_actions": prd.get("next_actions", []),
+        "guardrails": [
+            "This handoff does not approve or reject the release.",
+            "Approved and rejected signoff decisions still require owner_admin.",
+            "Formal distribution remains blocked until the latest release signoff is approved and hash-matched.",
+            "Delivery evidence can be recorded only after the approved distribution package is handed off.",
+        ],
+    }
+    handoff["handoff"] = persist_release_owner_handoff(handoff, ctx)
+    public_paths = [
+        handoff["handoff"]["json"]["path"],
+        handoff["handoff"]["markdown"]["path"],
+        *[
+            item["path"]
+            for item in handoff.get("evidence_files", [])
+            if item.get("path")
+        ],
+        *public_paths_from_result({"prd": handoff.get("prd", {}), "review_pack": handoff.get("review_pack", {})}),
+    ]
+    return service_response(
+        action="aivamax_release_owner_handoff",
+        role=caller_role,
+        result=handoff,
+        public_paths=public_paths,
+        audit={"passed": handoff_status in {"ready_for_owner_review", "approved_recorded"}, "handoff_status": handoff_status, "release_id": handoff["release"]["release_id"]},
+    )
+
+
 def render_distribution_checklist_markdown(manifest: dict[str, Any], brand_config: dict[str, Any]) -> str:
     brand = brand_config.get("public_brand", "AIvaMax")
     gate_rows = "\n".join(
@@ -4964,6 +5115,7 @@ def render_skill(role: str) -> str:
             "aivamax_release_signoff_record",
             "aivamax_release_history",
             "aivamax_release_review_pack",
+            "aivamax_release_owner_handoff",
             "aivamax_release_distribution_status",
             "aivamax_release_distribution_package",
             "aivamax_generate_client_pack",

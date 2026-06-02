@@ -263,6 +263,8 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertEqual(release_history_args.role, "owner_admin")
         release_review_pack_args = parser.parse_args(["release-review-pack"])
         self.assertEqual(release_review_pack_args.role, "owner_admin")
+        release_owner_handoff_args = parser.parse_args(["release-owner-handoff"])
+        self.assertEqual(release_owner_handoff_args.role, "owner_admin")
         prd_status_args = parser.parse_args(["course-factory-prd-status"])
         self.assertEqual(prd_status_args.role, "owner_admin")
         release_distribution_args = parser.parse_args(["release-distribution-package"])
@@ -379,6 +381,7 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("aivamax_release_signoff_record", tool_names)
         self.assertIn("aivamax_release_history", tool_names)
         self.assertIn("aivamax_release_review_pack", tool_names)
+        self.assertIn("aivamax_release_owner_handoff", tool_names)
         self.assertIn("aivamax_release_distribution_status", tool_names)
         self.assertIn("aivamax_release_distribution_package", tool_names)
         self.assertIn("aivamax_release_distribution_delivery_record", tool_names)
@@ -578,6 +581,14 @@ class AIvaMaxCLITest(unittest.TestCase):
         )
         self.assertFalse(blocked_review_pack["ok"])
         self.assertEqual(blocked_review_pack["error"], "permission_denied")
+        blocked_owner_handoff = mcp.call_tool(
+            "aivamax_release_owner_handoff",
+            {"role": "student_public"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_owner_handoff["ok"])
+        self.assertEqual(blocked_owner_handoff["error"], "permission_denied")
         blocked_distribution = mcp.call_tool(
             "aivamax_release_distribution_package",
             {"role": "student_public"},
@@ -876,6 +887,8 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("Final release decisions (`approved`/`rejected`) allowed: no", team_skill)
         self.assertIn("aivamax_course_factory_prd_status", owner_skill)
         self.assertIn("aivamax_course_factory_prd_status", team_skill)
+        self.assertIn("aivamax_release_owner_handoff", owner_skill)
+        self.assertIn("aivamax_release_owner_handoff", team_skill)
         self.assertIn("aivamax_release_distribution_status", owner_skill)
         self.assertIn("aivamax_release_distribution_package", owner_skill)
         self.assertIn("aivamax_release_distribution_delivery_record", owner_skill)
@@ -2522,6 +2535,26 @@ Module {number} production output
             self.assertIn("release-distribution-delivery-record", review_pack_markdown)
             self.assertIn("This review pack prepares a human release decision", review_pack_markdown)
             self.assert_public_clean(review_pack_markdown)
+
+            handoff_request = urllib.request.Request(base + "/api/actions/release-owner-handoff", method="POST")
+            with urllib.request.urlopen(handoff_request, timeout=60) as response:
+                handoff_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(handoff_payload["ok"], handoff_payload)
+            handoff = handoff_payload["result"]
+            self.assertEqual(handoff["release"]["release_id"], signoff["release_id"])
+            self.assertIn(handoff["handoff_status"], {"ready_for_owner_review", "review"})
+            self.assertIn("APPROVE AIVAMAX RELEASE", json.dumps(handoff["owner_confirmation_phrases"], ensure_ascii=False))
+            handoff_path = core.resolve_reported_path(handoff["handoff"]["markdown"]["path"])
+            self.assertTrue(handoff_path and handoff_path.exists())
+            handoff_markdown = handoff_path.read_text(encoding="utf-8")
+            self.assertIn("Owner Release Handoff", handoff_markdown)
+            self.assertIn("This handoff prepares the owner review decision", handoff_markdown)
+            self.assert_public_clean(handoff_markdown)
+
+            with urllib.request.urlopen(base + "/api/release-owner-handoff", timeout=20) as response:
+                get_handoff_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(get_handoff_payload["ok"], get_handoff_payload)
+            self.assertEqual(get_handoff_payload["result"]["release"]["release_id"], signoff["release_id"])
 
             with urllib.request.urlopen(base + "/api/release-review-pack", timeout=20) as response:
                 get_review_pack_payload = json.loads(response.read().decode("utf-8"))

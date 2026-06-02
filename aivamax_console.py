@@ -39,6 +39,7 @@ from aivamax_services import (
     release_distribution_delivery_record,
     release_distribution_package,
     release_distribution_status,
+    release_owner_handoff,
     release_review_pack,
     release_signoff_record,
     role_inventory,
@@ -144,6 +145,7 @@ def console_html() -> str:
       <button onclick="runAction('release-signoff-record')">Release Record</button>
       <button onclick="runAction('release-history')">Release History</button>
       <button onclick="runAction('release-review-pack')">Review Pack</button>
+      <button onclick="runAction('release-owner-handoff')">Owner Handoff</button>
       <button onclick="runAction('release-distribution-package')">Distribution Package</button>
       <button onclick="runAction('release-distribution-delivery-record')">Delivery Record</button>
       <button class="primary" onclick="refreshAll()">刷新状态</button>
@@ -869,6 +871,10 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                 payload = release_review_pack(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.NOT_FOUND, payload)
                 return
+            if route == "/api/release-owner-handoff":
+                payload = release_owner_handoff(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.NOT_FOUND, payload)
+                return
             if route == "/api/release-distribution-package":
                 payload = release_distribution_status(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.NOT_FOUND, payload)
@@ -1014,6 +1020,10 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                 return
             if route == "/api/actions/release-review-pack":
                 payload = release_review_pack(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.INTERNAL_SERVER_ERROR, payload)
+                return
+            if route == "/api/actions/release-owner-handoff":
+                payload = release_owner_handoff(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.INTERNAL_SERVER_ERROR, payload)
                 return
             if route == "/api/actions/release-distribution-package":

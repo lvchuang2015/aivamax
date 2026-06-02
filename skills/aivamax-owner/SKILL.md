@@ -70,6 +70,7 @@ Owner admins make the final release decision after reviewing the release review 
 - `aivamax_release_signoff_record`
 - `aivamax_release_history`
 - `aivamax_release_review_pack`
+- `aivamax_release_owner_handoff`
 - `aivamax_release_distribution_status`
 - `aivamax_release_distribution_package`
 - `aivamax_generate_client_pack`

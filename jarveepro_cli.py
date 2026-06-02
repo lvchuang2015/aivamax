@@ -7394,6 +7394,26 @@ def run_release_review_pack(args: argparse.Namespace) -> int:
     return 0 if result.get("ok") else 1
 
 
+def run_release_owner_handoff(args: argparse.Namespace) -> int:
+    from aivamax_services import release_owner_handoff
+
+    result = release_owner_handoff(
+        data_dir=Path(args.data_dir),
+        brand_config_path=Path(args.brand_config),
+        role=args.role,
+    )
+    if args.json:
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+    else:
+        payload = result.get("result", {})
+        handoff = payload.get("handoff", {})
+        print(f"Release owner handoff: {payload.get('handoff_status')}")
+        print(f"Release ID: {payload.get('release', {}).get('release_id')} | decision={payload.get('release', {}).get('decision')}")
+        if handoff.get("markdown"):
+            print(f"Handoff: {handoff['markdown'].get('path')}")
+    return 0 if result.get("ok") else 1
+
+
 def run_release_distribution_package(args: argparse.Namespace) -> int:
     from aivamax_services import release_distribution_package
 
@@ -7722,6 +7742,11 @@ def build_parser() -> argparse.ArgumentParser:
     release_review_pack_parser.add_argument("--role", default="owner_admin", choices=["owner_admin", "team_operator", "instructor_private", "student_public"])
     release_review_pack_parser.add_argument("--json", action="store_true")
     release_review_pack_parser.set_defaults(func=run_release_review_pack)
+
+    release_owner_handoff_parser = sub.add_parser("release-owner-handoff", help="Generate the AIvaMax owner release handoff report without approving or distributing.")
+    release_owner_handoff_parser.add_argument("--role", default="owner_admin", choices=["owner_admin", "team_operator", "instructor_private", "student_public"])
+    release_owner_handoff_parser.add_argument("--json", action="store_true")
+    release_owner_handoff_parser.set_defaults(func=run_release_owner_handoff)
 
     release_distribution_package_parser = sub.add_parser("release-distribution-package", help="Generate the approved AIvaMax distribution package after approved signoff.")
     release_distribution_package_parser.add_argument("--role", default="owner_admin", choices=["owner_admin", "team_operator", "instructor_private", "student_public"])
