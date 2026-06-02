@@ -55,6 +55,7 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
         "mcp_config_export",
         "host_smoke_test",
         "student_coach_preview",
+        "course_factory",
     },
     TEAM_OPERATOR: {
         "status",
@@ -73,6 +74,7 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
         "mcp_config_export",
         "host_smoke_test",
         "student_coach_preview",
+        "course_factory",
     },
     INSTRUCTOR_PRIVATE: {
         "status",
@@ -119,6 +121,8 @@ BLOCKED_PUBLIC_TERMS = [
 
 AUDIT_TYPES = {"brand", "artifact", "quality", "media", "case"}
 HOST_TARGETS = {"claude-code", "work-buddy", "codex", "generic-agent"}
+DEFAULT_COURSE_FACTORY_COURSE = "AIvaMax社媒自动化增长系统课"
+COURSE_FACTORY_SCENARIO_CONFIG = "90_Templates/Tables/course_factory_client_scenarios.json"
 
 
 @dataclass(frozen=True)
@@ -290,6 +294,8 @@ def get_status(
             "aivamax_host_smoke_test",
             "aivamax_export_mcp_config",
             "aivamax_student_coach_preview",
+            "aivamax_get_course_factory_status",
+            "aivamax_run_course_factory",
         ],
         "mcp_modes": ["http-json", "stdio-jsonrpc"],
         "skills": [
@@ -541,6 +547,199 @@ def generate_platform_assets(
         result={"platform": platform, "commands": commands, "platforms": core.platform_inventory(ctx.data_dir)},
         public_paths=public_paths_from_result(core.platform_inventory(ctx.data_dir)),
         error=None if ok else "generate_platform_assets_failed",
+    )
+
+
+def course_factory_scenario_config_path(ctx: ServiceContext) -> Path:
+    return ctx.matrix_root / COURSE_FACTORY_SCENARIO_CONFIG
+
+
+def render_course_factory_scenario_config(ctx: ServiceContext) -> dict[str, Any]:
+    return {
+        "schema_version": "aivamax.course_factory.client_scenarios.v1",
+        "visibility": "internal",
+        "public_brand": ctx.brand_config.get("public_brand", "AIvaMax"),
+        "description": "Internal client-pack scenarios used by course-factory-run-all.",
+        "scenarios": cli.default_course_factory_client_scenarios(),
+    }
+
+
+def ensure_course_factory_scenario_config(ctx: ServiceContext, *, force: bool = False) -> Path:
+    path = course_factory_scenario_config_path(ctx)
+    if path.exists() and not force:
+        return path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    content = render_course_factory_scenario_config(ctx)
+    path.write_text(json.dumps(content, ensure_ascii=False, indent=2), encoding="utf-8")
+    return path
+
+
+def read_course_factory_scenario_config(ctx: ServiceContext) -> dict[str, Any]:
+    path = course_factory_scenario_config_path(ctx)
+    if not path.exists():
+        return {
+            "path": relpath(path),
+            "exists": False,
+            "scenario_count": len(cli.default_course_factory_client_scenarios()),
+            "scenarios": cli.default_course_factory_client_scenarios(),
+        }
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return {"path": relpath(path), "exists": True, "scenario_count": 0, "error": str(exc), "scenarios": []}
+    scenarios = data.get("scenarios") if isinstance(data, dict) else data
+    if not isinstance(scenarios, list):
+        scenarios = []
+    return {
+        "path": relpath(path),
+        "exists": True,
+        "scenario_count": len(scenarios),
+        "scenarios": scenarios,
+    }
+
+
+def resolve_service_course_factory(ctx: ServiceContext, *, course: str | None = None, course_dir: str | None = None) -> Path:
+    try:
+        return cli.resolve_course_factory_dir(ctx.data_dir, course_dir=course_dir, course=course)
+    except SystemExit as exc:
+        raise FileNotFoundError(str(exc)) from exc
+
+
+def latest_course_factory_report(ctx: ServiceContext) -> dict[str, Any]:
+    dashboard = ctx.matrix_root / "00_Dashboards"
+    candidates = sorted(dashboard.glob("course_factory_run_*.json"), key=lambda path: path.stat().st_mtime, reverse=True) if dashboard.exists() else []
+    if not candidates:
+        return {"exists": False}
+    path = candidates[0]
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return {"exists": True, "path": relpath(path), "error": str(exc)}
+    return {
+        "exists": True,
+        "path": relpath(path),
+        "generated_at": data.get("generated_at"),
+        "passed": data.get("passed"),
+        "course_name": data.get("course_name"),
+        "full_export": data.get("full_export", {}),
+        "sales_preview": data.get("sales_preview", {}),
+        "client_pack_count": len(data.get("client_packs", [])) if isinstance(data.get("client_packs"), list) else 0,
+    }
+
+
+def course_factory_status(
+    *,
+    course: str | None = None,
+    course_dir: str | None = None,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    try:
+        factory_dir = resolve_service_course_factory(ctx, course=course, course_dir=course_dir)
+    except FileNotFoundError as exc:
+        return service_response(action="aivamax_get_course_factory_status", role=caller_role, ok=False, error="course_factory_not_found", warnings=[str(exc)])
+    audit = cli.audit_course_factory(factory_dir, ctx.data_dir, ctx.brand_config)
+    scenario_config = read_course_factory_scenario_config(ctx)
+    result = {
+        "course_name": factory_dir.name,
+        "course_dir": relpath(factory_dir),
+        "module_count": audit.get("module_count", 0),
+        "audit_passed": bool(audit.get("passed")),
+        "audit": audit,
+        "scenario_config": scenario_config,
+        "latest_report": latest_course_factory_report(ctx),
+        "recommended_command": (
+            f'aivamax.ps1 course-factory-run-all --course-dir "{relpath(factory_dir)}" '
+            f'--client-scenarios "{scenario_config["path"]}" --format html --force'
+        ),
+    }
+    return service_response(
+        action="aivamax_get_course_factory_status",
+        role=caller_role,
+        ok=True,
+        result=result,
+        public_paths=public_paths_from_result(result),
+        audit={"passed": bool(audit.get("passed"))},
+    )
+
+
+def init_course_factory_scenarios(
+    *,
+    force: bool = False,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    path = ensure_course_factory_scenario_config(ctx, force=force)
+    scenario_config = read_course_factory_scenario_config(ctx)
+    return service_response(
+        action="aivamax_init_course_factory_scenarios",
+        role=caller_role,
+        result=scenario_config,
+        public_paths=[relpath(path)],
+    )
+
+
+def run_course_factory_production(
+    *,
+    course: str | None = None,
+    course_dir: str | None = None,
+    format: str = "html",
+    build: bool = False,
+    no_client_packs: bool = False,
+    force: bool = True,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    try:
+        factory_dir = resolve_service_course_factory(ctx, course=course, course_dir=course_dir)
+    except FileNotFoundError as exc:
+        return service_response(action="aivamax_run_course_factory", role=caller_role, ok=False, error="course_factory_not_found", warnings=[str(exc)])
+    scenario_path = ensure_course_factory_scenario_config(ctx)
+    command = [
+        "--data-dir", str(ctx.data_dir),
+        "--brand-config", str(ctx.brand_config_path),
+        "course-factory-run-all",
+        "--course-dir", str(factory_dir),
+        "--client-scenarios", str(scenario_path),
+        "--format", format,
+        "--json",
+    ]
+    if force:
+        command.append("--force")
+    if build:
+        command.append("--build")
+    if no_client_packs:
+        command.append("--no-client-packs")
+    result = safe_cli(command, timeout=420)
+    parsed = result.get("json") or result
+    status = course_factory_status(
+        course_dir=str(factory_dir),
+        data_dir=ctx.data_dir,
+        brand_config_path=ctx.brand_config_path,
+        role=caller_role,
+    )
+    payload = {
+        "run": parsed,
+        "status": status.get("result", {}),
+        "scenario_config": relpath(scenario_path),
+    }
+    return service_response(
+        action="aivamax_run_course_factory",
+        role=caller_role,
+        ok=bool(result.get("ok")),
+        result=payload,
+        public_paths=public_paths_from_result(payload),
+        audit={"passed": bool((parsed or {}).get("passed")) if isinstance(parsed, dict) else bool(result.get("ok"))},
+        error=None if result.get("ok") else "course_factory_run_failed",
     )
 
 
@@ -1156,6 +1355,8 @@ def render_skill(role: str) -> str:
         preferred_tools.extend([
             "aivamax_run_matrix",
             "aivamax_export_mcp_config",
+            "aivamax_get_course_factory_status",
+            "aivamax_run_course_factory",
         ])
     if role == STUDENT_PUBLIC:
         preferred_tools.append("aivamax_student_coach_preview")

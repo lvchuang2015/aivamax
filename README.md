@@ -122,12 +122,22 @@ The safe action buttons are allowlisted only:
 - `Refresh audits`: refresh brand, artifact, quality, media, and case audit status.
 - `Rebuild platforms`: regenerate the five platform playbooks and boundary briefs.
 - `Refresh course export`: regenerate the latest course module's delivery manuals.
+- `Init Client Scenarios`: create or refresh the internal course-factory client scenario JSON under `AIvaMax_Matrix/90_Templates/Tables`.
+- `Run Course Factory`: run the full course-factory production pipeline: audit, public export, sales preview, sample client packs, and production report.
 - `Export MCP config`: generate stdio config templates for Claude Code, Codex, Work Buddy style hosts, and generic agent hosts.
 - `Host smoke test`: run a local stdio JSON-RPC smoke test against the AIvaMax MCP tool bridge.
 - `Release gate`: run the public release gate across brand, artifact, quality, media, and case checks.
 - `Material review`: review media and case material readiness.
 
 The console does not expose arbitrary shell execution and refuses non-loopback hosts in v1.3.
+
+Course factory production is also exposed through:
+
+- `GET /api/course-factory`
+- `POST /api/actions/course-factory-init-scenarios`
+- `POST /api/actions/course-factory-run-all`
+
+The scenario file is internal production configuration. Public exports and sales previews are generated separately under `AIvaMax_Matrix/public_export`.
 
 ## MCP and Skill Layer
 

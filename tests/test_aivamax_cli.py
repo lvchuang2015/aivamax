@@ -167,6 +167,7 @@ class AIvaMaxCLITest(unittest.TestCase):
             self.assertIn("Codex", html)
             self.assertIn("Work Buddy", html)
             self.assertIn("MCP", html)
+            self.assertIn("Run Course Factory", html)
         finally:
             server.shutdown()
             server.server_close()
@@ -273,6 +274,8 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("aivamax_host_smoke_test", tool_names)
         self.assertIn("aivamax_export_mcp_config", tool_names)
         self.assertIn("aivamax_student_coach_preview", tool_names)
+        self.assertIn("aivamax_get_course_factory_status", tool_names)
+        self.assertIn("aivamax_run_course_factory", tool_names)
         self.assertIn("inputSchema", tools[0])
         status = mcp.call_tool(
             "aivamax_get_status",
@@ -320,6 +323,14 @@ class AIvaMaxCLITest(unittest.TestCase):
         )
         self.assertFalse(blocked_smoke["ok"])
         self.assertEqual(blocked_smoke["error"], "permission_denied")
+        blocked_factory = mcp.call_tool(
+            "aivamax_run_course_factory",
+            {"role": "student_public"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_factory["ok"])
+        self.assertEqual(blocked_factory["error"], "permission_denied")
 
     def test_mcp_jsonrpc_stdio_protocol_shape(self) -> None:
         data_dir = self.make_console_fixture()
@@ -1488,6 +1499,60 @@ Module {number} production output
         audit = cli.audit_course_factory(course_dir, data_dir, self.brand_config)
         self.assertTrue(audit["passed"], audit)
         self.assert_public_clean("\n".join(path.read_text(encoding="utf-8") for path in course_dir.rglob("*.md")))
+
+    def test_course_factory_console_action_runs_pipeline_with_scenario_config(self) -> None:
+        data_dir, course_dir = self.make_course_factory_fixture()
+        self.assertEqual(cli.main([
+            "--data-dir",
+            str(data_dir),
+            "course-factory-build",
+            "--course-dir",
+            str(course_dir),
+            "--force",
+        ]), 0)
+        status = services.course_factory_status(
+            course_dir=str(course_dir),
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="owner_admin",
+        )
+        self.assertTrue(status["ok"], status)
+        self.assertFalse(status["result"]["scenario_config"]["exists"])
+        with self.assertRaises(PermissionError):
+            services.run_course_factory_production(
+                course_dir=str(course_dir),
+                data_dir=data_dir,
+                brand_config_path=ROOT / "config" / "brand_config.json",
+                role="student_public",
+            )
+
+        server = build_server(host="127.0.0.1", port=0, data_dir=data_dir, brand_config_path=ROOT / "config" / "brand_config.json")
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        base = f"http://127.0.0.1:{server.server_port}"
+        try:
+            request = urllib.request.Request(base + "/api/actions/course-factory-init-scenarios", method="POST")
+            with urllib.request.urlopen(request, timeout=20) as response:
+                init_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(init_payload["ok"], init_payload)
+            self.assertTrue((data_dir / "obsidian" / "AIvaMax_Matrix" / "90_Templates" / "Tables" / "course_factory_client_scenarios.json").exists())
+
+            request = urllib.request.Request(base + "/api/actions/course-factory-run-all", method="POST")
+            with urllib.request.urlopen(request, timeout=90) as response:
+                run_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(run_payload["ok"], run_payload)
+            report = run_payload["result"]["run"]
+            self.assertTrue(report["passed"], report)
+            self.assertEqual(len(report["client_packs"]), 3)
+
+            with urllib.request.urlopen(base + "/api/course-factory", timeout=20) as response:
+                factory_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(factory_payload["ok"], factory_payload)
+            self.assertTrue(factory_payload["result"]["latest_report"]["exists"])
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=5)
 
     def test_client_pack_and_sales_preview_generators_are_brand_safe(self) -> None:
         data_dir, course_dir = self.make_course_factory_fixture()

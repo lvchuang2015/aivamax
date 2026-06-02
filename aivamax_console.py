@@ -11,6 +11,7 @@ from aivamax_core import DEFAULT_BRAND_CONFIG, DEFAULT_DATA_DIR
 from aivamax_mcp_server import list_tools
 from aivamax_services import (
     OWNER_ADMIN,
+    course_factory_status,
     export_course,
     generate_platform_assets,
     get_status,
@@ -25,9 +26,11 @@ from aivamax_services import (
     release_gate,
     role_inventory,
     run_audit,
+    run_course_factory_production,
     runtime_status,
     skill_inventory,
     student_coach_preview,
+    init_course_factory_scenarios,
 )
 
 
@@ -101,6 +104,8 @@ def console_html() -> str:
       <p>本地智能营销矩阵控制台：Core、MCP、Skill、课程、审计、素材与三端视图的统一入口。</p>
     </div>
     <div class="toolbar">
+      <button onclick="runAction('course-factory-init-scenarios')">Init Client Scenarios</button>
+      <button class="primary" onclick="runAction('course-factory-run-all')">Run Course Factory</button>
       <button class="primary" onclick="refreshAll()">刷新状态</button>
       <button onclick="runAction('refresh-audits')">刷新审计</button>
       <button onclick="runAction('refresh-platform-assets')">重建平台库</button>
@@ -191,6 +196,10 @@ def console_html() -> str:
         </table>
       </div>
       <div class="panel wide">
+        <h2>Course Factory Production</h2>
+        <div id="courseFactoryRows"></div>
+      </div>
+      <div class="panel wide">
         <h2>发布门禁</h2>
         <div id="releaseGateRows"></div>
       </div>
@@ -227,7 +236,7 @@ def console_html() -> str:
       return payload;
     }
     async function refreshAll() {
-      const [status, roles, mcp, skills, runtime, hostIntegration, coachPreview, releaseGate, material] = await Promise.all([
+      const [status, roles, mcp, skills, runtime, hostIntegration, coachPreview, releaseGate, material, courseFactory] = await Promise.all([
         getJson('/api/status'),
         getJson('/api/roles'),
         getJson('/api/mcp/tools'),
@@ -236,7 +245,8 @@ def console_html() -> str:
         getJson('/api/host-integration'),
         getJson('/api/student-coach-preview'),
         getJson('/api/release-gate'),
-        getJson('/api/material-review')
+        getJson('/api/material-review'),
+        getJson('/api/course-factory')
       ]);
       render(status.result || status, {
         roles: roles.result || {},
@@ -246,7 +256,8 @@ def console_html() -> str:
         hostIntegration: hostIntegration.result || {},
         coachPreview: coachPreview.result || {},
         releaseGate,
-        material
+        material,
+        courseFactory: courseFactory.result || {}
       });
     }
     async function runAction(action) {
@@ -303,6 +314,14 @@ def console_html() -> str:
         <div class="row"><div><strong>${name}</strong><div class="path">${item.path || item.course || ''}</div></div>${pill(item.passed, item.passed ? 'passed' : 'review')}</div>`).join('');
       document.getElementById('courseRows').innerHTML = data.courses.courses.map(course => `
         <tr><td>${course.course}<div class="path">${course.path}</div></td><td>${course.module_count}</td><td>${pill(course.release_files_ready)}</td><td>${course.modules.length ? course.modules[course.modules.length - 1].module : '-'}</td></tr>`).join('');
+      const factory = extra.courseFactory || {};
+      const scenario = factory.scenario_config || {};
+      const report = factory.latest_report || {};
+      document.getElementById('courseFactoryRows').innerHTML = `
+        <div class="row"><div><strong>${esc(factory.course_name || 'No course factory')}</strong><div class="path">${esc(factory.course_dir || '')}</div></div>${pill(!!factory.audit_passed, factory.audit_passed ? 'audit passed' : 'review')}</div>
+        <div class="row"><div><strong>Client scenarios</strong><div class="path">${esc(scenario.path || '')}</div></div>${pill(!!scenario.exists, `${scenario.scenario_count || 0} scenarios`)}</div>
+        <div class="row"><div><strong>Latest production report</strong><div class="path">${esc(report.path || 'No report yet')}</div></div>${pill(!!report.passed, report.exists ? (report.passed ? 'passed' : 'review') : 'none')}</div>
+        <div class="row"><div><strong>Last client packs</strong><div class="path">${esc(factory.recommended_command || '')}</div></div><span class="pill">${esc(report.client_pack_count || 0)} packs</span></div>`;
       document.getElementById('releaseGateRows').innerHTML = extra.releaseGate.result ? Object.entries(extra.releaseGate.result.audits || {}).map(([name, item]) => `
         <div class="row"><div><strong>${name}</strong><div class="path">${extra.releaseGate.result.course || ''}</div></div>${pill(item.passed, item.score ? `score ${item.score}` : (item.passed ? 'passed' : 'review'))}</div>`).join('') : '';
       document.getElementById('materialRows').innerHTML = extra.material.result ? [
@@ -425,6 +444,10 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                 payload = material_review(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK, payload)
                 return
+            if route == "/api/course-factory":
+                payload = course_factory_status(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK, payload)
+                return
             json_response(self, HTTPStatus.NOT_FOUND, {"ok": False, "error": "unknown_route", "route": route})
 
         def do_POST(self) -> None:  # noqa: N802
@@ -442,6 +465,14 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                 return
             if route == "/api/actions/refresh-course-export":
                 payload = latest_export_action(data_dir, brand_config_path)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.INTERNAL_SERVER_ERROR, payload)
+                return
+            if route == "/api/actions/course-factory-init-scenarios":
+                payload = init_course_factory_scenarios(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.INTERNAL_SERVER_ERROR, payload)
+                return
+            if route == "/api/actions/course-factory-run-all":
+                payload = run_course_factory_production(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.INTERNAL_SERVER_ERROR, payload)
                 return
             if route == "/api/actions/export-mcp-config":

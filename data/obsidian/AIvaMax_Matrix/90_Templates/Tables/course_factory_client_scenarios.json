@@ -1,0 +1,32 @@
+{
+  "schema_version": "aivamax.course_factory.client_scenarios.v1",
+  "visibility": "internal",
+  "public_brand": "AIvaMax",
+  "description": "Internal client-pack scenarios used by course-factory-run-all.",
+  "scenarios": [
+    {
+      "client_code": "AI-SaaS-Pilot",
+      "industry": "AI SaaS",
+      "product": "AI workflow automation service",
+      "market": "United States B2B",
+      "goal": "lead_generation",
+      "days": 30
+    },
+    {
+      "client_code": "Local-Service-Pilot",
+      "industry": "local service",
+      "product": "local service booking offer",
+      "market": "United States local market",
+      "goal": "appointment_generation",
+      "days": 30
+    },
+    {
+      "client_code": "Education-Course-Pilot",
+      "industry": "education course",
+      "product": "online course offer",
+      "market": "global Chinese-speaking audience",
+      "goal": "course_sales",
+      "days": 30
+    }
+  ]
+}

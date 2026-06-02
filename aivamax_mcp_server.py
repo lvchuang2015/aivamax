@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 from aivamax_services import (
     DEFAULT_BRAND_CONFIG,
     DEFAULT_DATA_DIR,
+    course_factory_status,
     export_course,
     get_status,
     host_integration_status,
@@ -21,6 +22,7 @@ from aivamax_services import (
     mcp_config_export,
     runtime_status,
     run_audit,
+    run_course_factory_production,
     run_matrix_job,
     search_public_knowledge,
     student_coach_preview,
@@ -126,6 +128,34 @@ TOOL_DEFINITIONS = [
                 "role": {"type": "string"},
             },
             "required": ["course", "module"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "aivamax_get_course_factory_status",
+        "description": "Return AIvaMax course factory audit, scenario config, latest production report, and recommended command.",
+        "allowed_roles": ["owner_admin", "team_operator"],
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "course": {"type": "string"},
+                "role": {"type": "string"},
+            },
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "aivamax_run_course_factory",
+        "description": "Run the allowlisted AIvaMax course factory production pipeline.",
+        "allowed_roles": ["owner_admin", "team_operator"],
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "course": {"type": "string"},
+                "format": {"type": "string", "default": "html"},
+                "build": {"type": "boolean", "default": False},
+                "role": {"type": "string"},
+            },
             "additionalProperties": False,
         },
     },
@@ -254,6 +284,18 @@ def call_tool(
                 str(arguments.get("course", "")),
                 str(arguments.get("module", "")),
                 format=str(arguments.get("format", "html")),
+                **common,
+            )
+        if name == "aivamax_get_course_factory_status":
+            return course_factory_status(
+                course=arguments.get("course"),
+                **common,
+            )
+        if name == "aivamax_run_course_factory":
+            return run_course_factory_production(
+                course=arguments.get("course"),
+                format=str(arguments.get("format", "html")),
+                build=bool(arguments.get("build", False)),
                 **common,
             )
         if name == "aivamax_get_latest_course":

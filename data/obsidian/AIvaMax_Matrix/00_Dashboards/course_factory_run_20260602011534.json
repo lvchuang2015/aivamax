@@ -1,0 +1,79 @@
+{
+  "generated_at": "2026-06-02T01:15:34+00:00",
+  "public_brand": "AIvaMax",
+  "course_name": "AIvaMax社媒自动化增长系统课",
+  "course_dir": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课",
+  "dry_run": false,
+  "build": null,
+  "course_factory_audit": {
+    "course_dir": "obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课",
+    "module_count": 12,
+    "manifest_exists": true,
+    "teaching_pack_exists": true,
+    "violations": [],
+    "warnings": [],
+    "brand_violations": [],
+    "passed": true
+  },
+  "full_export": {
+    "out_dir": "obsidian/AIvaMax_Matrix/public_export/AIvaMax社媒自动化增长系统课/course_factory_full_export",
+    "file_count": 10,
+    "brand_audit_passed": true,
+    "violation_count": 0
+  },
+  "sales_preview": {
+    "out_dir": "obsidian/AIvaMax_Matrix/public_export/AIvaMax社媒自动化增长系统课/course_factory_sales_preview",
+    "file_count": 10,
+    "brand_audit_passed": true,
+    "violation_count": 0
+  },
+  "client_packs": [
+    {
+      "pack_id": "ai-saas-pilot",
+      "industry": "AI SaaS",
+      "product": "AI workflow automation service",
+      "market": "United States B2B",
+      "goal": "lead_generation",
+      "days": 30,
+      "out_dir": "obsidian/AIvaMax_Matrix/50_Projects/Samples/ai-saas-pilot",
+      "file_count": 10,
+      "brand_audit_passed": true,
+      "violation_count": 0
+    },
+    {
+      "pack_id": "local-service-pilot",
+      "industry": "local service",
+      "product": "local service booking offer",
+      "market": "United States local market",
+      "goal": "appointment_generation",
+      "days": 30,
+      "out_dir": "obsidian/AIvaMax_Matrix/50_Projects/Samples/local-service-pilot",
+      "file_count": 10,
+      "brand_audit_passed": true,
+      "violation_count": 0
+    },
+    {
+      "pack_id": "education-course-pilot",
+      "industry": "education course",
+      "product": "online course offer",
+      "market": "global Chinese-speaking audience",
+      "goal": "course_sales",
+      "days": 30,
+      "out_dir": "obsidian/AIvaMax_Matrix/50_Projects/Samples/education-course-pilot",
+      "file_count": 10,
+      "brand_audit_passed": true,
+      "violation_count": 0
+    }
+  ],
+  "brand_audit": {
+    "passed": true,
+    "violation_count": 0
+  },
+  "artifact_audit": {
+    "passed": true,
+    "violation_count": 0
+  },
+  "report_json": "obsidian/AIvaMax_Matrix/00_Dashboards/course_factory_run_20260602011534.json",
+  "report_md": "obsidian/AIvaMax_Matrix/00_Dashboards/course_factory_run_20260602011534.md",
+  "passed": true
+}
