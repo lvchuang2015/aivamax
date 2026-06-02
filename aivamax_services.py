@@ -7,6 +7,7 @@ import sys
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 from urllib.parse import quote
 
@@ -304,6 +305,8 @@ def get_status(
             "aivamax_generate_client_pack",
             "aivamax_client_pack_delivery_qa",
             "aivamax_client_pack_batch_delivery_qa",
+            "aivamax_repair_client_pack",
+            "aivamax_repair_client_pack_batch",
             "aivamax_export_client_pack_zip",
         ],
         "mcp_modes": ["http-json", "stdio-jsonrpc"],
@@ -491,9 +494,19 @@ def client_pack_report_paths(ctx: ServiceContext, pack_id: str) -> tuple[Path, P
     return report_dir / "Delivery-QA-Report.json", report_dir / "Delivery-QA-Report.md"
 
 
+def client_pack_repair_report_paths(ctx: ServiceContext, pack_id: str) -> tuple[Path, Path]:
+    report_dir = client_pack_export_root(ctx) / cli.slugify(pack_id, fallback="client-pack", max_len=72)
+    return report_dir / "Delivery-Repair-Report.json", report_dir / "Delivery-Repair-Report.md"
+
+
 def client_pack_batch_report_paths(ctx: ServiceContext) -> tuple[Path, Path]:
     report_dir = client_pack_export_root(ctx)
     return report_dir / "Delivery-QA-Summary.json", report_dir / "Delivery-QA-Summary.md"
+
+
+def client_pack_batch_repair_report_paths(ctx: ServiceContext) -> tuple[Path, Path]:
+    report_dir = client_pack_export_root(ctx)
+    return report_dir / "Delivery-Repair-Summary.json", report_dir / "Delivery-Repair-Summary.md"
 
 
 def latest_client_pack_batch_report(ctx: ServiceContext) -> dict[str, Any] | None:
@@ -511,6 +524,30 @@ def latest_client_pack_batch_report(ctx: ServiceContext) -> dict[str, Any] | Non
                     "deliverable_count": data.get("deliverable_count"),
                     "needs_revision_count": data.get("needs_revision_count"),
                     "average_score": data.get("average_score"),
+                })
+        except json.JSONDecodeError:
+            report["json_error"] = "invalid_json"
+        report["json"] = client_pack_report_record(json_path)
+    if md_path.exists():
+        report["markdown"] = client_pack_report_record(md_path)
+    return report
+
+
+def latest_client_pack_batch_repair_report(ctx: ServiceContext) -> dict[str, Any] | None:
+    json_path, md_path = client_pack_batch_repair_report_paths(ctx)
+    if not json_path.exists() and not md_path.exists():
+        return None
+    report: dict[str, Any] = {}
+    if json_path.exists():
+        try:
+            data = json.loads(json_path.read_text(encoding="utf-8"))
+            if isinstance(data, dict):
+                report.update({
+                    "generated_at": data.get("generated_at"),
+                    "pack_count": data.get("pack_count"),
+                    "repaired_count": data.get("repaired_count"),
+                    "skipped_count": data.get("skipped_count"),
+                    "after_deliverable_count": data.get("after_deliverable_count"),
                 })
         except json.JSONDecodeError:
             report["json_error"] = "invalid_json"
@@ -544,6 +581,30 @@ def latest_client_pack_qa_report(ctx: ServiceContext, pack_id: str) -> dict[str,
     return report
 
 
+def latest_client_pack_repair_report(ctx: ServiceContext, pack_id: str) -> dict[str, Any] | None:
+    json_path, md_path = client_pack_repair_report_paths(ctx, pack_id)
+    if not json_path.exists() and not md_path.exists():
+        return None
+    report: dict[str, Any] = {}
+    if json_path.exists():
+        try:
+            data = json.loads(json_path.read_text(encoding="utf-8"))
+            if isinstance(data, dict):
+                report.update({
+                    "generated_at": data.get("generated_at"),
+                    "dry_run": data.get("dry_run"),
+                    "changed_count": data.get("changed_count"),
+                    "after_passed": data.get("after", {}).get("passed"),
+                    "after_score": data.get("after", {}).get("score"),
+                })
+        except json.JSONDecodeError:
+            report["json_error"] = "invalid_json"
+        report["json"] = client_pack_report_record(json_path)
+    if md_path.exists():
+        report["markdown"] = client_pack_report_record(md_path)
+    return report
+
+
 def list_client_packs(
     *,
     data_dir: Path | str | None = None,
@@ -562,6 +623,7 @@ def list_client_packs(
         pack_id = str(manifest.get("pack_id") or pack_dir.name)
         archive = latest_client_pack_archive(ctx, pack_id)
         qa_report = latest_client_pack_qa_report(ctx, pack_id)
+        repair_report = latest_client_pack_repair_report(ctx, pack_id)
         packs.append({
             "pack_id": pack_id,
             "path": relpath(pack_dir),
@@ -577,8 +639,15 @@ def list_client_packs(
             "files": file_records,
             "archive": archive,
             "qa_report": qa_report,
+            "repair_report": repair_report,
         })
-    result = {"root": relpath(root), "pack_count": len(packs), "packs": packs, "batch_report": latest_client_pack_batch_report(ctx)}
+    result = {
+        "root": relpath(root),
+        "pack_count": len(packs),
+        "packs": packs,
+        "batch_report": latest_client_pack_batch_report(ctx),
+        "batch_repair_report": latest_client_pack_batch_repair_report(ctx),
+    }
     return service_response(
         action="aivamax_list_client_packs",
         role=caller_role,
@@ -687,7 +756,16 @@ def resolve_client_pack_report_file(
         candidate.relative_to(root)
     except ValueError as exc:
         raise PermissionError("Client pack QA report must be under AIvaMax_Matrix/public_export/client_packs.") from exc
-    allowed_names = {"Delivery-QA-Report.json", "Delivery-QA-Report.md", "Delivery-QA-Summary.json", "Delivery-QA-Summary.md"}
+    allowed_names = {
+        "Delivery-QA-Report.json",
+        "Delivery-QA-Report.md",
+        "Delivery-QA-Summary.json",
+        "Delivery-QA-Summary.md",
+        "Delivery-Repair-Report.json",
+        "Delivery-Repair-Report.md",
+        "Delivery-Repair-Summary.json",
+        "Delivery-Repair-Summary.md",
+    }
     if not candidate.is_file() or candidate.name not in allowed_names:
         raise PermissionError("Only exported Delivery QA report files can be previewed or downloaded.")
     return candidate
@@ -826,6 +904,178 @@ def build_client_pack_delivery_qa(pack_dir: Path, ctx: ServiceContext) -> dict[s
         "missing_files": missing,
         "brand_violation_count": len(brand_violations),
     }
+
+
+def request_bool(request: dict[str, Any], key: str, default: bool = False) -> bool:
+    value = request.get(key, default)
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "y", "on"}
+    return bool(value)
+
+
+def extract_client_pack_field(text: str, label: str) -> str:
+    pattern = rf"\|\s*{re.escape(label)}\s*\|\s*([^|\n]+)\|"
+    match = re.search(pattern, text, flags=re.I)
+    return match.group(1).strip() if match else ""
+
+
+def infer_client_pack_args(pack_dir: Path, ctx: ServiceContext, manifest: dict[str, Any]) -> SimpleNamespace:
+    brief_path = pack_dir / "00_Client-Brief.md"
+    brief = brief_path.read_text(encoding="utf-8", errors="ignore") if brief_path.exists() else ""
+    pack_id = scrub_text(str(manifest.get("pack_id") or pack_dir.name), ctx.brand_config)
+    days_text = str(manifest.get("days") or extract_client_pack_field(brief, "Duration") or "30")
+    days_match = re.search(r"\d+", days_text)
+    days = int(days_match.group(0)) if days_match else 30
+    days = max(1, min(days, 365))
+    return SimpleNamespace(
+        client_code=pack_id,
+        industry=scrub_text(str(manifest.get("industry") or extract_client_pack_field(brief, "Industry") or "general business"), ctx.brand_config),
+        product=scrub_text(str(manifest.get("product") or extract_client_pack_field(brief, "Product") or "client offer"), ctx.brand_config),
+        market=scrub_text(str(manifest.get("market") or extract_client_pack_field(brief, "Market") or "target market"), ctx.brand_config),
+        goal=scrub_text(str(manifest.get("goal") or extract_client_pack_field(brief, "Primary goal") or "lead_generation"), ctx.brand_config),
+        days=days,
+    )
+
+
+def repair_reason_for_client_pack_file(
+    *,
+    filename: str,
+    path: Path,
+    manifest_valid: bool,
+    before_qa: dict[str, Any],
+    force: bool,
+) -> str | None:
+    if not path.exists():
+        return "missing_file"
+    if filename == "manifest.json" and not manifest_valid:
+        return "missing_or_invalid_manifest"
+    if filename in CLIENT_PACK_PUBLIC_FILE_SET and len(path.read_text(encoding="utf-8", errors="ignore").strip()) < 200:
+        return "thin_client_file"
+    if force and (filename in CLIENT_PACK_PUBLIC_FILE_SET or filename in {"manifest.json", "08_Delivery-README.md"}):
+        return "force_refresh"
+    if filename in CLIENT_PACK_PUBLIC_FILE_SET and before_qa.get("brand_violation_count", 0) > 0 and force:
+        return "boundary_refresh"
+    return None
+
+
+def render_client_pack_repair_markdown(repair: dict[str, Any], brand_config: dict[str, Any]) -> str:
+    brand = brand_config.get("public_brand", "AIvaMax")
+    rows = "\n".join(
+        f"| {item.get('file')} | {item.get('reason')} | {item.get('action')} |"
+        for item in repair.get("changes", [])
+    ) or "| - | - | no_changes |"
+    return scrub_text(f"""---
+type: client_pack_delivery_repair
+public_brand: {brand}
+pack_id: {repair.get("pack_id")}
+visibility: client_delivery_qa
+status: {'dry_run' if repair.get('dry_run') else 'applied'}
+---
+
+# {brand} Client Pack Repair Report
+
+| Field | Value |
+| --- | --- |
+| Pack ID | {repair.get("pack_id")} |
+| Generated at | {repair.get("generated_at")} |
+| Dry run | {repair.get("dry_run")} |
+| Force refresh | {repair.get("force")} |
+| Before score | {repair.get("before", {}).get("score")} |
+| After score | {repair.get("after", {}).get("score")} |
+| After decision | {repair.get("after", {}).get("decision")} |
+| Changed files | {repair.get("changed_count")} |
+
+## Repair Actions
+
+| File | Reason | Action |
+| --- | --- | --- |
+{rows}
+
+## Boundary
+
+This repair uses the approved AIvaMax client-pack template and only writes client-pack draft files, internal README, and manifest files under the selected package folder.
+""", brand_config)
+
+
+def persist_client_pack_repair_report(repair: dict[str, Any], ctx: ServiceContext) -> dict[str, Any]:
+    pack_id = str(repair.get("pack_id") or "client-pack")
+    json_path, md_path = client_pack_repair_report_paths(ctx, pack_id)
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    report_payload = {
+        key: repair.get(key)
+        for key in [
+            "pack_id",
+            "generated_at",
+            "dry_run",
+            "force",
+            "changed_count",
+            "changes",
+            "before",
+            "after",
+        ]
+    }
+    json_path.write_text(json.dumps(report_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    md_path.write_text(render_client_pack_repair_markdown(repair, ctx.brand_config), encoding="utf-8")
+    return {
+        "json": client_pack_report_record(json_path),
+        "markdown": client_pack_report_record(md_path),
+    }
+
+
+def repair_client_pack_dir(pack_dir: Path, ctx: ServiceContext, *, dry_run: bool = False, force: bool = False) -> dict[str, Any]:
+    manifest = read_client_pack_manifest(pack_dir)
+    manifest_valid = bool(manifest)
+    before_qa = build_client_pack_delivery_qa(pack_dir, ctx)
+    pack_id = str(manifest.get("pack_id") or before_qa.get("pack_id") or pack_dir.name)
+    generated_files = cli.render_client_pack_files(infer_client_pack_args(pack_dir, ctx, manifest), ctx.brand_config, pack_id)
+    changes: list[dict[str, Any]] = []
+    for filename, content in generated_files.items():
+        target = pack_dir / filename
+        reason = repair_reason_for_client_pack_file(
+            filename=filename,
+            path=target,
+            manifest_valid=manifest_valid,
+            before_qa=before_qa,
+            force=force,
+        )
+        if not reason:
+            continue
+        changes.append({
+            "file": filename,
+            "reason": reason,
+            "action": "would_write" if dry_run else "written",
+            "bytes": len(content.encode("utf-8")),
+        })
+        if not dry_run:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(content, encoding="utf-8")
+    after_qa = build_client_pack_delivery_qa(pack_dir, ctx) if not dry_run else before_qa
+    repair = {
+        "pack_id": pack_id,
+        "generated_at": cli.now_iso(),
+        "dry_run": dry_run,
+        "force": force,
+        "changed_count": len(changes),
+        "changes": changes,
+        "before": {
+            "passed": before_qa.get("passed"),
+            "decision": before_qa.get("decision"),
+            "score": before_qa.get("score"),
+            "failed_check_count": before_qa.get("failed_check_count"),
+            "missing_files": before_qa.get("missing_files", []),
+        },
+        "after": {
+            "passed": after_qa.get("passed"),
+            "decision": after_qa.get("decision"),
+            "score": after_qa.get("score"),
+            "failed_check_count": after_qa.get("failed_check_count"),
+            "missing_files": after_qa.get("missing_files", []),
+        },
+    }
+    repair["report"] = persist_client_pack_repair_report(repair, ctx)
+    return repair
 
 
 def render_client_pack_qa_report_markdown(qa: dict[str, Any], brand_config: dict[str, Any]) -> str:
@@ -984,6 +1234,146 @@ def client_pack_delivery_qa(
         result=result,
         public_paths=[result["report"]["markdown"]["path"], result["report"]["json"]["path"]],
         audit={"passed": bool(result.get("passed")), "score": result.get("score", 0), "failed_check_count": result.get("failed_check_count", 0)},
+    )
+
+
+def repair_client_pack(
+    request: dict[str, Any] | None = None,
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    request = request or {}
+    try:
+        pack_dir = resolve_client_pack_dir(request, ctx)
+    except (PermissionError, FileNotFoundError, ValueError) as exc:
+        return service_response(action="aivamax_repair_client_pack", role=caller_role, ok=False, error="client_pack_not_found", warnings=[str(exc)])
+    repair = repair_client_pack_dir(
+        pack_dir,
+        ctx,
+        dry_run=request_bool(request, "dry_run", False),
+        force=request_bool(request, "force", False),
+    )
+    if not repair.get("dry_run"):
+        after_qa = build_client_pack_delivery_qa(pack_dir, ctx)
+        after_qa["report"] = persist_client_pack_qa_report(after_qa, ctx)
+        repair["after_report"] = after_qa["report"]
+    return service_response(
+        action="aivamax_repair_client_pack",
+        role=caller_role,
+        result=repair,
+        public_paths=[repair["report"]["markdown"]["path"], repair["report"]["json"]["path"]],
+        audit={"passed": bool(repair.get("after", {}).get("passed")), "score": repair.get("after", {}).get("score", 0), "changed_count": repair.get("changed_count", 0)},
+    )
+
+
+def render_client_pack_batch_repair_markdown(summary: dict[str, Any], brand_config: dict[str, Any]) -> str:
+    brand = brand_config.get("public_brand", "AIvaMax")
+    rows = "\n".join(
+        f"| {item.get('pack_id')} | {item.get('before', {}).get('decision')} | {item.get('after', {}).get('decision')} | {item.get('changed_count')} | {item.get('dry_run')} |"
+        for item in summary.get("packs", [])
+    ) or "| - | - | - | 0 | - |"
+    skipped_rows = "\n".join(
+        f"| {item.get('pack_id')} | {item.get('reason')} | {item.get('score')} |"
+        for item in summary.get("skipped", [])
+    ) or "| - | - | - |"
+    return scrub_text(f"""---
+type: client_pack_delivery_repair_summary
+public_brand: {brand}
+visibility: client_delivery_qa
+status: {'dry_run' if summary.get('dry_run') else 'applied'}
+---
+
+# {brand} Client Pack Repair Summary
+
+| Field | Value |
+| --- | --- |
+| Generated at | {summary.get("generated_at")} |
+| Pack count | {summary.get("pack_count")} |
+| Repaired | {summary.get("repaired_count")} |
+| Skipped | {summary.get("skipped_count")} |
+| After deliverable | {summary.get("after_deliverable_count")} |
+| Dry run | {summary.get("dry_run")} |
+| Force refresh | {summary.get("force")} |
+
+## Package Results
+
+| Pack | Before | After | Changed files | Dry run |
+| --- | --- | --- | --- | --- |
+{rows}
+
+## Skipped Packages
+
+| Pack | Reason | Score |
+| --- | --- | --- |
+{skipped_rows}
+
+## Boundary
+
+This summary records AIvaMax client-pack draft repairs only. It does not expose source traces or private source material.
+""", brand_config)
+
+
+def persist_client_pack_batch_repair_report(summary: dict[str, Any], ctx: ServiceContext) -> dict[str, Any]:
+    json_path, md_path = client_pack_batch_repair_report_paths(ctx)
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    md_path.write_text(render_client_pack_batch_repair_markdown(summary, ctx.brand_config), encoding="utf-8")
+    return {
+        "json": client_pack_report_record(json_path),
+        "markdown": client_pack_report_record(md_path),
+    }
+
+
+def repair_client_pack_batch(
+    request: dict[str, Any] | None = None,
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    request = request or {}
+    dry_run = request_bool(request, "dry_run", False)
+    force = request_bool(request, "force", False)
+    only_failed = request_bool(request, "only_failed", True)
+    repairs: list[dict[str, Any]] = []
+    skipped: list[dict[str, Any]] = []
+    for pack_dir in client_pack_dirs(ctx):
+        qa = build_client_pack_delivery_qa(pack_dir, ctx)
+        if only_failed and qa.get("passed") and not force:
+            skipped.append({"pack_id": qa.get("pack_id"), "reason": "already_deliverable", "score": qa.get("score")})
+            continue
+        repairs.append(repair_client_pack_dir(pack_dir, ctx, dry_run=dry_run, force=force))
+    after_deliverable_count = 0
+    for pack_dir in client_pack_dirs(ctx):
+        after_deliverable_count += 1 if build_client_pack_delivery_qa(pack_dir, ctx).get("passed") else 0
+    summary = {
+        "generated_at": cli.now_iso(),
+        "dry_run": dry_run,
+        "force": force,
+        "only_failed": only_failed,
+        "pack_count": len(repairs) + len(skipped),
+        "repaired_count": len([item for item in repairs if int(item.get("changed_count") or 0) > 0]),
+        "skipped_count": len(skipped),
+        "after_deliverable_count": after_deliverable_count,
+        "packs": repairs,
+        "skipped": skipped,
+    }
+    summary["report"] = persist_client_pack_batch_repair_report(summary, ctx)
+    if not dry_run:
+        qa_summary = client_pack_batch_delivery_qa({"export_zip": False}, data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+        summary["qa_summary"] = qa_summary.get("result", {}).get("report")
+    return service_response(
+        action="aivamax_repair_client_pack_batch",
+        role=caller_role,
+        result=summary,
+        public_paths=[summary["report"]["markdown"]["path"], summary["report"]["json"]["path"]],
+        audit={"passed": bool(summary.get("after_deliverable_count") == len(client_pack_dirs(ctx))) if not dry_run else True, "repaired_count": summary.get("repaired_count", 0)},
     )
 
 
@@ -2305,6 +2695,8 @@ def render_skill(role: str) -> str:
             "aivamax_generate_client_pack",
             "aivamax_client_pack_delivery_qa",
             "aivamax_client_pack_batch_delivery_qa",
+            "aivamax_repair_client_pack",
+            "aivamax_repair_client_pack_batch",
             "aivamax_export_client_pack_zip",
         ])
     if role == STUDENT_PUBLIC:

@@ -176,6 +176,8 @@ class AIvaMaxCLITest(unittest.TestCase):
             self.assertIn("Generate Pack", html)
             self.assertIn("Run QA", html)
             self.assertIn("Run Batch QA", html)
+            self.assertIn("Batch Repair", html)
+            self.assertIn("Repair Dry Run", html)
             self.assertIn("Export ZIP", html)
             self.assertIn("Client Delivery Packs", html)
         finally:
@@ -295,6 +297,8 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("aivamax_generate_client_pack", tool_names)
         self.assertIn("aivamax_client_pack_delivery_qa", tool_names)
         self.assertIn("aivamax_client_pack_batch_delivery_qa", tool_names)
+        self.assertIn("aivamax_repair_client_pack", tool_names)
+        self.assertIn("aivamax_repair_client_pack_batch", tool_names)
         self.assertIn("aivamax_export_client_pack_zip", tool_names)
         self.assertIn("inputSchema", tools[0])
         status = mcp.call_tool(
@@ -375,6 +379,22 @@ class AIvaMaxCLITest(unittest.TestCase):
         )
         self.assertFalse(blocked_batch_qa["ok"])
         self.assertEqual(blocked_batch_qa["error"], "permission_denied")
+        blocked_repair = mcp.call_tool(
+            "aivamax_repair_client_pack",
+            {"role": "student_public", "pack_id": "AI-SaaS-Pilot"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_repair["ok"])
+        self.assertEqual(blocked_repair["error"], "permission_denied")
+        blocked_batch_repair = mcp.call_tool(
+            "aivamax_repair_client_pack_batch",
+            {"role": "student_public"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_batch_repair["ok"])
+        self.assertEqual(blocked_batch_repair["error"], "permission_denied")
         blocked_zip = mcp.call_tool(
             "aivamax_export_client_pack_zip",
             {"role": "student_public", "pack_id": "AI-SaaS-Pilot"},
@@ -1615,6 +1635,20 @@ Module {number} production output
                 role="student_public",
             )
         with self.assertRaises(PermissionError):
+            services.repair_client_pack(
+                {"pack_id": "AI-SaaS-Pilot"},
+                data_dir=data_dir,
+                brand_config_path=ROOT / "config" / "brand_config.json",
+                role="student_public",
+            )
+        with self.assertRaises(PermissionError):
+            services.repair_client_pack_batch(
+                {},
+                data_dir=data_dir,
+                brand_config_path=ROOT / "config" / "brand_config.json",
+                role="student_public",
+            )
+        with self.assertRaises(PermissionError):
             services.export_client_pack_zip(
                 {"pack_id": "AI-SaaS-Pilot"},
                 data_dir=data_dir,
@@ -1672,6 +1706,26 @@ Module {number} production output
         self.assertFalse(blocked_zip["ok"], blocked_zip)
         self.assertEqual(blocked_zip["error"], "client_pack_qa_failed")
         self.assertIn("report", blocked_zip["result"]["delivery_qa"])
+
+        missing_pack = data_dir / "obsidian" / "AIvaMax_Matrix" / "50_Projects" / "Samples" / "missing-manifest-pack"
+        missing_pack.mkdir(parents=True, exist_ok=True)
+        (missing_pack / "00_Client-Brief.md").write_text("# Thin\n", encoding="utf-8")
+        repaired_missing = services.repair_client_pack(
+            {"pack_id": "missing-manifest-pack"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="owner_admin",
+        )
+        self.assertTrue(repaired_missing["ok"], repaired_missing)
+        self.assertGreaterEqual(repaired_missing["result"]["changed_count"], 8)
+        self.assertTrue(repaired_missing["result"]["after"]["passed"], repaired_missing)
+        self.assertTrue((missing_pack / "manifest.json").exists())
+        self.assertTrue((missing_pack / "04_Content-Calendar.md").exists())
+        repair_report_path = core.resolve_reported_path(repaired_missing["result"]["report"]["json"]["path"])
+        self.assertIsNotNone(repair_report_path)
+        repair_report_data = json.loads(repair_report_path.read_text(encoding="utf-8"))
+        self.assertNotIn("source_path", json.dumps(repair_report_data, ensure_ascii=False))
+        self.assertNotIn("raw_path", json.dumps(repair_report_data, ensure_ascii=False))
 
         server = build_server(host="127.0.0.1", port=0, data_dir=data_dir, brand_config_path=ROOT / "config" / "brand_config.json")
         thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -1827,6 +1881,49 @@ Module {number} production output
             self.assertNotIn("source_path", json.dumps(batch_json, ensure_ascii=False))
             self.assertNotIn("raw_path", json.dumps(batch_json, ensure_ascii=False))
 
+            request = urllib.request.Request(
+                base + "/api/actions/client-pack-batch-repair",
+                data=json.dumps({"dry_run": True, "only_failed": True}).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(request, timeout=60) as response:
+                batch_repair_plan = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(batch_repair_plan["ok"], batch_repair_plan)
+            self.assertGreaterEqual(batch_repair_plan["result"]["repaired_count"], 1)
+            self.assertTrue(any(item["pack_id"] == "broken-pack" and item["changed_count"] >= 3 for item in batch_repair_plan["result"]["packs"]))
+            with urllib.request.urlopen(base + batch_repair_plan["result"]["report"]["markdown"]["preview_url"], timeout=20) as response:
+                batch_repair_markdown = response.read().decode("utf-8")
+            self.assertIn("Client Pack Repair Summary", batch_repair_markdown)
+
+            request = urllib.request.Request(
+                base + "/api/actions/client-pack-repair",
+                data=json.dumps({"pack_id": "broken-pack"}).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(request, timeout=60) as response:
+                repair_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(repair_payload["ok"], repair_payload)
+            self.assertFalse(repair_payload["result"]["before"]["passed"])
+            self.assertTrue(repair_payload["result"]["after"]["passed"], repair_payload)
+            self.assertGreaterEqual(repair_payload["result"]["changed_count"], 3)
+            with urllib.request.urlopen(base + repair_payload["result"]["report"]["markdown"]["preview_url"], timeout=20) as response:
+                repair_markdown = response.read().decode("utf-8")
+            self.assertIn("Client Pack Repair Report", repair_markdown)
+
+            request = urllib.request.Request(
+                base + "/api/actions/client-pack-batch-qa",
+                data=json.dumps({"export_zip": True}).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(request, timeout=60) as response:
+                repaired_batch_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(repaired_batch_payload["ok"], repaired_batch_payload)
+            self.assertEqual(repaired_batch_payload["result"]["needs_revision_count"], 0)
+            self.assertGreaterEqual(repaired_batch_payload["result"]["deliverable_count"], 5)
+
             with urllib.request.urlopen(base + "/api/course-factory", timeout=20) as response:
                 factory_payload = json.loads(response.read().decode("utf-8"))
             self.assertTrue(factory_payload["ok"], factory_payload)
@@ -1838,6 +1935,8 @@ Module {number} production output
             self.assertGreaterEqual(packs_payload["result"]["pack_count"], 3)
             self.assertIn("batch_report", packs_payload["result"])
             self.assertIn("markdown", packs_payload["result"]["batch_report"])
+            self.assertIn("batch_repair_report", packs_payload["result"])
+            self.assertIn("markdown", packs_payload["result"]["batch_repair_report"])
             first_pack = packs_payload["result"]["packs"][0]
             public_files = [item for item in first_pack["files"] if item["visibility"] == "client_delivery"]
             self.assertTrue(public_files)

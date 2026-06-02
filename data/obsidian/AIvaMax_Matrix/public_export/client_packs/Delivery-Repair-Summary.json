@@ -1,0 +1,48 @@
+{
+  "generated_at": "2026-06-02T05:44:12+00:00",
+  "dry_run": true,
+  "force": false,
+  "only_failed": true,
+  "pack_count": 7,
+  "repaired_count": 0,
+  "skipped_count": 7,
+  "after_deliverable_count": 7,
+  "packs": [],
+  "skipped": [
+    {
+      "pack_id": "AI-SaaS-LeadGen-30D",
+      "reason": "already_deliverable",
+      "score": 80
+    },
+    {
+      "pack_id": "education-course-pilot",
+      "reason": "already_deliverable",
+      "score": 100
+    },
+    {
+      "pack_id": "local-service-pilot",
+      "reason": "already_deliverable",
+      "score": 100
+    },
+    {
+      "pack_id": "ai-saas-pilot",
+      "reason": "already_deliverable",
+      "score": 100
+    },
+    {
+      "pack_id": "local-service-leadgen-30d",
+      "reason": "already_deliverable",
+      "score": 100
+    },
+    {
+      "pack_id": "edu-course-trial-30d",
+      "reason": "already_deliverable",
+      "score": 100
+    },
+    {
+      "pack_id": "xbe-ecom-30d",
+      "reason": "already_deliverable",
+      "score": 100
+    }
+  ]
+}

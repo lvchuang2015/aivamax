@@ -24,6 +24,8 @@ from aivamax_services import (
     list_courses,
     list_platforms,
     mcp_config_export,
+    repair_client_pack,
+    repair_client_pack_batch,
     runtime_status,
     run_audit,
     run_course_factory_production,
@@ -219,6 +221,37 @@ TOOL_DEFINITIONS = [
         },
     },
     {
+        "name": "aivamax_repair_client_pack",
+        "description": "Repair one client delivery pack by filling missing, invalid, or thin draft files from the AIvaMax template.",
+        "allowed_roles": ["owner_admin", "team_operator"],
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "pack_id": {"type": "string"},
+                "path": {"type": "string"},
+                "dry_run": {"type": "boolean", "default": False},
+                "force": {"type": "boolean", "default": False},
+                "role": {"type": "string"},
+            },
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "aivamax_repair_client_pack_batch",
+        "description": "Repair all failed client delivery packs and write a batch repair summary report.",
+        "allowed_roles": ["owner_admin", "team_operator"],
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "dry_run": {"type": "boolean", "default": False},
+                "force": {"type": "boolean", "default": False},
+                "only_failed": {"type": "boolean", "default": True},
+                "role": {"type": "string"},
+            },
+            "additionalProperties": False,
+        },
+    },
+    {
         "name": "aivamax_get_latest_course",
         "description": "Return the latest public course target.",
         "allowed_roles": ["owner_admin", "team_operator", "instructor_private", "student_public"],
@@ -365,6 +398,10 @@ def call_tool(
             return client_pack_delivery_qa(arguments, **common)
         if name == "aivamax_client_pack_batch_delivery_qa":
             return client_pack_batch_delivery_qa(arguments, **common)
+        if name == "aivamax_repair_client_pack":
+            return repair_client_pack(arguments, **common)
+        if name == "aivamax_repair_client_pack_batch":
+            return repair_client_pack_batch(arguments, **common)
         if name == "aivamax_get_latest_course":
             return latest_course(**common)
         if name == "aivamax_get_runtime_status":

@@ -141,6 +141,8 @@ Course factory production is also exposed through:
 - `POST /api/actions/client-pack-generate`
 - `POST /api/actions/client-pack-qa`
 - `POST /api/actions/client-pack-batch-qa`
+- `POST /api/actions/client-pack-repair`
+- `POST /api/actions/client-pack-batch-repair`
 - `POST /api/actions/client-pack-export-zip`
 - `POST /api/actions/course-factory-run-all`
 - `GET /api/client-packs`
@@ -149,7 +151,7 @@ Course factory production is also exposed through:
 - `GET /api/client-packs/report?path=<encoded-path>&mode=preview|download`
 
 The scenario file is internal production configuration. The Console editor can add, replace, delete, and reset scenarios by `client_code`; public exports and sales previews are generated separately under `AIvaMax_Matrix/public_export`.
-Client-pack file links are restricted to the fixed client-facing `00-07_*.md` whitelist under `AIvaMax_Matrix/50_Projects/Samples/<pack>`. Delivery QA writes `Delivery-QA-Report.json` and `Delivery-QA-Report.md` under `AIvaMax_Matrix/public_export/client_packs/<pack>`. Batch Delivery QA refreshes every pack report and writes `Delivery-QA-Summary.json` and `Delivery-QA-Summary.md` under `AIvaMax_Matrix/public_export/client_packs/`; when requested, it exports ZIPs only for packs that pass the gate. ZIP exports live in the same folder and contain only the eight client files; internal README and manifest files are not exposed through preview, download, report, or ZIP routes. ZIP export is gated by Delivery QA: goal, duration, platform weights, content calendar, account matrix, review forecast, risk boundary, brand boundary, and client-readability checks must pass.
+Client-pack file links are restricted to the fixed client-facing `00-07_*.md` whitelist under `AIvaMax_Matrix/50_Projects/Samples/<pack>`. Delivery QA writes `Delivery-QA-Report.json` and `Delivery-QA-Report.md` under `AIvaMax_Matrix/public_export/client_packs/<pack>`. Batch Delivery QA refreshes every pack report and writes `Delivery-QA-Summary.json` and `Delivery-QA-Summary.md` under `AIvaMax_Matrix/public_export/client_packs/`; when requested, it exports ZIPs only for packs that pass the gate. Repair actions fill missing, invalid, or thin client-pack draft files from the AIvaMax client-pack template and write `Delivery-Repair-Report.*` or `Delivery-Repair-Summary.*` reports. ZIP exports live in the same folder and contain only the eight client files; internal README and manifest files are not exposed through preview, download, report, or ZIP routes. ZIP export is gated by Delivery QA: goal, duration, platform weights, content calendar, account matrix, review forecast, risk boundary, brand boundary, and client-readability checks must pass.
 
 ## MCP and Skill Layer
 
@@ -207,6 +209,8 @@ aivamax_run_course_factory
 aivamax_generate_client_pack
 aivamax_client_pack_delivery_qa
 aivamax_client_pack_batch_delivery_qa
+aivamax_repair_client_pack
+aivamax_repair_client_pack_batch
 aivamax_export_client_pack_zip
 ```
 

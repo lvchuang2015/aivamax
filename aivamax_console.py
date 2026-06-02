@@ -38,6 +38,8 @@ from aivamax_services import (
     student_coach_preview,
     init_course_factory_scenarios,
     reset_course_factory_scenarios,
+    repair_client_pack,
+    repair_client_pack_batch,
     resolve_client_pack_archive_file,
     resolve_client_pack_file,
     resolve_client_pack_report_file,
@@ -239,6 +241,8 @@ def console_html() -> str:
         <h2>Client Delivery Packs</h2>
         <div class="toolbar">
           <button onclick="runBatchQa(false)">Run Batch QA</button>
+          <button onclick="runBatchRepair(false)">Batch Repair</button>
+          <button onclick="runBatchRepair(true)">Repair Dry Run</button>
           <button class="primary" onclick="runBatchQa(true)">Batch QA + ZIP</button>
         </div>
         <div id="clientPackRows"></div>
@@ -387,6 +391,17 @@ def console_html() -> str:
         log.textContent = `Client pack QA failed: ${err.message}`;
       }
     }
+    async function repairPack(packId) {
+      const log = document.getElementById('actionLog');
+      log.textContent = `Repairing client pack ${packId}...`;
+      try {
+        const result = await postJson('/api/actions/client-pack-repair', { pack_id: packId });
+        log.textContent = JSON.stringify(result, null, 2);
+        await refreshAll();
+      } catch (err) {
+        log.textContent = `Client pack repair failed: ${err.message}`;
+      }
+    }
     async function runBatchQa(exportZip) {
       const log = document.getElementById('actionLog');
       log.textContent = exportZip ? 'Running batch Delivery QA and ZIP export...' : 'Running batch Delivery QA...';
@@ -396,6 +411,17 @@ def console_html() -> str:
         await refreshAll();
       } catch (err) {
         log.textContent = `Batch client pack QA failed: ${err.message}`;
+      }
+    }
+    async function runBatchRepair(dryRun) {
+      const log = document.getElementById('actionLog');
+      log.textContent = dryRun ? 'Checking batch repair plan...' : 'Repairing failed client packs...';
+      try {
+        const result = await postJson('/api/actions/client-pack-batch-repair', { dry_run: !!dryRun, only_failed: true });
+        log.textContent = JSON.stringify(result, null, 2);
+        await refreshAll();
+      } catch (err) {
+        log.textContent = `Batch client pack repair failed: ${err.message}`;
       }
     }
     function render(data, extra) {
@@ -461,13 +487,17 @@ def console_html() -> str:
         </tr>`).join('');
       const packs = extra.clientPacks || {};
       const batch = packs.batch_report || {};
+      const batchRepair = packs.batch_repair_report || {};
       const batchReport = batch.markdown ? `
         <div class="row"><div><strong>Latest batch QA</strong><div class="path">${esc(batch.generated_at || batch.markdown.path || '')}</div></div><span class="pill">${esc(batch.deliverable_count || 0)}/${esc(batch.pack_count || 0)} deliverable</span> <a href="${esc(batch.markdown.preview_url)}" target="_blank">Batch Report</a></div>
+      ` : '';
+      const batchRepairReport = batchRepair.markdown ? `
+        <div class="row"><div><strong>Latest batch repair</strong><div class="path">${esc(batchRepair.generated_at || batchRepair.markdown.path || '')}</div></div><span class="pill">${esc(batchRepair.repaired_count || 0)} repaired</span> <a href="${esc(batchRepair.markdown.preview_url)}" target="_blank">Repair Report</a></div>
       ` : '';
       const packCards = (packs.packs || []).slice(0, 8).map(pack => `
         <div class="card">
           <div class="row"><div><strong>${esc(pack.pack_id)}</strong><div class="path">${esc(pack.path)}</div></div><span class="pill">${esc(pack.client_file_count || 0)} files</span></div>
-          <div class="toolbar"><button data-pack-id="${esc(pack.pack_id)}" onclick="runPackQa(this.dataset.packId)">Run QA</button> <button class="primary" data-pack-id="${esc(pack.pack_id)}" onclick="exportPackZip(this.dataset.packId)">Export ZIP</button>${pack.qa_report && pack.qa_report.markdown ? ` <a href="${esc(pack.qa_report.markdown.preview_url)}" target="_blank">QA Report</a>` : ''}${pack.archive ? ` <a href="${esc(pack.archive.download_url)}" target="_blank">Download ZIP</a>` : ''}</div>
+          <div class="toolbar"><button data-pack-id="${esc(pack.pack_id)}" onclick="runPackQa(this.dataset.packId)">Run QA</button> <button data-pack-id="${esc(pack.pack_id)}" onclick="repairPack(this.dataset.packId)">Repair</button> <button class="primary" data-pack-id="${esc(pack.pack_id)}" onclick="exportPackZip(this.dataset.packId)">Export ZIP</button>${pack.qa_report && pack.qa_report.markdown ? ` <a href="${esc(pack.qa_report.markdown.preview_url)}" target="_blank">QA Report</a>` : ''}${pack.repair_report && pack.repair_report.markdown ? ` <a href="${esc(pack.repair_report.markdown.preview_url)}" target="_blank">Repair Report</a>` : ''}${pack.archive ? ` <a href="${esc(pack.archive.download_url)}" target="_blank">Download ZIP</a>` : ''}</div>
           <table>
             <thead><tr><th>File</th><th>Size</th><th>Links</th></tr></thead>
             <tbody>${(pack.files || []).filter(file => file.visibility === 'client_delivery').map(file => `
@@ -476,7 +506,7 @@ def console_html() -> str:
           </table>
         </div>
       `).join('');
-      document.getElementById('clientPackRows').innerHTML = batchReport + (packCards || '<p>No client delivery packs yet.</p>');
+      document.getElementById('clientPackRows').innerHTML = batchReport + batchRepairReport + (packCards || '<p>No client delivery packs yet.</p>');
       document.getElementById('releaseGateRows').innerHTML = extra.releaseGate.result ? Object.entries(extra.releaseGate.result.audits || {}).map(([name, item]) => `
         <div class="row"><div><strong>${name}</strong><div class="path">${extra.releaseGate.result.course || ''}</div></div>${pill(item.passed, item.score ? `score ${item.score}` : (item.passed ? 'passed' : 'review'))}</div>`).join('') : '';
       document.getElementById('materialRows').innerHTML = extra.material.result ? [
@@ -746,6 +776,24 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                     json_response(self, HTTPStatus.BAD_REQUEST, {"ok": False, "error": "invalid_json", "message": str(exc)})
                     return
                 payload = client_pack_batch_delivery_qa(body, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.BAD_REQUEST, payload)
+                return
+            if route == "/api/actions/client-pack-repair":
+                try:
+                    body = read_json_body(self)
+                except ValueError as exc:
+                    json_response(self, HTTPStatus.BAD_REQUEST, {"ok": False, "error": "invalid_json", "message": str(exc)})
+                    return
+                payload = repair_client_pack(body, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.BAD_REQUEST, payload)
+                return
+            if route == "/api/actions/client-pack-batch-repair":
+                try:
+                    body = read_json_body(self)
+                except ValueError as exc:
+                    json_response(self, HTTPStatus.BAD_REQUEST, {"ok": False, "error": "invalid_json", "message": str(exc)})
+                    return
+                payload = repair_client_pack_batch(body, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.BAD_REQUEST, payload)
                 return
             if route == "/api/actions/client-pack-export-zip":
