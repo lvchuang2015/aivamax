@@ -180,6 +180,8 @@ class AIvaMaxCLITest(unittest.TestCase):
             self.assertIn("Release History", html)
             self.assertIn("Review Pack", html)
             self.assertIn("Distribution Package", html)
+            self.assertIn("Owner Approve", html)
+            self.assertIn("Owner Reject", html)
             self.assertIn("Course Factory Release Status", html)
             self.assertIn("Client Scenario Editor", html)
             self.assertIn("Generate Pack", html)
@@ -2339,6 +2341,70 @@ Module {number} production output
             )
             self.assertFalse(blocked_distribution["ok"])
             self.assertEqual(blocked_distribution["error"], "release_not_approved")
+
+            blocked_approval_request = urllib.request.Request(
+                base + "/api/actions/release-signoff-record",
+                data=json.dumps({
+                    "decision": "approved",
+                    "signer": "owner_admin",
+                    "version": "test-course-factory-v1",
+                    "notes": "Missing explicit owner confirmation.",
+                    "require_ready": False,
+                }).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with self.assertRaises(urllib.error.HTTPError) as approval_ctx:
+                urllib.request.urlopen(blocked_approval_request, timeout=60)
+            approval_error = approval_ctx.exception
+            self.assertEqual(approval_error.code, 409)
+            blocked_approval_body = json.loads(approval_error.read().decode("utf-8"))
+            approval_error.close()
+            self.assertEqual(blocked_approval_body["error"], "owner_confirmation_required")
+            self.assertEqual(blocked_approval_body["required_confirmation"], "APPROVE AIVAMAX RELEASE")
+
+            approved_request = urllib.request.Request(
+                base + "/api/actions/release-signoff-record",
+                data=json.dumps({
+                    "decision": "approved",
+                    "signer": "owner_admin",
+                    "version": "test-course-factory-v1",
+                    "notes": "Owner approved after automated console review test.",
+                    "require_ready": False,
+                    "confirmation": "APPROVE AIVAMAX RELEASE",
+                }).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(approved_request, timeout=60) as response:
+                approved_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(approved_payload["ok"], approved_payload)
+            approved_record = approved_payload["result"]
+            self.assertEqual(approved_record["decision"], "approved")
+            self.assertRegex(approved_record["bundle"]["sha256"], r"^[0-9a-f]{64}$")
+
+            distribution_request = urllib.request.Request(base + "/api/actions/release-distribution-package", method="POST")
+            if approved_record["ready_to_release"]:
+                with urllib.request.urlopen(distribution_request, timeout=60) as response:
+                    distribution_payload = json.loads(response.read().decode("utf-8"))
+                self.assertTrue(distribution_payload["ok"], distribution_payload)
+                distribution = distribution_payload["result"]
+                self.assertEqual(distribution["distribution_status"], "approved_for_distribution")
+                self.assertEqual(distribution["release_id"], approved_record["release_id"])
+                distribution_archive_path = core.resolve_reported_path(distribution["files"]["archive"]["path"])
+                self.assertTrue(distribution_archive_path and distribution_archive_path.exists())
+                with urllib.request.urlopen(base + distribution["files"]["checklist"]["preview_url"], timeout=20) as response:
+                    distribution_checklist = response.read().decode("utf-8")
+                self.assertIn("Approved Distribution Checklist", distribution_checklist)
+                self.assert_public_clean(distribution_checklist)
+            else:
+                with self.assertRaises(urllib.error.HTTPError) as distribution_ctx:
+                    urllib.request.urlopen(distribution_request, timeout=60)
+                distribution_error = distribution_ctx.exception
+                self.assertEqual(distribution_error.code, 409)
+                blocked_distribution_body = json.loads(distribution_error.read().decode("utf-8"))
+                distribution_error.close()
+                self.assertEqual(blocked_distribution_body["error"], "approved_release_not_ready")
 
             with urllib.request.urlopen(base + "/api/course-factory", timeout=20) as response:
                 factory_payload = json.loads(response.read().decode("utf-8"))

@@ -59,6 +59,10 @@ from aivamax_services import (
 
 
 LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "::1"}
+FINAL_RELEASE_CONFIRMATIONS = {
+    "approved": "APPROVE AIVAMAX RELEASE",
+    "rejected": "REJECT AIVAMAX RELEASE",
+}
 
 
 def is_loopback_host(host: str) -> bool:
@@ -256,6 +260,11 @@ def console_html() -> str:
       </div>
       <div class="panel wide">
         <h2>Course Factory Release Status</h2>
+        <div class="toolbar">
+          <button onclick="runAction('release-review-pack')">Review Pack</button>
+          <button class="primary" onclick="submitOwnerDecision('approved')">Owner Approve</button>
+          <button class="danger" onclick="submitOwnerDecision('rejected')">Owner Reject</button>
+        </div>
         <div id="courseFactoryReleaseRows"></div>
       </div>
       <div class="panel wide">
@@ -349,6 +358,31 @@ def console_html() -> str:
         await refreshAll();
       } catch (err) {
         log.textContent = `Action failed: ${err.message}`;
+      }
+    }
+    async function submitOwnerDecision(decision) {
+      const phrase = decision === 'approved' ? 'APPROVE AIVAMAX RELEASE' : 'REJECT AIVAMAX RELEASE';
+      const log = document.getElementById('actionLog');
+      const confirmation = window.prompt(`Type ${phrase} to confirm ${decision}.`);
+      if (confirmation !== phrase) {
+        log.textContent = `Owner decision cancelled: ${decision}`;
+        return;
+      }
+      const version = window.prompt('Version', 'course-factory-v1') || 'course-factory-v1';
+      const notes = window.prompt('Decision notes', decision === 'approved' ? 'Owner approved after review.' : 'Owner rejected; remediation required.') || '';
+      log.textContent = `Recording owner ${decision} decision...`;
+      try {
+        const result = await postJson('/api/actions/release-signoff-record', {
+          decision,
+          signer: 'owner_admin',
+          version,
+          notes,
+          confirmation: phrase
+        });
+        log.textContent = JSON.stringify(result, null, 2);
+        await refreshAll();
+      } catch (err) {
+        log.textContent = `Owner decision failed: ${err.message}`;
       }
     }
     async function saveScenario() {
@@ -609,6 +643,23 @@ def read_json_body(handler: BaseHTTPRequestHandler) -> dict:
     if not isinstance(payload, dict):
         raise ValueError("JSON body must be an object.")
     return payload
+
+
+def release_confirmation_error(body: dict) -> dict | None:
+    decision = str(body.get("decision") or "pending_review").strip().lower().replace("-", "_")
+    required = FINAL_RELEASE_CONFIRMATIONS.get(decision)
+    if not required:
+        return None
+    confirmation = str(body.get("confirmation") or "").strip()
+    if confirmation == required:
+        return None
+    return {
+        "ok": False,
+        "error": "owner_confirmation_required",
+        "decision": decision,
+        "required_confirmation": required,
+        "message": "Final release approval or rejection through the Console requires an explicit owner confirmation phrase.",
+    }
 
 
 def latest_export_action(data_dir: Path, brand_config_path: Path) -> dict:
@@ -939,6 +990,10 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                     return
                 body.setdefault("decision", "pending_review")
                 body.setdefault("signer", OWNER_ADMIN)
+                confirmation_error = release_confirmation_error(body)
+                if confirmation_error:
+                    json_response(self, HTTPStatus.CONFLICT, confirmation_error)
+                    return
                 payload = release_signoff_record(body, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.INTERNAL_SERVER_ERROR, payload)
                 return

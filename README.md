@@ -126,7 +126,7 @@ The safe action buttons are allowlisted only:
 - `Run Course Factory`: run the full course-factory production pipeline: audit, public export, sales preview, sample client packs, and production report.
 - `Release Status`: generate the course-factory release readiness dashboard across course structure, exports, client packs, ZIPs, repair status, and release gate.
 - `Final Bundle`: assemble the final release ZIP, manifest, and human signoff checklist from public-safe exports and reports.
-- `Release Record`: write a release signoff record with bundle hash, signer, version, and gate status; `approved` and `rejected` decisions require `owner_admin`.
+- `Release Record`: write a release signoff record with bundle hash, signer, version, and gate status; `approved` and `rejected` decisions require `owner_admin`, and Console final decisions require an explicit owner confirmation phrase.
 - `Release History`: generate the internal release-history dashboard across all signoff records.
 - `Review Pack`: generate an owner review pack for human approval or rejection without changing release decision state.
 - `Distribution Package`: generate the formal approved distribution wrapper only after an approved signoff record.
