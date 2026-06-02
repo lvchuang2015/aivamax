@@ -116,7 +116,13 @@ def console_html() -> str:
     button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
     button.danger { border-color: #f1b4ad; color: var(--bad); }
     .form-grid { display: grid; grid-template-columns: repeat(6, minmax(120px, 1fr)); gap: 8px; margin: 10px 0 14px; }
-    input, select { border: 1px solid var(--line); border-radius: 7px; padding: 8px 10px; font-size: 13px; min-width: 0; background: #fff; color: var(--text); }
+    .entry-grid { grid-template-columns: repeat(2, minmax(260px, 1fr)); margin-bottom: 16px; }
+    .step-grid { display: grid; grid-template-columns: repeat(3, minmax(180px, 1fr)); gap: 10px; margin: 10px 0 16px; }
+    .checkbox-grid { display: grid; grid-template-columns: repeat(4, minmax(140px, 1fr)); gap: 8px; margin: 8px 0 14px; }
+    .check { border: 1px solid var(--line); border-radius: 7px; padding: 8px 10px; background: #fff; font-size: 13px; }
+    .subtle { color: var(--muted); font-size: 13px; margin-top: 6px; }
+    input, select, textarea { border: 1px solid var(--line); border-radius: 7px; padding: 8px 10px; font-size: 13px; min-width: 0; background: #fff; color: var(--text); font-family: inherit; }
+    textarea { min-height: 76px; resize: vertical; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th, td { text-align: left; border-bottom: 1px solid var(--line); padding: 9px 8px; vertical-align: top; }
     th { color: var(--muted); font-weight: 600; }
@@ -130,7 +136,7 @@ def console_html() -> str:
     pre { white-space: pre-wrap; word-break: break-word; background: #111827; color: #e5e7eb; border-radius: 8px; padding: 14px; max-height: 260px; overflow: auto; font-size: 12px; }
     @media (max-width: 980px) {
       header { align-items: flex-start; flex-direction: column; }
-      .metrics, .sections, .arch, .persona, .roles, .form-grid { grid-template-columns: 1fr; }
+      .metrics, .sections, .arch, .persona, .roles, .form-grid, .entry-grid, .step-grid, .checkbox-grid { grid-template-columns: 1fr; }
       main { padding: 16px; }
     }
   </style>
@@ -178,6 +184,93 @@ def console_html() -> str:
           AIvaMax Core 是产品本体，Codex、Work Buddy、Claude Code、Dify、Coze、SaaS 和 MCP 都只是接口或宿主。
           这个工作台负责查看本地知识库、平台打法库、课程工厂、发布门禁、角色边界与未来智能体接入状态。
         </p>
+      </div>
+      <div class="panel wide">
+        <h2>AIvaMax 双入口方案工厂</h2>
+        <div class="grid entry-grid">
+          <div class="card">
+            <h3>生成客户方案包</h3>
+            <p>输入行业、目标、周期、客户痛点和素材边界，一键生成客户可读的增长方案包。</p>
+            <div class="toolbar"><button class="primary" onclick="scrollToSection('clientSolutionWizard')">进入客户方案向导</button></div>
+          </div>
+          <div class="card">
+            <h3>课程工厂 / 发布审核</h3>
+            <p>课程模块、客户包 QA、发布门禁、Owner 审批和已批准分发包仍在这里统一治理。</p>
+            <div class="toolbar"><button onclick="scrollToSection('courseFactorySection')">进入课程工厂</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel wide" id="clientSolutionWizard">
+        <h2>生成客户方案包</h2>
+        <p>这是日常使用入口：填客户边界条件，系统按 AIvaMax Solution Brief v2 生成客户方案包。公开文件不会暴露供应方资料、内部路径或原始来源。</p>
+        <h3>1. 项目信息</h3>
+        <div class="step-grid">
+          <input id="solutionClientCode" placeholder="客户代码，如 AI-SaaS-Pilot" />
+          <input id="solutionProjectName" placeholder="项目名称" />
+          <input id="solutionBrandName" placeholder="客户品牌" />
+          <input id="solutionWebsite" placeholder="官网 / 落地页" />
+          <input id="solutionIndustry" placeholder="行业，如 AI SaaS / Ecommerce / Local service" />
+          <input id="solutionProduct" placeholder="产品或服务" />
+          <input id="solutionMarket" placeholder="市场，如 United States B2B" />
+        </div>
+        <h3>2. 目标与周期</h3>
+        <div class="step-grid">
+          <select id="solutionGoal">
+            <option value="lead_generation">lead_generation</option>
+            <option value="appointment_generation">appointment_generation</option>
+            <option value="product_promotion">product_promotion</option>
+            <option value="brand_building">brand_building</option>
+            <option value="launch">launch</option>
+            <option value="seo">seo</option>
+            <option value="agency_recruitment">agency_recruitment</option>
+            <option value="course_sales">course_sales</option>
+          </select>
+          <input id="solutionDays" type="number" min="1" max="365" value="30" />
+          <select id="solutionBudget">
+            <option value="medium">medium budget</option>
+            <option value="low">low budget</option>
+            <option value="high">high budget</option>
+            <option value="enterprise">enterprise budget</option>
+          </select>
+          <select id="solutionRisk">
+            <option value="balanced">balanced risk</option>
+            <option value="conservative">conservative risk</option>
+            <option value="aggressive">aggressive risk</option>
+          </select>
+          <input id="solutionCountries" placeholder="目标国家，逗号分隔" />
+          <input id="solutionLanguages" placeholder="目标语言，逗号分隔" />
+        </div>
+        <h3>3. 客户、素材与平台</h3>
+        <div class="step-grid">
+          <textarea id="solutionAudience" placeholder="目标客户群，逗号或换行分隔"></textarea>
+          <textarea id="solutionPains" placeholder="客户痛点，逗号或换行分隔"></textarea>
+          <textarea id="solutionAssets" placeholder="已有素材，如官网、案例、视频、图片、优惠、博客"></textarea>
+        </div>
+        <div class="checkbox-grid">
+          <label class="check"><input type="checkbox" id="platformFacebook" checked /> Facebook</label>
+          <label class="check"><input type="checkbox" id="platformInstagram" checked /> Instagram</label>
+          <label class="check"><input type="checkbox" id="platformX" checked /> X</label>
+          <label class="check"><input type="checkbox" id="platformReddit" checked /> Reddit</label>
+          <label class="check"><input type="checkbox" id="platformTiktok" checked /> TikTok</label>
+          <label class="check"><input type="checkbox" id="platformPinterest" checked /> Pinterest</label>
+          <label class="check"><input type="checkbox" id="platformYoutube" checked /> YouTube</label>
+          <label class="check"><input type="checkbox" id="platformLinkedin" checked /> LinkedIn</label>
+        </div>
+        <div class="checkbox-grid">
+          <label class="check"><input type="checkbox" id="automationPost" checked /> 可自动排程发帖</label>
+          <label class="check"><input type="checkbox" id="automationComment" checked /> 评论需上下文</label>
+          <label class="check"><input type="checkbox" id="automationDm" /> 私信需人工审核</label>
+          <label class="check"><input type="checkbox" id="automationMonitor" checked /> 关键词监控</label>
+        </div>
+        <h3>4. 生成与交付</h3>
+        <div class="toolbar">
+          <button onclick="saveSolutionBrief()">保存 Brief 到课程工厂</button>
+          <button class="primary" onclick="generateSolutionBrief()">生成客户方案包</button>
+          <button onclick="runBatchQa(false)">批量 QA</button>
+          <button onclick="runBatchRepair(false)">修复未通过客户包</button>
+          <button class="primary" onclick="runBatchQa(true)">QA + 导出 ZIP</button>
+        </div>
+        <p class="subtle">生成后，在下方“Client Delivery Packs”里预览、QA、修复或导出单个客户 ZIP。</p>
       </div>
       <div class="panel wide">
         <h2>v1.3 四层架构</h2>
@@ -247,10 +340,10 @@ def console_html() -> str:
           <tbody id="courseRows"></tbody>
         </table>
       </div>
-      <div class="panel wide">
-        <h2>Course Factory Production</h2>
+      <div class="panel wide" id="courseFactorySection">
+        <h2>课程工厂 / 发布审核</h2>
         <div id="courseFactoryRows"></div>
-        <h3>Client Scenario Editor</h3>
+        <h3>兼容旧版 Client Scenario Editor</h3>
         <div class="form-grid">
           <input id="scenarioClientCode" placeholder="Client code" />
           <input id="scenarioIndustry" placeholder="Industry" />
@@ -322,6 +415,55 @@ def console_html() -> str:
     const pill = (ok, text) => `<span class="pill ${ok ? 'ok' : 'bad'}">${text || (ok ? 'ready' : 'review')}</span>`;
     const metric = (label, value) => `<div class="card"><div class="metric-label">${label}</div><div class="metric-value">${value}</div></div>`;
     const esc = (value) => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[char]));
+    const scrollToSection = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const splitList = (value) => String(value || '').split(/[,;，；\n]+/).map(item => item.trim()).filter(Boolean);
+    const isChecked = (id) => !!document.getElementById(id)?.checked;
+    function collectSolutionBrief() {
+      const clientCode = document.getElementById('solutionClientCode').value.trim() || 'Client-Pack';
+      return {
+        schema_version: 'aivamax.solution_brief.v2',
+        client_code: clientCode,
+        project_name: document.getElementById('solutionProjectName').value.trim() || clientCode,
+        brand_name: document.getElementById('solutionBrandName').value.trim() || clientCode,
+        website: document.getElementById('solutionWebsite').value.trim(),
+        industry: document.getElementById('solutionIndustry').value.trim() || 'AI SaaS',
+        product: document.getElementById('solutionProduct').value.trim() || 'growth offer',
+        market: document.getElementById('solutionMarket').value.trim() || 'United States',
+        goal: document.getElementById('solutionGoal').value,
+        days: Number(document.getElementById('solutionDays').value || 30),
+        budget_level: document.getElementById('solutionBudget').value,
+        risk_level: document.getElementById('solutionRisk').value,
+        target_countries: splitList(document.getElementById('solutionCountries').value),
+        target_languages: splitList(document.getElementById('solutionLanguages').value),
+        audience_groups: splitList(document.getElementById('solutionAudience').value),
+        pain_points: splitList(document.getElementById('solutionPains').value),
+        assets: splitList(document.getElementById('solutionAssets').value),
+        platforms: {
+          facebook: isChecked('platformFacebook'),
+          instagram: isChecked('platformInstagram'),
+          twitter_x: isChecked('platformX'),
+          reddit: isChecked('platformReddit'),
+          tiktok: isChecked('platformTiktok'),
+          pinterest: isChecked('platformPinterest'),
+          youtube: isChecked('platformYoutube'),
+          linkedin: isChecked('platformLinkedin')
+        },
+        automation_scope: {
+          can_auto_post: isChecked('automationPost'),
+          can_auto_comment: isChecked('automationComment'),
+          can_auto_dm: isChecked('automationDm'),
+          can_monitor_keywords: isChecked('automationMonitor'),
+          can_schedule_tasks: isChecked('automationPost')
+        },
+        compliance_rules: {
+          no_impersonation: true,
+          no_fake_claims: true,
+          no_mass_spam: true,
+          human_review_for_dm: true,
+          respect_platform_rules: true
+        }
+      };
+    }
     async function getJson(url, options) {
       const res = await fetch(url, options || {});
       const payload = await res.json();
@@ -417,6 +559,30 @@ def console_html() -> str:
         await refreshAll();
       } catch (err) {
         log.textContent = `Scenario save failed: ${err.message}`;
+      }
+    }
+    async function saveSolutionBrief() {
+      const payload = collectSolutionBrief();
+      const log = document.getElementById('actionLog');
+      log.textContent = 'Saving Solution Brief v2...';
+      try {
+        const result = await postJson('/api/actions/course-factory-upsert-scenario', payload);
+        log.textContent = JSON.stringify(result, null, 2);
+        await refreshAll();
+      } catch (err) {
+        log.textContent = `Solution Brief save failed: ${err.message}`;
+      }
+    }
+    async function generateSolutionBrief() {
+      const payload = { scenario: collectSolutionBrief(), force: true };
+      const log = document.getElementById('actionLog');
+      log.textContent = 'Generating client solution pack...';
+      try {
+        const result = await postJson('/api/actions/client-pack-generate', payload);
+        log.textContent = JSON.stringify(result, null, 2);
+        await refreshAll();
+      } catch (err) {
+        log.textContent = `Client solution generation failed: ${err.message}`;
       }
     }
     async function removeScenario(clientCode) {

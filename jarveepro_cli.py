@@ -1444,54 +1444,481 @@ def client_pack_slug(client_code: str, industry: str, goal: str, days: int) -> s
     return slugify(base, fallback="client-pack", max_len=72)
 
 
+SOLUTION_BRIEF_V2_FIELDS = {
+    "schema_version",
+    "project_name",
+    "brand_name",
+    "website",
+    "product_or_service",
+    "target_countries",
+    "target_languages",
+    "target_audience",
+    "audience_groups",
+    "pain_points",
+    "marketing_goal",
+    "budget_level",
+    "assets",
+    "available_assets",
+    "platforms",
+    "automation_scope",
+    "jarveepro_execution",
+    "compliance_rules",
+    "risk_level",
+}
+
+
+PLATFORM_LABELS = {
+    "facebook": "Facebook",
+    "instagram": "Instagram",
+    "twitter_x": "X",
+    "x": "X",
+    "reddit": "Reddit",
+    "tiktok": "TikTok",
+    "pinterest": "Pinterest",
+    "youtube": "YouTube",
+    "linkedin": "LinkedIn",
+}
+
+
+INDUSTRY_RULES = {
+    "b2b_saas": {
+        "keywords": ["saas", "software", "b2b", "enterprise"],
+        "label": "B2B SaaS",
+        "platforms": [("LinkedIn", 25, "Decision-maker discovery and trust"), ("X", 25, "Point-of-view reach and topical authority"), ("Reddit", 20, "Pain discovery and community learning"), ("YouTube", 20, "Proof, demos, and searchable education"), ("Facebook", 10, "Small-business community touchpoints")],
+        "pillars": ["Problem education", "Workflow demo", "Proof", "Comparison", "Offer bridge"],
+    },
+    "ecommerce": {
+        "keywords": ["ecom", "commerce", "retail", "shop", "store", "consumer"],
+        "label": "Ecommerce",
+        "platforms": [("Instagram", 25, "Visual trust and product discovery"), ("TikTok", 25, "Short-video demand testing"), ("Pinterest", 20, "Visual search and long-tail intent"), ("Facebook", 15, "Groups and retargetable community touchpoints"), ("YouTube", 10, "Proof and product education"), ("X", 3, "Light trend listening"), ("Reddit", 2, "Niche community insight")],
+        "pillars": ["Use case", "Product proof", "Buyer story", "Comparison", "Offer bridge"],
+    },
+    "local_service": {
+        "keywords": ["local", "service", "clinic", "appointment", "booking", "near me"],
+        "label": "Local Service",
+        "platforms": [("Facebook", 35, "Local groups and community trust"), ("Instagram", 25, "Visual proof and before/after content"), ("TikTok", 15, "Local discovery and short-video reach"), ("YouTube", 10, "Searchable service proof"), ("X", 5, "Local signal monitoring"), ("Reddit", 5, "Community question discovery"), ("Pinterest", 5, "Visual proof archive")],
+        "pillars": ["Local pain", "Service proof", "FAQ", "Before/after", "Booking bridge"],
+    },
+    "education_course": {
+        "keywords": ["education", "course", "class", "training", "lesson", "school"],
+        "label": "Education / Course",
+        "platforms": [("YouTube", 30, "Searchable lessons and trust"), ("TikTok", 20, "Short learning clips"), ("Instagram", 20, "Workbook and student proof"), ("Facebook", 15, "Community discussion"), ("LinkedIn", 15, "Professional credibility")],
+        "pillars": ["Learning pain", "Method preview", "Student proof", "FAQ", "Trial lesson bridge"],
+    },
+    "ai_tool": {
+        "keywords": ["ai", "agent", "automation", "web3", "tech", "developer"],
+        "label": "AI / Tech Tool",
+        "platforms": [("X", 30, "Technical audience and fast topic reach"), ("Reddit", 25, "Workflow pain discovery and community proof"), ("YouTube", 20, "Demo, tutorial, and use-case proof"), ("TikTok", 10, "Short workflow demonstration"), ("Facebook", 5, "Founder and community touchpoints"), ("Instagram", 5, "Visual workflow proof"), ("Pinterest", 5, "Long-tail visual reference")],
+        "pillars": ["AI workflow", "Automation case", "Tool comparison", "Template/tutorial", "Demo bridge"],
+    },
+}
+
+
+GOAL_RULES = {
+    "lead_generation": {
+        "label": "Lead Generation",
+        "account_weights": [("Brand account", "20%"), ("Expert/founder role", "15%"), ("Community response role", "30%"), ("Content seeding role", "20%"), ("Sales handoff role", "10%"), ("Proof/case role", "5%")],
+        "task_weights": [("Keyword search", "20%"), ("Contextual comments", "25%"), ("Content publishing", "20%"), ("Human-approved messages", "15%"), ("Community participation", "15%"), ("Proof content", "5%")],
+        "cta": ["Request a project review", "Ask for the checklist", "Book a consultation"],
+    },
+    "appointment_generation": {
+        "label": "Appointment Generation",
+        "account_weights": [("Brand account", "25%"), ("Local proof role", "25%"), ("Community response role", "25%"), ("Support/booking role", "15%"), ("FAQ role", "10%")],
+        "task_weights": [("Local proof posting", "25%"), ("FAQ replies", "20%"), ("Community comments", "20%"), ("Booking-page routing", "20%"), ("Weekly review", "15%")],
+        "cta": ["Book an appointment", "Request availability", "Ask for the local checklist"],
+    },
+    "product_promotion": {
+        "label": "Product Promotion",
+        "account_weights": [("Brand account", "25%"), ("Product education role", "25%"), ("Content seeding role", "25%"), ("Search content role", "15%"), ("Proof/case role", "10%")],
+        "task_weights": [("Feature demo", "20%"), ("Tutorial publishing", "20%"), ("Visual content", "20%"), ("Contextual comments", "15%"), ("Search coverage", "15%"), ("Human-approved messages", "10%")],
+        "cta": ["Watch the demo", "Try the workflow", "Request the product guide"],
+    },
+    "brand_building": {
+        "label": "Brand Building",
+        "account_weights": [("Brand account", "30%"), ("Expert/founder role", "20%"), ("Search content role", "20%"), ("Media/news role", "10%"), ("Employee advocacy role", "10%"), ("Proof/case role", "10%")],
+        "task_weights": [("Brand content", "25%"), ("Industry viewpoint", "20%"), ("Long-form/tutorial content", "20%"), ("Case proof", "15%"), ("Contextual replies", "10%"), ("Search placement", "10%")],
+        "cta": ["Follow the method series", "Download the guide", "Request a brand review"],
+    },
+    "launch": {
+        "label": "Launch / Event",
+        "account_weights": [("Brand account", "20%"), ("Event promotion role", "30%"), ("Content seeding role", "25%"), ("Support/booking role", "15%"), ("Community response role", "10%")],
+        "task_weights": [("Warm-up publishing", "20%"), ("Countdown content", "15%"), ("Contextual comments", "15%"), ("Human-approved invites", "15%"), ("Group/community posting", "15%"), ("Event-day publishing", "10%"), ("Post-event recap", "10%")],
+        "cta": ["Register for the event", "Claim the offer", "Watch the launch replay"],
+    },
+    "seo": {
+        "label": "SEO / Search Presence",
+        "account_weights": [("Brand account", "10%"), ("Search content role", "50%"), ("Product education role", "15%"), ("Community Q&A role", "15%"), ("Video content role", "10%")],
+        "task_weights": [("Long-tail content", "35%"), ("YouTube tutorials", "20%"), ("Pinterest visuals", "15%"), ("Community Q&A", "15%"), ("Keyword posts", "10%"), ("Content linking", "5%")],
+        "cta": ["Read the guide", "Compare the options", "Request the checklist"],
+    },
+    "agency_recruitment": {
+        "label": "Agency / Partner Recruitment",
+        "account_weights": [("Brand account", "20%"), ("Partner recruitment role", "30%"), ("Expert/founder role", "15%"), ("Proof/case role", "20%"), ("Support/business role", "15%")],
+        "task_weights": [("Partner content", "25%"), ("Model explanation", "15%"), ("Success case", "20%"), ("Partner search", "15%"), ("Human-approved outreach", "15%"), ("Webinar promotion", "10%")],
+        "cta": ["Request partner details", "Join the briefing", "Apply for a partner review"],
+    },
+    "course_sales": {
+        "label": "Course Sales",
+        "account_weights": [("Brand account", "20%"), ("Instructor/expert role", "30%"), ("Student proof role", "20%"), ("Community response role", "15%"), ("Support role", "15%")],
+        "task_weights": [("Teaching clips", "25%"), ("Learning-path posts", "20%"), ("Student proof", "20%"), ("FAQ replies", "15%"), ("Human-approved follow-up", "10%"), ("Weekly review", "10%")],
+        "cta": ["Watch the free lesson", "Download the workbook", "Join the class"],
+    },
+}
+
+
 def client_pack_strategy(industry: str, goal: str) -> dict:
-    key = industry.lower()
-    if "ecom" in key or "commerce" in key or "retail" in key:
-        return {
-            "platforms": [("Instagram", "30%", "Visual trust and product discovery"), ("TikTok", "30%", "Short-video demand testing"), ("Pinterest", "20%", "Visual search and long-tail intent"), ("Facebook", "10%", "Groups and retargetable community touchpoints"), ("YouTube", "10%", "Proof and product education")],
-            "pillars": ["Problem/use case", "Product proof", "Buyer story", "Comparison", "Offer bridge"],
-        }
-    if "local" in key or "service" in key:
-        return {
-            "platforms": [("Facebook", "35%", "Local groups and community trust"), ("Instagram", "25%", "Visual proof and before/after content"), ("TikTok", "15%", "Local discovery and short-video reach"), ("YouTube", "15%", "Searchable service proof"), ("LinkedIn", "10%", "B2B referral and professional trust")],
-            "pillars": ["Local pain", "Service proof", "FAQ", "Before/after", "Booking bridge"],
-        }
-    if "education" in key or "course" in key:
-        return {
-            "platforms": [("YouTube", "30%", "Searchable lessons and trust"), ("TikTok", "20%", "Short learning clips"), ("Instagram", "20%", "Workbook and student proof"), ("Facebook", "15%", "Community discussion"), ("LinkedIn", "15%", "Professional credibility")],
-            "pillars": ["Learning pain", "Method preview", "Student proof", "FAQ", "Trial lesson bridge"],
-        }
+    brief = normalize_solution_brief({"industry": industry, "goal": goal})
+    blueprint = build_solution_blueprint(brief)
     return {
-        "platforms": [("LinkedIn", "35%", "B2B trust and decision-maker discovery"), ("X", "25%", "Opinion and topical reach"), ("Reddit", "15%", "Pain discovery and community learning"), ("YouTube", "15%", "Product proof and education"), ("Facebook", "10%", "Small business community presence")],
-        "pillars": ["Problem education", "Method explanation", "Proof", "Comparison", "Offer bridge"],
+        "platforms": [(row["platform"], row["weight"], row["job"]) for row in blueprint["platforms"]],
+        "pillars": [row["pillar"] for row in blueprint["content_pillars"]],
     }
 
 
-def render_client_pack_files(args: argparse.Namespace, brand_config: dict, pack_id: str) -> dict[str, str]:
+def namespace_to_dict(value: argparse.Namespace | dict) -> dict:
+    if isinstance(value, argparse.Namespace):
+        return vars(value).copy()
+    if hasattr(value, "__dict__"):
+        return vars(value).copy()
+    return dict(value)
+
+
+def split_brief_list(value: object) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    if isinstance(value, tuple):
+        return [str(item).strip() for item in value if str(item).strip()]
+    if isinstance(value, dict):
+        return [str(item).strip() for item in value.values() if str(item).strip()]
+    text = str(value).strip()
+    if not text:
+        return []
+    parts = re.split(r"[,;，；\n]+", text)
+    return [part.strip() for part in parts if part.strip()]
+
+
+def flatten_assets(value: object) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, dict):
+        items: list[str] = []
+        for key, raw in value.items():
+            for item in split_brief_list(raw):
+                items.append(f"{key}: {item}")
+        return items
+    return split_brief_list(value)
+
+
+def enabled_platforms(value: object) -> list[str]:
+    if not value:
+        return []
+    if isinstance(value, dict):
+        platforms: list[str] = []
+        for key, enabled in value.items():
+            if isinstance(enabled, str):
+                is_enabled = enabled.strip().lower() not in {"", "0", "false", "no", "off"}
+            else:
+                is_enabled = bool(enabled)
+            if is_enabled:
+                platforms.append(PLATFORM_LABELS.get(str(key).strip().lower(), str(key).strip()))
+        return [item for item in platforms if item]
+    return [PLATFORM_LABELS.get(item.strip().lower(), item.strip()) for item in split_brief_list(value)]
+
+
+def normalize_goal(raw: object) -> str:
+    goal = str(raw or "lead_generation").strip().lower().replace("-", "_").replace(" ", "_")
+    aliases = {
+        "brand_visibility": "brand_building",
+        "brand_awareness": "brand_building",
+        "community_growth": "lead_generation",
+        "ecommerce_sales": "product_promotion",
+        "event_promotion": "launch",
+        "agency": "agency_recruitment",
+        "partner_recruitment": "agency_recruitment",
+    }
+    return aliases.get(goal, goal)
+
+
+def normalize_solution_brief(raw: argparse.Namespace | dict) -> dict:
+    data = namespace_to_dict(raw)
+    if isinstance(data.get("brief"), dict):
+        merged = dict(data["brief"])
+        merged.update({key: value for key, value in data.items() if key != "brief" and value not in (None, "", [], {})})
+        data = merged
+    marketing_goal = data.get("marketing_goal") if isinstance(data.get("marketing_goal"), dict) else {}
+    target_audience = data.get("target_audience") if isinstance(data.get("target_audience"), dict) else {}
+    campaign_duration = data.get("campaign_duration") if isinstance(data.get("campaign_duration"), dict) else {}
+    product = data.get("product") or data.get("product_or_service") or data.get("offer") or "growth offer"
+    countries = split_brief_list(data.get("target_countries"))
+    languages = split_brief_list(data.get("target_languages"))
+    days = data.get("days") or campaign_duration.get("days") or 30
+    try:
+        days_int = int(days)
+    except (TypeError, ValueError):
+        days_int = 30
+    goal = normalize_goal(data.get("goal") or marketing_goal.get("primary_goal"))
+    automation = data.get("automation_scope") if isinstance(data.get("automation_scope"), dict) else {}
+    if not automation and isinstance(data.get("jarveepro_execution"), dict):
+        automation = dict(data["jarveepro_execution"])
+    compliance = data.get("compliance_rules") if isinstance(data.get("compliance_rules"), dict) else {}
+    defaults = {
+        "no_impersonation": True,
+        "no_fake_claims": True,
+        "no_mass_spam": True,
+        "human_review_for_dm": True,
+        "respect_platform_rules": True,
+    }
+    defaults.update(compliance)
+    return {
+        "schema_version": data.get("schema_version") or "aivamax.solution_brief.v2",
+        "client_code": data.get("client_code") or data.get("code") or data.get("project_name") or "Client-Pack",
+        "project_name": data.get("project_name") or data.get("client_code") or "Client project",
+        "brand_name": data.get("brand_name") or data.get("brand") or data.get("client_code") or "Client brand",
+        "website": data.get("website") or "",
+        "industry": data.get("industry") or "AI SaaS",
+        "product": product,
+        "product_or_service": product,
+        "market": data.get("market") or ", ".join(countries) or "United States",
+        "target_countries": countries,
+        "target_languages": languages,
+        "audience_groups": split_brief_list(data.get("audience_groups") or target_audience.get("main_customer_groups")),
+        "pain_points": split_brief_list(data.get("pain_points") or target_audience.get("customer_pain_points")),
+        "buying_motivation": split_brief_list(target_audience.get("buying_motivation")),
+        "decision_makers": split_brief_list(target_audience.get("decision_makers")),
+        "goal": goal,
+        "secondary_goals": split_brief_list(marketing_goal.get("secondary_goals")),
+        "expected_result": marketing_goal.get("expected_result") or data.get("expected_result") or "",
+        "days": max(1, days_int),
+        "budget_level": str(data.get("budget_level") or "medium").strip().lower(),
+        "assets": flatten_assets(data.get("assets") or data.get("available_assets")),
+        "platforms": enabled_platforms(data.get("platforms")),
+        "automation_scope": automation,
+        "compliance_rules": defaults,
+        "risk_level": str(data.get("risk_level") or data.get("risk") or "balanced").strip().lower(),
+    }
+
+
+def classify_solution_industry(industry: str) -> str:
+    key = industry.lower()
+    for rule_id, rule in INDUSTRY_RULES.items():
+        if any(keyword in key for keyword in rule["keywords"]):
+            return rule_id
+    return "b2b_saas"
+
+
+def normalized_weight_rows(rows: list[tuple[str, int, str]], selected: list[str]) -> list[dict]:
+    selected_keys = {item.lower() for item in selected}
+    filtered = [row for row in rows if not selected_keys or row[0].lower() in selected_keys]
+    if not filtered:
+        filtered = rows
+    total = sum(row[1] for row in filtered) or 1
+    weighted: list[dict] = []
+    running = 0
+    for index, (platform, weight, job) in enumerate(filtered):
+        percent = round((weight / total) * 100)
+        if index == len(filtered) - 1:
+            percent = max(1, 100 - running)
+        running += percent
+        weighted.append({"platform": platform, "weight": f"{percent}%", "job": job})
+    return weighted
+
+
+def account_scale_for_brief(brief: dict) -> str:
+    days = int(brief["days"])
+    budget = brief["budget_level"]
+    risk = brief["risk_level"]
+    if days <= 14 or budget == "low" or risk == "conservative":
+        return "10-50 controlled account-role slots"
+    if days <= 30 or budget == "medium":
+        return "30-100 controlled account-role slots"
+    if days <= 90 or budget == "high":
+        return "100-500 controlled account-role slots"
+    return "500+ account-role slots with strict governance"
+
+
+def cycle_stages(days: int) -> list[dict]:
+    if days <= 7:
+        return [
+            {"name": "Preparation", "days": "Day 1", "goal": "Accounts, assets, and keywords ready", "action": "Set account roles, import assets, define review rules"},
+            {"name": "Warm-up", "days": "Day 2-3", "goal": "Normal account activity", "action": "Light browsing, publishing, and low-risk interaction"},
+            {"name": "Content test", "days": "Day 4-5", "goal": "Test 3-5 angles", "action": "Publish controlled variations and compare response quality"},
+            {"name": "Interaction test", "days": "Day 5-6", "goal": "Find responsive audiences", "action": "Search, contextual comments, and community learning"},
+            {"name": "Review", "days": "Day 7", "goal": "Decide whether to scale", "action": "Review clicks, replies, comments, and qualified signals"},
+        ]
+    if days <= 14:
+        return [
+            {"name": "Account setup", "days": "Day 1-2", "goal": "Profile and brand consistency", "action": "Prepare accounts, visuals, links, and review gates"},
+            {"name": "Content foundation", "days": "Day 3-5", "goal": "Build baseline content pool", "action": "Publish platform-specific seed content"},
+            {"name": "Light interaction", "days": "Day 4-7", "goal": "Find relevant conversations", "action": "Search keywords and add helpful contextual replies"},
+            {"name": "Lead routing", "days": "Day 7-11", "goal": "Guide qualified interest", "action": "Use opt-in follow-up and clear landing paths"},
+            {"name": "Optimization", "days": "Day 12-14", "goal": "Pick winning angles", "action": "Scale only the strongest content and channels"},
+        ]
+    if days <= 30:
+        return [
+            {"name": "Foundation", "days": "Day 1-3", "goal": "Accounts, content, and keywords ready", "action": "Classify account roles, assets, keywords, and risk limits"},
+            {"name": "Content launch", "days": "Day 4-10", "goal": "Create baseline exposure", "action": "Publish demos, proof, FAQs, and platform-specific posts"},
+            {"name": "Interaction lead capture", "days": "Day 11-20", "goal": "Reach target customers", "action": "Search, comment, follow-up, and community engagement"},
+            {"name": "Conversion support", "days": "Day 21-27", "goal": "Route qualified users", "action": "Use proof, FAQ, offers, and human-approved messages"},
+            {"name": "Review and scale", "days": "Day 28-30", "goal": "Decide next-cycle scale", "action": "Summarize winning channels, topics, and task mix"},
+        ]
+    if days <= 60:
+        return [
+            {"name": "Foundation", "days": "Day 1-7", "goal": "Account matrix and content library", "action": "Set roles, content themes, target lists, and QA rhythm"},
+            {"name": "Multi-platform test", "days": "Day 8-20", "goal": "Test platforms, topics, and keywords", "action": "Compare response quality by platform and content type"},
+            {"name": "Scale working actions", "days": "Day 21-40", "goal": "Increase proven task ratios", "action": "Move weight toward qualified response channels"},
+            {"name": "Conversion loop", "days": "Day 41-55", "goal": "Connect social signals to website, forms, and support", "action": "Strengthen routing, qualification, and review handoff"},
+            {"name": "SOP capture", "days": "Day 56-60", "goal": "Produce next-cycle operating plan", "action": "Document winning content, tasks, and risk events"},
+        ]
+    return [
+        {"name": "Asset foundation", "days": "Day 1-15", "goal": "Accounts, content, keywords, and website path", "action": "Prepare account matrix, content themes, target lists, and review gates"},
+        {"name": "Platform presence", "days": "Day 16-30", "goal": "Stable publishing and search coverage", "action": "Build consistent posting, replies, and search-facing content"},
+        {"name": "Lead and conversion", "days": "Day 31-60", "goal": "Qualified comments, messages, partners, and community signals", "action": "Focus on contextual interaction and human-approved follow-up"},
+        {"name": "Authority building", "days": "Day 61-75", "goal": "Cases, tutorials, viewpoints, and video proof", "action": "Publish proof-led and educational material"},
+        {"name": "Scale replication", "days": "Day 76-90", "goal": "Copy high-performing combinations", "action": "Repeat winning account roles, content angles, and platform task mixes"},
+    ]
+
+
+def stage_for_day(day: int, stages: list[dict]) -> dict:
+    for stage in stages:
+        numbers = [int(num) for num in re.findall(r"\d+", stage["days"])]
+        if not numbers:
+            continue
+        if len(numbers) == 1 and day == numbers[0]:
+            return stage
+        if len(numbers) >= 2 and numbers[0] <= day <= numbers[1]:
+            return stage
+    return stages[-1]
+
+
+def content_pillars_for_brief(brief: dict, industry_rule: dict) -> list[dict]:
+    pains = brief["pain_points"][:5] or ["main customer pain", "decision friction", "proof gap"]
+    pillars = list(industry_rule["pillars"])
+    for pain in pains:
+        if len(pillars) >= 8:
+            break
+        pillars.append(f"Pain solution: {pain}")
+    return [{"pillar": item, "topic_direction": f"Draft 3-5 topics tied to {brief['product']} and {brief['market']}."} for item in pillars]
+
+
+def solution_evidence_notes(brief: dict, data_dir: Path | None, brand_config: dict) -> list[dict]:
+    if data_dir is None:
+        return []
+    records = load_source_records(data_dir, "auto")
+    queries = [
+        f"{brief['industry']} {brief['goal']} platform strategy",
+        f"{brief['product']} {brief['market']} content calendar lead generation",
+        "account matrix automation risk boundary human review",
+    ]
+    notes: list[dict] = []
+    seen: set[str] = set()
+    for query in queries:
+        for score, record, snippet in search_records(records, query, 3):
+            rid = str(record.get("id") or record.get("title") or snippet[:40])
+            if rid in seen:
+                continue
+            seen.add(rid)
+            notes.append({
+                "title": redact_public_text(str(record.get("title") or "Internal source note"), brand_config),
+                "section": redact_public_text(str(record.get("section") or record.get("category") or ""), brand_config),
+                "snippet": redact_public_text(snippet[:220], brand_config),
+                "score": round(float(score), 2),
+            })
+            break
+    return notes[:5]
+
+
+def build_solution_blueprint(brief: dict, data_dir: Path | None = None, brand_config: dict | None = None) -> dict:
+    brand_config = brand_config or {}
+    industry_id = classify_solution_industry(brief["industry"])
+    industry_rule = INDUSTRY_RULES[industry_id]
+    goal_rule = GOAL_RULES.get(brief["goal"], GOAL_RULES["lead_generation"])
+    platforms = normalized_weight_rows(industry_rule["platforms"], brief["platforms"])
+    account_rows = [
+        {
+            "role": role,
+            "suggested_scale": account_scale_for_brief(brief) if index == 0 else "Use within the controlled role mix",
+            "weight": weight,
+            "job": f"Support {goal_rule['label']} for {brief['product']}",
+            "content_focus": " / ".join([brief["product"], brief["industry"], brief["market"]]),
+            "risk": "medium" if "message" in role.lower() or "response" in role.lower() else "low",
+        }
+        for index, (role, weight) in enumerate(goal_rule["account_weights"])
+    ]
+    task_rows = [
+        {"task": task, "weight": weight, "review": "Human review required" if "message" in task.lower() or "outreach" in task.lower() else "Weekly QA"}
+        for task, weight in goal_rule["task_weights"]
+    ]
+    stages = cycle_stages(brief["days"])
+    pillars = content_pillars_for_brief(brief, industry_rule)
+    evidence = solution_evidence_notes(brief, data_dir, brand_config)
+    return {
+        "industry_id": industry_id,
+        "industry_label": industry_rule["label"],
+        "goal_label": goal_rule["label"],
+        "platforms": platforms,
+        "account_matrix": account_rows,
+        "task_mix": task_rows,
+        "stages": stages,
+        "content_pillars": pillars,
+        "cta_bank": goal_rule["cta"],
+        "evidence_notes": evidence,
+        "scale_summary": account_scale_for_brief(brief),
+    }
+
+
+def markdown_table(rows: list[dict], columns: list[tuple[str, str]]) -> str:
+    header = "| " + " | ".join(label for label, _ in columns) + " |"
+    sep = "| " + " | ".join("---" for _ in columns) + " |"
+    body = ["| " + " | ".join(str(row.get(key, "")) for _, key in columns) + " |" for row in rows]
+    return "\n".join([header, sep] + body)
+
+
+def render_daily_calendar(brief: dict, blueprint: dict) -> str:
+    rows: list[dict] = []
+    platforms = blueprint["platforms"]
+    pillars = blueprint["content_pillars"]
+    tasks = blueprint["task_mix"]
+    stages = blueprint["stages"]
+    for day in range(1, int(brief["days"]) + 1):
+        stage = stage_for_day(day, stages)
+        platform = platforms[(day - 1) % len(platforms)]["platform"]
+        pillar = pillars[(day - 1) % len(pillars)]["pillar"]
+        task = tasks[(day - 1) % len(tasks)]["task"]
+        rows.append({
+            "day": f"Day {day}",
+            "stage": stage["name"],
+            "platform": platform,
+            "topic": f"{pillar} for {brief['product']}",
+            "task": task,
+            "review": "Human review",
+        })
+    return markdown_table(rows, [("Day", "day"), ("Stage", "stage"), ("Platform", "platform"), ("Topic", "topic"), ("Task", "task"), ("Review", "review")])
+
+
+def render_client_pack_files(args: argparse.Namespace, brand_config: dict, pack_id: str, data_dir: Path | None = None) -> dict[str, str]:
     brand = public_brand(brand_config)
-    industry = args.industry
-    product = args.product
-    goal = args.goal
-    market = args.market
-    days = int(args.days)
-    strategy = client_pack_strategy(industry, goal)
-    platform_rows = "\n".join(f"| {name} | {weight} | {job} |" for name, weight, job in strategy["platforms"])
-    pillar_rows = "\n".join(f"| {pillar} | Draft 3-5 topics tied to {product} and {market}. |" for pillar in strategy["pillars"])
-    calendar_rows = []
-    for day in range(1, days + 1):
-        if day <= 3:
-            job = "Setup and readiness"
-        elif day % 7 == 0:
-            job = "Weekly review"
-        elif day <= 14:
-            job = "Content angle testing"
-        elif day <= 24:
-            job = "Lead signal capture"
-        else:
-            job = "Conversion support and report"
-        platform = strategy["platforms"][(day - 1) % len(strategy["platforms"])][0]
-        calendar_rows.append(f"| Day {day} | {job} | {platform} | {product} angle {day} | Human review |")
-    calendar_table = "\n".join(calendar_rows)
+    brief_model = normalize_solution_brief(args)
+    industry = brief_model["industry"]
+    product = brief_model["product"]
+    goal = brief_model["goal"]
+    market = brief_model["market"]
+    days = int(brief_model["days"])
+    blueprint = build_solution_blueprint(brief_model, data_dir, brand_config)
+    platform_rows = markdown_table(blueprint["platforms"], [("Platform", "platform"), ("Weight", "weight"), ("Job", "job")])
+    account_rows = markdown_table(blueprint["account_matrix"], [("Role", "role"), ("Suggested scale", "suggested_scale"), ("Weight", "weight"), ("Job", "job"), ("Content focus", "content_focus"), ("Risk", "risk")])
+    task_rows = markdown_table(blueprint["task_mix"], [("Task", "task"), ("Weight", "weight"), ("Review", "review")])
+    stage_rows = markdown_table(blueprint["stages"], [("Stage", "name"), ("Days", "days"), ("Goal", "goal"), ("Action", "action")])
+    pillar_rows = markdown_table(blueprint["content_pillars"], [("Pillar", "pillar"), ("Topic direction", "topic_direction")])
+    calendar_table = render_daily_calendar(brief_model, blueprint)
+    audience = ", ".join(brief_model["audience_groups"]) or "Target customers to be confirmed"
+    pains = ", ".join(brief_model["pain_points"]) or "Pain points to be confirmed"
+    countries = ", ".join(brief_model["target_countries"]) or market
+    languages = ", ".join(brief_model["target_languages"]) or "local language / English"
+    assets = "\n".join(f"- {item}" for item in brief_model["assets"]) or "- Website, offer, demo, case proof, and review material to be confirmed."
+    ctas = "\n".join(f"- {item}" for item in blueprint["cta_bank"])
+    evidence_lines = "\n".join(f"- {item['title']} :: {item['section']}" for item in blueprint["evidence_notes"]) or "- Local source retrieval is available for operator review; no private source path is exposed."
     brief = f"""---
 type: client_delivery
 public_brand: {brand}
@@ -1505,15 +1932,27 @@ status: draft
 | Field | Value |
 | --- | --- |
 | Pack ID | {pack_id} |
+| Project | {brief_model['project_name']} |
+| Client brand | {brief_model['brand_name']} |
 | Product | {product} |
 | Industry | {industry} |
 | Market | {market} |
 | Primary goal | {goal} |
 | Duration | {days} days |
+| Budget level | {brief_model['budget_level']} |
+| Risk level | {brief_model['risk_level']} |
+| Countries | {countries} |
+| Languages | {languages} |
+| Audience | {audience} |
+| Pain points | {pains} |
 
 ## Scope
 
-This pack converts the project brief into a client-readable growth plan. Internal source traces and operator-only notes are excluded.
+This pack converts the project brief into a client-readable growth plan. Internal source traces, supplier wording, and operator-only notes are excluded.
+
+## Available Assets
+
+{assets}
 """
     strategy_plan = f"""---
 type: strategy_plan
@@ -1527,16 +1966,24 @@ status: draft
 
 ## Growth Hypothesis
 
-The project should validate repeatable demand signals for {product} in {market} before scaling execution volume.
+The project should validate repeatable demand signals for {product} in {market} before scaling execution volume. The first pass prioritizes audience fit, response quality, and safe handoff over raw activity volume.
 
-## Stages
+## Blueprint
 
-| Stage | Days | Output |
-| --- | --- | --- |
-| Setup | 1-3 | Brief, assets, account roles, risk boundary |
-| Test | 4-14 | Content angles and channel signals |
-| Capture | 15-24 | Lead signals and response quality |
-| Review | 25-{days} | Forecast, next-cycle recommendation, delivery report |
+| Field | Value |
+| --- | --- |
+| Industry rule | {blueprint['industry_label']} |
+| Goal rule | {blueprint['goal_label']} |
+| Account-role scale | {blueprint['scale_summary']} |
+| Generation mode | Local rules + local retrieval evidence + AI-ready structured draft |
+
+## Stage Plan
+
+{stage_rows}
+
+## Task Mix
+
+{task_rows}
 """
     account = f"""---
 type: account_matrix
@@ -1548,13 +1995,11 @@ status: draft
 
 # Account Matrix
 
-| Role | Job | Content focus | Owner | Risk |
-| --- | --- | --- | --- | --- |
-| Brand account | Authority and conversion path | Product clarity, proof, CTA | Client marketing | low |
-| Expert/founder role | Trust and point of view | Industry insight and method | Client sponsor | medium |
-| Product education role | Explain use cases | Demo, FAQ, workflow | Product owner | low |
-| Community response role | Learn and answer | Helpful replies | Delivery owner | medium |
-| Sales handoff role | Route qualified interest | Booking and next step | Sales owner | medium |
+{account_rows}
+
+## Operating Rule
+
+Each role should carry a distinct content job, review owner, and escalation path. Do not make every account publish the same message or perform the same action.
 """
     weights = f"""---
 type: platform_weights
@@ -1566,13 +2011,11 @@ status: draft
 
 # Platform Weights
 
-| Platform | Weight | Job |
-| --- | --- | --- |
 {platform_rows}
 
 ## Adjustment Rule
 
-After Day 14, move effort away from weak response channels and toward the strongest qualified signal channel.
+After the first review point, move effort away from weak response channels and toward the strongest qualified signal channel. Do not increase risky actions when content quality or response quality is weak.
 """
     calendar = f"""---
 type: content_calendar
@@ -1584,8 +2027,6 @@ status: draft
 
 # {days}-Day Calendar
 
-| Day | Job | Platform | Topic | Review |
-| --- | --- | --- | --- | --- |
 {calendar_table}
 """
     topics = f"""---
@@ -1598,17 +2039,17 @@ status: draft
 
 # Content Topic Bank
 
-| Pillar | Topic direction |
-| --- | --- |
 {pillar_rows}
 
 ## CTA Bank
 
-- Ask for the checklist.
-- Watch the demo.
-- Book a consultation.
-- Reply with the main bottleneck.
-- Request a project review.
+{ctas}
+
+## Comment And Message Boundary
+
+- Comments must add context before any CTA.
+- Messages are opt-in, relevant, and human-approved.
+- Sensitive replies, pricing claims, and qualification handoff stay under human review.
 """
     review = f"""---
 type: review_forecast
@@ -1620,15 +2061,23 @@ status: draft
 
 # Review And Forecast
 
-| Scenario | Condition | Lead signal range |
+| Scenario | Condition | Lead signal range | Review action |
 | --- | --- | --- |
-| Conservative | New audience, limited proof | Low but measurable |
-| Expected | Clear content and review rhythm | Repeatable signal pattern |
-| Upside | Strong proof and fast follow-up | Strong signal and next-cycle scale case |
+| Conservative | New audience, limited proof, or strict risk boundary | Low but measurable | Improve proof, tighten audience, and keep volume controlled |
+| Expected | Clear content, weekly review rhythm, and working handoff | Repeatable signal pattern | Shift platform weight toward qualified response channels |
+| Upside | Strong proof, fast human follow-up, and clean risk record | Strong signal and next-cycle scale case | Expand the best account-role and content combinations |
 
 ## Forecast Rule
 
 Use ranges and assumptions. Do not present guaranteed reach, leads, sales, or revenue.
+
+## Metrics To Review
+
+- Reach and engagement quality.
+- Profile visits and website clicks.
+- Qualified comments and opt-in messages.
+- Booking, trial, or inquiry handoff quality.
+- Risk events, hidden comments, negative feedback, or blocked content.
 """
     risk = f"""---
 type: risk_boundary
@@ -1648,6 +2097,8 @@ risk_level: medium
 | Messages | Use opt-in, relevant, human-approved follow-up only. |
 | Forecast | Present assumptions, not guarantees. |
 | Source trace | Keep internal-only. |
+| Account roles | Keep role separation, rate limits, and exception review. |
+| Platform rules | Respect platform rules and stop actions that trigger negative signals. |
 """
     readme = f"""---
 type: client_pack_readme
@@ -1660,16 +2111,42 @@ status: draft
 # Delivery README
 
 Files 00-07 are client-facing draft assets. This README and source trace records remain internal.
+
+## Internal Evidence Notes
+
+{evidence_lines}
+
+## AI Continuation Note
+
+This package is generated from the AIvaMax Solution Brief v2 local blueprint. A future LLM layer can rewrite tone and examples, but must keep the same public boundary, forecast limits, and human-review rules.
 """
     manifest = {
         "generated_at": now_iso(),
+        "schema_version": "aivamax.solution_pack.v1.5",
+        "solution_brief_schema": brief_model["schema_version"],
         "public_brand": brand,
         "pack_id": pack_id,
+        "project_name": brief_model["project_name"],
+        "client_brand": brief_model["brand_name"],
+        "website": brief_model["website"],
         "industry": industry,
         "product": product,
         "market": market,
         "goal": goal,
         "days": days,
+        "budget_level": brief_model["budget_level"],
+        "risk_level": brief_model["risk_level"],
+        "target_countries": brief_model["target_countries"],
+        "target_languages": brief_model["target_languages"],
+        "audience_groups": brief_model["audience_groups"],
+        "pain_points": brief_model["pain_points"],
+        "platforms": [row["platform"] for row in blueprint["platforms"]],
+        "blueprint": {
+            "industry_rule": blueprint["industry_id"],
+            "goal_label": blueprint["goal_label"],
+            "scale_summary": blueprint["scale_summary"],
+        },
+        "internal_evidence_count": len(blueprint["evidence_notes"]),
         "visibility": "client_delivery",
         "files": [
             "00_Client-Brief.md",
@@ -1698,16 +2175,43 @@ Files 00-07 are client-facing draft assets. This README and source trace records
     return {name: redact_public_text(content, brand_config) for name, content in files.items()}
 
 
+def load_solution_brief_file(path: str | None) -> dict:
+    if not path:
+        return {}
+    source = resolve_existing_cli_path(path)
+    data = json.loads(source.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError("Solution brief file must contain a JSON object.")
+    return data
+
+
+def client_pack_args_from_request(args: argparse.Namespace) -> argparse.Namespace:
+    brief_data = load_solution_brief_file(getattr(args, "brief_file", None))
+    if not brief_data:
+        return args
+    merged = vars(args).copy()
+    merged.update(brief_data)
+    for key in ["out", "force", "dry_run", "json", "brief_file", "data_dir", "brand_config"]:
+        if hasattr(args, key):
+            merged[key] = getattr(args, key)
+    return argparse.Namespace(**merged)
+
+
 def run_client_pack_generate(args: argparse.Namespace) -> int:
     data_dir = Path(args.data_dir)
     brand_config = load_brand_config(Path(args.brand_config))
     matrix_root = ensure_aivamax_matrix_dirs(data_dir)
-    pack_id = client_pack_slug(args.client_code, args.industry, args.goal, int(args.days))
+    pack_args = client_pack_args_from_request(args)
+    brief_model = normalize_solution_brief(pack_args)
+    if int(brief_model["days"]) > 365:
+        print(f"Client pack duration must be between 1 and 365 days: {brief_model['days']}", file=sys.stderr)
+        return 1
+    pack_id = client_pack_slug(brief_model["client_code"], brief_model["industry"], brief_model["goal"], int(brief_model["days"]))
     out_dir = Path(args.out) if args.out else matrix_root / "50_Projects" / "Samples" / pack_id
     if out_dir.exists() and any(out_dir.iterdir()) and not args.force:
         print(f"Client pack already exists: {out_dir}. Use --force to overwrite.", file=sys.stderr)
         return 1
-    files = render_client_pack_files(args, brand_config, pack_id)
+    files = render_client_pack_files(pack_args, brand_config, pack_id, data_dir)
     written = [out_dir / name for name in files]
     if not args.dry_run:
         write_named_files(out_dir, files, brand_config, force=True)
@@ -2178,16 +2682,11 @@ def default_course_factory_client_scenarios() -> list[dict]:
 
 
 def normalize_course_factory_client_scenario(raw: dict, index: int) -> dict:
-    scenario = {
-        "client_code": raw.get("client_code") or raw.get("code") or f"Client-Pack-{index:02d}",
-        "industry": raw.get("industry") or "AI SaaS",
-        "product": raw.get("product") or "growth offer",
-        "market": raw.get("market") or "United States",
-        "goal": raw.get("goal") or "lead_generation",
-        "days": int(raw.get("days") or 30),
-    }
+    scenario = normalize_solution_brief({**raw, "client_code": raw.get("client_code") or raw.get("code") or f"Client-Pack-{index:02d}"})
     if scenario["days"] < 1:
         raise ValueError(f"Client scenario {index} has invalid days: {scenario['days']}")
+    if scenario["days"] > 365:
+        raise ValueError(f"Client scenario {index} exceeds the 365 day limit: {scenario['days']}")
     return scenario
 
 
@@ -2358,7 +2857,7 @@ def run_course_factory_run_all(args: argparse.Namespace) -> int:
             if out_dir.exists() and any(out_dir.iterdir()) and not args.force:
                 print(f"Client pack already exists: {out_dir}. Use --force to overwrite.", file=sys.stderr)
                 return 1
-            files = render_client_pack_files(pack_args, brand_config, pack_id)
+            files = render_client_pack_files(pack_args, brand_config, pack_id, data_dir)
             if not args.dry_run:
                 write_named_files(out_dir, files, brand_config, force=True)
                 append_course_factory_derivations(data_dir, [{
@@ -8046,11 +8545,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     client_pack_generate = sub.add_parser("client-pack-generate", help="Generate a client delivery pack from AIvaMax course factory templates.")
     client_pack_generate.add_argument("--client-code", default="")
-    client_pack_generate.add_argument("--industry", required=True)
-    client_pack_generate.add_argument("--product", required=True)
+    client_pack_generate.add_argument("--industry", default="AI SaaS")
+    client_pack_generate.add_argument("--product", default="growth offer")
     client_pack_generate.add_argument("--market", default="United States")
     client_pack_generate.add_argument("--goal", default="lead_generation")
     client_pack_generate.add_argument("--days", type=int, default=30)
+    client_pack_generate.add_argument("--brief-file", help="Read a full AIvaMax Solution Brief v2 JSON file.")
     client_pack_generate.add_argument("--out")
     client_pack_generate.add_argument("--force", action="store_true")
     client_pack_generate.add_argument("--dry-run", action="store_true")

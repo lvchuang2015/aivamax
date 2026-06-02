@@ -3114,6 +3114,133 @@ Module {number} production output
         dumped = "\n".join(path.read_text(encoding="utf-8") for path in list(client_out.rglob("*")) + list(preview_out.rglob("*")) + list(full_export.rglob("*")) + list(report_md.parent.rglob("test-production-run.*")) if path.is_file())
         self.assert_public_clean(dumped)
 
+    def test_solution_brief_v2_generates_blueprint_driven_client_pack(self) -> None:
+        data_dir = self.make_test_dir("solution_brief_v2") / "data"
+        brief_path = data_dir / "briefs" / "ai-tool-client.json"
+        out_dir = data_dir / "obsidian" / "AIvaMax_Matrix" / "50_Projects" / "Samples" / "ai-tool-client"
+        brief_path.parent.mkdir(parents=True, exist_ok=True)
+        brief = {
+            "schema_version": "aivamax.solution_brief.v2",
+            "client_code": "AI-Tool-Client",
+            "project_name": "AI Tool Growth Sprint",
+            "brand_name": "ClientAI",
+            "website": "https://example.com",
+            "industry": "AI tool",
+            "product": "AI workflow assistant",
+            "market": "United States B2B",
+            "goal": "product_promotion",
+            "days": 30,
+            "budget_level": "medium",
+            "risk_level": "conservative",
+            "target_countries": ["United States"],
+            "target_languages": ["English"],
+            "audience_groups": ["operations teams", "agency owners"],
+            "pain_points": ["manual reporting", "slow content production"],
+            "assets": ["demo video", "case study", "trial page"],
+            "platforms": {"twitter_x": True, "reddit": True, "youtube": True, "linkedin": True},
+            "automation_scope": {"can_auto_post": True, "can_auto_comment": True, "can_auto_dm": False, "can_monitor_keywords": True},
+            "compliance_rules": {"human_review_for_dm": True, "no_mass_spam": True},
+        }
+        brief_path.write_text(json.dumps(brief, ensure_ascii=False, indent=2), encoding="utf-8")
+        code = cli.main([
+            "--data-dir",
+            str(data_dir),
+            "client-pack-generate",
+            "--brief-file",
+            str(brief_path),
+            "--out",
+            str(out_dir),
+            "--force",
+            "--json",
+        ])
+        self.assertEqual(code, 0)
+        manifest = json.loads((out_dir / "manifest.json").read_text(encoding="utf-8"))
+        self.assertEqual(manifest["solution_brief_schema"], "aivamax.solution_brief.v2")
+        self.assertEqual(manifest["blueprint"]["industry_rule"], "ai_tool")
+        self.assertIn("X", manifest["platforms"])
+        self.assertIn("Reddit", manifest["platforms"])
+        strategy = (out_dir / "01_Strategy-Plan.md").read_text(encoding="utf-8")
+        account = (out_dir / "02_Account-Matrix.md").read_text(encoding="utf-8")
+        topics = (out_dir / "05_Content-Topic-Bank.md").read_text(encoding="utf-8")
+        risk = (out_dir / "07_Risk-Boundary.md").read_text(encoding="utf-8")
+        self.assertIn("AI / Tech Tool", strategy)
+        self.assertIn("Task Mix", strategy)
+        self.assertIn("controlled account-role slots", account)
+        self.assertIn("Messages are opt-in, relevant, and human-approved", topics)
+        self.assertIn("Respect platform rules", risk.replace("respect", "Respect"))
+        self.assert_public_clean("\n".join(path.read_text(encoding="utf-8") for path in out_dir.rglob("*") if path.is_file()))
+
+    def test_service_accepts_solution_brief_v2_scenario(self) -> None:
+        data_dir, _course_dir = self.make_course_factory_fixture()
+        scenario = {
+            "schema_version": "aivamax.solution_brief.v2",
+            "client_code": "Education-V2",
+            "project_name": "Course Trial Sprint",
+            "brand_name": "Course Brand",
+            "industry": "education course",
+            "product": "online course offer",
+            "market": "global Chinese-speaking audience",
+            "goal": "course_sales",
+            "days": 14,
+            "budget_level": "low",
+            "risk_level": "conservative",
+            "audience_groups": ["new creators", "solo founders"],
+            "pain_points": ["do not know how to start", "need a workbook"],
+            "platforms": {"youtube": True, "tiktok": True, "instagram": True, "facebook": True},
+        }
+        upsert = services.upsert_course_factory_scenario(
+            scenario,
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="owner_admin",
+        )
+        self.assertTrue(upsert["ok"], upsert)
+        saved = upsert["result"]["scenario"]
+        self.assertEqual(saved["schema_version"], "aivamax.solution_brief.v2")
+        self.assertEqual(saved["audience_groups"], ["new creators", "solo founders"])
+        generated = services.generate_client_pack_from_scenario(
+            {"client_code": "Education-V2"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="owner_admin",
+        )
+        self.assertTrue(generated["ok"], generated)
+        self.assertIn("brief_file", generated["result"])
+        pack_id = generated["result"]["client_pack"]["pack_id"]
+        self.assertEqual(pack_id, "education-v2")
+        qa = services.client_pack_delivery_qa(
+            {"pack_id": pack_id},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="owner_admin",
+        )
+        self.assertTrue(qa["ok"], qa)
+        self.assertTrue(qa["result"]["passed"], qa)
+
+    def test_solution_blueprint_rules_cover_priority_industries(self) -> None:
+        cases = [
+            ("AI SaaS", "lead_generation", "b2b_saas"),
+            ("cross-border ecommerce", "product_promotion", "ecommerce"),
+            ("local service", "appointment_generation", "local_service"),
+            ("education course", "course_sales", "education_course"),
+            ("AI tool", "product_promotion", "ai_tool"),
+        ]
+        for industry, goal, expected_rule in cases:
+            with self.subTest(industry=industry):
+                brief = cli.normalize_solution_brief({
+                    "client_code": f"{expected_rule}-case",
+                    "industry": industry,
+                    "product": "test offer",
+                    "market": "United States",
+                    "goal": goal,
+                    "days": 30,
+                })
+                blueprint = cli.build_solution_blueprint(brief, None, self.brand_config)
+                self.assertEqual(blueprint["industry_id"], expected_rule)
+                self.assertGreaterEqual(len(blueprint["platforms"]), 3)
+                self.assertGreaterEqual(len(blueprint["account_matrix"]), 3)
+                self.assertGreaterEqual(len(blueprint["task_mix"]), 3)
+
 
 if __name__ == "__main__":
     unittest.main()

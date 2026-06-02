@@ -1371,14 +1371,22 @@ def infer_client_pack_args(pack_dir: Path, ctx: ServiceContext, manifest: dict[s
     days_match = re.search(r"\d+", days_text)
     days = int(days_match.group(0)) if days_match else 30
     days = max(1, min(days, 365))
-    return SimpleNamespace(
-        client_code=pack_id,
-        industry=scrub_text(str(manifest.get("industry") or extract_client_pack_field(brief, "Industry") or "general business"), ctx.brand_config),
-        product=scrub_text(str(manifest.get("product") or extract_client_pack_field(brief, "Product") or "client offer"), ctx.brand_config),
-        market=scrub_text(str(manifest.get("market") or extract_client_pack_field(brief, "Market") or "target market"), ctx.brand_config),
-        goal=scrub_text(str(manifest.get("goal") or extract_client_pack_field(brief, "Primary goal") or "lead_generation"), ctx.brand_config),
-        days=days,
+    payload = {
+        key: value
+        for key, value in manifest.items()
+        if key not in {"files", "blueprint", "visibility", "generated_at"}
+    }
+    payload.update(
+        {
+            "client_code": pack_id,
+            "industry": scrub_text(str(manifest.get("industry") or extract_client_pack_field(brief, "Industry") or "general business"), ctx.brand_config),
+            "product": scrub_text(str(manifest.get("product") or extract_client_pack_field(brief, "Product") or "client offer"), ctx.brand_config),
+            "market": scrub_text(str(manifest.get("market") or extract_client_pack_field(brief, "Market") or "target market"), ctx.brand_config),
+            "goal": scrub_text(str(manifest.get("goal") or extract_client_pack_field(brief, "Primary goal") or "lead_generation"), ctx.brand_config),
+            "days": days,
+        }
     )
+    return SimpleNamespace(**payload)
 
 
 def repair_reason_for_client_pack_file(
@@ -2136,6 +2144,25 @@ def generate_platform_assets(
 
 def course_factory_scenario_config_path(ctx: ServiceContext) -> Path:
     return ctx.matrix_root / COURSE_FACTORY_SCENARIO_CONFIG
+
+
+def generated_solution_brief_path(ctx: ServiceContext, scenario: dict[str, Any]) -> Path:
+    client_code = str(scenario.get("client_code") or "client-pack")
+    filename = f"{cli.slugify(client_code, fallback='client-pack', max_len=72)}.json"
+    return ctx.matrix_root / "90_Templates" / "Tables" / "generated_solution_briefs" / filename
+
+
+def write_generated_solution_brief(ctx: ServiceContext, scenario: dict[str, Any]) -> Path:
+    path = generated_solution_brief_path(ctx, scenario)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        key: value
+        for key, value in scenario.items()
+        if key not in {"source_path", "raw_path", "note_path", "source_url"}
+    }
+    payload.setdefault("schema_version", "aivamax.solution_brief.v2")
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    return path
 
 
 def render_course_factory_scenario_config(ctx: ServiceContext) -> dict[str, Any]:
@@ -5733,6 +5760,7 @@ def generate_client_pack_from_scenario(
     except ValueError as exc:
         return service_response(action="aivamax_generate_client_pack", role=caller_role, ok=False, error="invalid_scenario", warnings=[str(exc)])
 
+    brief_path = write_generated_solution_brief(ctx, scenario)
     command = [
         "--data-dir", str(ctx.data_dir),
         "--brand-config", str(ctx.brand_config_path),
@@ -5743,6 +5771,7 @@ def generate_client_pack_from_scenario(
         "--market", str(scenario["market"]),
         "--goal", str(scenario["goal"]),
         "--days", str(scenario["days"]),
+        "--brief-file", str(brief_path),
         "--json",
     ]
     if force:
@@ -5756,6 +5785,7 @@ def generate_client_pack_from_scenario(
     packs = list_client_packs(data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
     payload = {
         "scenario": scenario,
+        "brief_file": relpath(brief_path),
         "client_pack": parsed,
         "packs": packs.get("result", {}),
     }
