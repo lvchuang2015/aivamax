@@ -167,6 +167,7 @@ MCP_TOOL_ROLE_ALLOWLIST: dict[str, set[str]] = {
     "aivamax_release_distribution_status": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_distribution_package": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_distribution_delivery_record": {OWNER_ADMIN},
+    "aivamax_release_post_approval_workflow": {OWNER_ADMIN},
     "aivamax_list_client_packs": {OWNER_ADMIN, TEAM_OPERATOR, INSTRUCTOR_PRIVATE},
     "aivamax_generate_client_pack": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_client_pack_delivery_qa": {OWNER_ADMIN, TEAM_OPERATOR},
@@ -838,6 +839,7 @@ def resolve_release_record_file(
         or candidate.name.startswith("Release-Evidence-Snapshot")
         or candidate.name.startswith("Owner-Review-Package")
         or candidate.name.startswith("AIvaMax-Owner-Review-Package")
+        or candidate.name.startswith("Post-Approval-Workflow")
     )
     if candidate.suffix.lower() not in {".json", ".md", ".zip"} or not allowed_name:
         raise PermissionError("Release record file is not allowlisted.")
@@ -4874,6 +4876,189 @@ def release_distribution_delivery_record(
     )
 
 
+def render_post_approval_workflow_markdown(workflow: dict[str, Any], brand_config: dict[str, Any]) -> str:
+    brand = brand_config.get("public_brand", "AIvaMax")
+    step_rows = "\n".join(
+        f"| {item.get('step')} | {item.get('status')} | {item.get('detail')} |"
+        for item in workflow.get("steps", [])
+    ) or "| - | - | - |"
+    return scrub_text(f"""---
+type: post_approval_workflow
+public_brand: {brand}
+visibility: internal_release_record
+status: {workflow.get("workflow_status")}
+---
+
+# {brand} Post Approval Workflow
+
+| Field | Value |
+| --- | --- |
+| Generated at | {workflow.get("generated_at")} |
+| Workflow status | {workflow.get("workflow_status")} |
+| Dry run | {workflow.get("dry_run")} |
+| Release ID | {workflow.get("release_id")} |
+| Decision | {workflow.get("decision")} |
+| Distribution status | {workflow.get("distribution_status")} |
+| Approved package generated | {workflow.get("approved_package_generated")} |
+| Delivery recorded | {workflow.get("delivery_recorded")} |
+
+## Steps
+
+| Step | Status | Detail |
+| --- | --- | --- |
+{step_rows}
+
+## Boundary
+
+This workflow runs only after owner approval. Before approval it records readiness only. It does not approve or reject releases, and it does not bypass the approved distribution gate.
+""", brand_config)
+
+
+def persist_post_approval_workflow(workflow: dict[str, Any], ctx: ServiceContext) -> dict[str, Any]:
+    root = release_record_root(ctx)
+    root.mkdir(parents=True, exist_ok=True)
+    json_path = root / "Post-Approval-Workflow.json"
+    md_path = root / "Post-Approval-Workflow.md"
+    json_path.write_text(json.dumps(workflow, ensure_ascii=False, indent=2), encoding="utf-8")
+    md_path.write_text(render_post_approval_workflow_markdown(workflow, ctx.brand_config), encoding="utf-8")
+    return {
+        "json": release_record_file_record(json_path),
+        "markdown": release_record_file_record(md_path),
+    }
+
+
+def release_post_approval_workflow(
+    request: dict[str, Any] | None = None,
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    if caller_role != OWNER_ADMIN:
+        return service_response(
+            action="aivamax_release_post_approval_workflow",
+            role=caller_role,
+            ok=False,
+            error="owner_approval_required",
+            result={"required_role": OWNER_ADMIN, "caller_role": caller_role},
+            audit={"passed": False, "caller_role": caller_role},
+        )
+    request = request or {}
+    dry_run = request_bool(request, "dry_run", False)
+    status_payload = release_distribution_status(request, data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+    if not status_payload.get("ok"):
+        return service_response(
+            action="aivamax_release_post_approval_workflow",
+            role=caller_role,
+            ok=False,
+            error=status_payload.get("error", "distribution_status_failed"),
+            warnings=status_payload.get("warnings", []),
+        )
+    status = status_payload.get("result", {})
+    decision = str(status.get("decision") or "unknown")
+    distribution_status = str(status.get("distribution_status") or "unknown")
+    can_generate = bool(status.get("can_generate"))
+    has_distribution = bool(status.get("has_existing_distribution"))
+    has_delivery = bool(status.get("has_delivery_record"))
+    steps: list[dict[str, Any]] = [{
+        "step": "distribution_status",
+        "status": distribution_status,
+        "detail": f"decision={decision}, can_generate={can_generate}, has_distribution={has_distribution}, has_delivery={has_delivery}",
+    }]
+    workflow_status = "blocked_pre_approval"
+    approved_package_generated = False
+    delivery_recorded = False
+    package_result: dict[str, Any] | None = None
+    delivery_result: dict[str, Any] | None = None
+
+    if decision != "approved":
+        steps.append({"step": "owner_approval_gate", "status": "blocked", "detail": "Latest release signoff is not approved."})
+    elif dry_run:
+        workflow_status = "ready_to_run" if can_generate or has_distribution else "blocked"
+        steps.append({"step": "dry_run", "status": workflow_status, "detail": "No distribution package or delivery record was written."})
+    else:
+        if not has_distribution:
+            if not can_generate:
+                workflow_status = "blocked"
+                steps.append({"step": "approved_distribution_package", "status": distribution_status, "detail": status.get("required_action") or "Distribution package is not ready to generate."})
+            else:
+                package_payload = release_distribution_package(request, data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+                if not package_payload.get("ok"):
+                    workflow_status = "blocked"
+                    steps.append({"step": "approved_distribution_package", "status": "failed", "detail": package_payload.get("error")})
+                else:
+                    package_result = package_payload.get("result", {})
+                    approved_package_generated = True
+                    steps.append({"step": "approved_distribution_package", "status": "generated", "detail": (package_result.get("files", {}).get("archive") or {}).get("path")})
+                    status_payload = release_distribution_status(request, data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+                    status = status_payload.get("result", {}) if status_payload.get("ok") else status
+                    has_distribution = bool(status.get("has_existing_distribution"))
+                    has_delivery = bool(status.get("has_delivery_record"))
+        else:
+            steps.append({"step": "approved_distribution_package", "status": "already_exists", "detail": "Using existing approved distribution package."})
+
+        if has_distribution and not has_delivery:
+            delivery_payload = release_distribution_delivery_record(
+                {
+                    "delivery_owner": request.get("delivery_owner") or OWNER_ADMIN,
+                    "recipient_label": request.get("recipient_label") or "internal_distribution_recipient",
+                    "delivery_channel": request.get("delivery_channel") or "manual_handoff",
+                    "notes": request.get("notes") or "Approved distribution package handed off by post-approval workflow.",
+                },
+                data_dir=ctx.data_dir,
+                brand_config_path=ctx.brand_config_path,
+                role=caller_role,
+            )
+            if not delivery_payload.get("ok"):
+                workflow_status = "blocked"
+                steps.append({"step": "delivery_record", "status": "failed", "detail": delivery_payload.get("error")})
+            else:
+                delivery_result = delivery_payload.get("result", {})
+                delivery_recorded = True
+                workflow_status = "completed"
+                steps.append({"step": "delivery_record", "status": "recorded", "detail": delivery_result.get("delivery_id")})
+        elif has_delivery:
+            workflow_status = "completed"
+            delivery_recorded = True
+            steps.append({"step": "delivery_record", "status": "already_exists", "detail": "Current release already has delivery evidence."})
+
+    workflow = {
+        "generated_at": cli.now_iso(),
+        "public_brand": ctx.brand_config.get("public_brand", "AIvaMax"),
+        "dry_run": dry_run,
+        "workflow_status": workflow_status,
+        "release_id": status.get("release_id"),
+        "decision": decision,
+        "distribution_status": distribution_status,
+        "approved_package_generated": approved_package_generated,
+        "delivery_recorded": delivery_recorded,
+        "status": status,
+        "package": package_result,
+        "delivery": delivery_result,
+        "steps": steps,
+        "guardrails": [
+            "Workflow does not approve or reject a release.",
+            "Workflow is blocked until the latest release signoff is approved.",
+            "Delivery evidence is owner-only.",
+        ],
+    }
+    workflow["report"] = persist_post_approval_workflow(workflow, ctx)
+    public_paths = [
+        workflow["report"]["json"]["path"],
+        workflow["report"]["markdown"]["path"],
+        *public_paths_from_result({"package": package_result or {}, "delivery": delivery_result or {}}),
+    ]
+    return service_response(
+        action="aivamax_release_post_approval_workflow",
+        role=caller_role,
+        result=workflow,
+        public_paths=public_paths,
+        audit={"passed": workflow_status == "completed", "workflow_status": workflow_status, "release_id": workflow.get("release_id")},
+    )
+
+
 def release_signoff_record(
     request: dict[str, Any] | None = None,
     *,
@@ -5845,6 +6030,7 @@ def render_skill(role: str) -> str:
         ])
         if role == OWNER_ADMIN:
             preferred_tools.append("aivamax_release_distribution_delivery_record")
+            preferred_tools.append("aivamax_release_post_approval_workflow")
     elif role == INSTRUCTOR_PRIVATE:
         preferred_tools.extend([
             "aivamax_student_coach_preview",

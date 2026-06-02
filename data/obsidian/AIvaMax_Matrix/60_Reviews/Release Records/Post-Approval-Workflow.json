@@ -1,0 +1,58 @@
+{
+  "generated_at": "2026-06-02T08:53:53+00:00",
+  "public_brand": "AIvaMax",
+  "dry_run": false,
+  "workflow_status": "blocked_pre_approval",
+  "release_id": "REL-20260602061539",
+  "decision": "pending_review",
+  "distribution_status": "release_not_approved",
+  "approved_package_generated": false,
+  "delivery_recorded": false,
+  "status": {
+    "generated_at": "2026-06-02T08:53:53+00:00",
+    "public_brand": "AIvaMax",
+    "release_id": "REL-20260602061539",
+    "decision": "pending_review",
+    "review_status": "awaiting_owner_approval",
+    "ready_to_release": true,
+    "can_generate": false,
+    "distribution_status": "release_not_approved",
+    "blockers": [
+      "release_not_approved"
+    ],
+    "required_action": "Run release-review-pack and record an approved signoff before distribution.",
+    "expected_sha256": "b226e8ac0db5769328c7754ab034c184212000950414ca4fc6ef2b992d324e26",
+    "actual_sha256": null,
+    "bundle": {
+      "archive_path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release.zip",
+      "archive_size": 87291,
+      "sha256": "b226e8ac0db5769328c7754ab034c184212000950414ca4fc6ef2b992d324e26",
+      "included_file_count": 51,
+      "manifest_path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release-Manifest.json",
+      "checklist_path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release-Signoff-Checklist.md"
+    },
+    "existing_distribution_files": {},
+    "has_existing_distribution": false,
+    "delivery_record": null,
+    "has_delivery_record": false
+  },
+  "package": null,
+  "delivery": null,
+  "steps": [
+    {
+      "step": "distribution_status",
+      "status": "release_not_approved",
+      "detail": "decision=pending_review, can_generate=False, has_distribution=False, has_delivery=False"
+    },
+    {
+      "step": "owner_approval_gate",
+      "status": "blocked",
+      "detail": "Latest release signoff is not approved."
+    }
+  ],
+  "guardrails": [
+    "Workflow does not approve or reject a release.",
+    "Workflow is blocked until the latest release signoff is approved.",
+    "Delivery evidence is owner-only."
+  ]
+}

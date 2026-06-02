@@ -283,6 +283,9 @@ class AIvaMaxCLITest(unittest.TestCase):
         delivery_record_args = parser.parse_args(["release-distribution-delivery-record"])
         self.assertEqual(delivery_record_args.role, "owner_admin")
         self.assertEqual(delivery_record_args.recipient_label, "internal_distribution_recipient")
+        post_approval_args = parser.parse_args(["release-post-approval-workflow"])
+        self.assertEqual(post_approval_args.role, "owner_admin")
+        self.assertFalse(post_approval_args.dry_run)
         coach_args = parser.parse_args(["student-coach-preview", "--question", "账号安全怎么检查？"])
         self.assertEqual(coach_args.role, "student_public")
 
@@ -397,6 +400,7 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("aivamax_release_distribution_status", tool_names)
         self.assertIn("aivamax_release_distribution_package", tool_names)
         self.assertIn("aivamax_release_distribution_delivery_record", tool_names)
+        self.assertIn("aivamax_release_post_approval_workflow", tool_names)
         self.assertIn("aivamax_list_client_packs", tool_names)
         self.assertIn("aivamax_generate_client_pack", tool_names)
         self.assertIn("aivamax_client_pack_delivery_qa", tool_names)
@@ -649,6 +653,14 @@ class AIvaMaxCLITest(unittest.TestCase):
         )
         self.assertFalse(blocked_delivery_record["ok"])
         self.assertEqual(blocked_delivery_record["error"], "permission_denied")
+        blocked_post_approval_workflow = mcp.call_tool(
+            "aivamax_release_post_approval_workflow",
+            {"role": "student_public"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_post_approval_workflow["ok"])
+        self.assertEqual(blocked_post_approval_workflow["error"], "permission_denied")
         blocked_team_delivery_record = mcp.call_tool(
             "aivamax_release_distribution_delivery_record",
             {"role": "team_operator"},
@@ -727,6 +739,24 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertFalse(blocked_delivery["ok"])
         self.assertEqual(blocked_delivery["error"], "distribution_not_approved")
         self.assertFalse((release_root / "Latest-Distribution-Delivery-Record.json").exists())
+        blocked_workflow = services.release_post_approval_workflow(
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="owner_admin",
+        )
+        self.assertTrue(blocked_workflow["ok"], blocked_workflow)
+        self.assertEqual(blocked_workflow["result"]["workflow_status"], "blocked_pre_approval")
+        workflow_report_path = core.resolve_reported_path(blocked_workflow["result"]["report"]["markdown"]["path"])
+        self.assertTrue(workflow_report_path and workflow_report_path.exists())
+        self.assertIn("Post Approval Workflow", workflow_report_path.read_text(encoding="utf-8"))
+        self.assertFalse((matrix_root / "public_export" / "approved_distribution" / "AIvaMax-Approved-Distribution.zip").exists())
+        team_workflow = services.release_post_approval_workflow(
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="team_operator",
+        )
+        self.assertFalse(team_workflow["ok"])
+        self.assertEqual(team_workflow["error"], "owner_approval_required")
         team_dry_run = services.release_decision_dry_run(
             {"decision": "approved", "signer": "team_operator"},
             data_dir=data_dir,
@@ -752,6 +782,15 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertEqual(ready_status["result"]["distribution_status"], "ready_to_generate")
         self.assertTrue(ready_status["result"]["can_generate"])
         self.assertEqual(ready_status["result"]["actual_sha256"], bundle_sha)
+        self.assertFalse((matrix_root / "public_export" / "approved_distribution" / "AIvaMax-Approved-Distribution.zip").exists())
+        ready_workflow_dry_run = services.release_post_approval_workflow(
+            {"dry_run": True},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="owner_admin",
+        )
+        self.assertTrue(ready_workflow_dry_run["ok"], ready_workflow_dry_run)
+        self.assertEqual(ready_workflow_dry_run["result"]["workflow_status"], "ready_to_run")
         self.assertFalse((matrix_root / "public_export" / "approved_distribution" / "AIvaMax-Approved-Distribution.zip").exists())
         missing_delivery = services.release_distribution_delivery_record(
             data_dir=data_dir,
@@ -837,6 +876,15 @@ class AIvaMaxCLITest(unittest.TestCase):
         )
         self.assertTrue(delivered_status["result"]["has_delivery_record"])
         self.assertEqual(delivered_status["result"]["delivery_record"]["delivery_id"], delivery["result"]["delivery_id"])
+        completed_workflow = services.release_post_approval_workflow(
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="owner_admin",
+        )
+        self.assertTrue(completed_workflow["ok"], completed_workflow)
+        self.assertEqual(completed_workflow["result"]["workflow_status"], "completed")
+        self.assertTrue(completed_workflow["result"]["delivery_recorded"])
+        self.assert_public_clean((core.resolve_reported_path(completed_workflow["result"]["report"]["markdown"]["path"])).read_text(encoding="utf-8"))
         delivered_status_payload = services.get_status(
             data_dir=data_dir,
             brand_config_path=ROOT / "config" / "brand_config.json",
@@ -947,7 +995,9 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("aivamax_release_distribution_status", owner_skill)
         self.assertIn("aivamax_release_distribution_package", owner_skill)
         self.assertIn("aivamax_release_distribution_delivery_record", owner_skill)
+        self.assertIn("aivamax_release_post_approval_workflow", owner_skill)
         self.assertNotIn("aivamax_release_distribution_delivery_record", team_skill)
+        self.assertNotIn("aivamax_release_post_approval_workflow", team_skill)
         self.assertIn("course_factory", team_skill)
         self.assertIn("client_packs", team_skill)
         self.assertIn("escalate `approved`/`rejected` decisions to `owner_admin`", team_skill)
@@ -2750,6 +2800,21 @@ Module {number} production output
             self.assertEqual(distribution_status_payload["action"], "aivamax_release_distribution_status")
             self.assertEqual(distribution_status_payload["result"]["distribution_status"], "release_not_approved")
             self.assertFalse(distribution_status_payload["result"]["can_generate"])
+
+            workflow_request = urllib.request.Request(base + "/api/actions/release-post-approval-workflow", method="POST")
+            with urllib.request.urlopen(workflow_request, timeout=60) as response:
+                workflow_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(workflow_payload["ok"], workflow_payload)
+            workflow = workflow_payload["result"]
+            self.assertEqual(workflow["workflow_status"], "blocked_pre_approval")
+            self.assertEqual(workflow["release_id"], signoff["release_id"])
+            workflow_report_path = core.resolve_reported_path(workflow["report"]["markdown"]["path"])
+            self.assertTrue(workflow_report_path and workflow_report_path.exists())
+            self.assertIn("Post Approval Workflow", workflow_report_path.read_text(encoding="utf-8"))
+            with urllib.request.urlopen(base + "/api/release-post-approval-workflow", timeout=60) as response:
+                get_workflow_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(get_workflow_payload["ok"], get_workflow_payload)
+            self.assertEqual(get_workflow_payload["result"]["workflow_status"], "blocked_pre_approval")
 
             blocked_approval_request = urllib.request.Request(
                 base + "/api/actions/release-signoff-record",

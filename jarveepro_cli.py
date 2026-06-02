@@ -7569,6 +7569,33 @@ def run_release_distribution_delivery_record(args: argparse.Namespace) -> int:
     return 0 if result.get("ok") else 1
 
 
+def run_release_post_approval_workflow(args: argparse.Namespace) -> int:
+    from aivamax_services import release_post_approval_workflow
+
+    result = release_post_approval_workflow(
+        {
+            "dry_run": args.dry_run,
+            "delivery_owner": args.delivery_owner,
+            "recipient_label": args.recipient_label,
+            "delivery_channel": args.delivery_channel,
+            "notes": args.notes,
+        },
+        data_dir=Path(args.data_dir),
+        brand_config_path=Path(args.brand_config),
+        role=args.role,
+    )
+    if args.json:
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+    else:
+        payload = result.get("result", {})
+        print(f"Post-approval workflow: {payload.get('workflow_status')}")
+        print(f"Release ID: {payload.get('release_id')} | decision={payload.get('decision')} | distribution={payload.get('distribution_status')}")
+        report = payload.get("report", {})
+        if report.get("markdown"):
+            print(f"Report: {report['markdown'].get('path')}")
+    return 0 if result.get("ok") else 1
+
+
 def run_material_review(args: argparse.Namespace) -> int:
     from aivamax_services import material_review
 
@@ -7887,6 +7914,16 @@ def build_parser() -> argparse.ArgumentParser:
     release_distribution_delivery_parser.add_argument("--role", default="owner_admin", choices=["owner_admin", "team_operator", "instructor_private", "student_public"])
     release_distribution_delivery_parser.add_argument("--json", action="store_true")
     release_distribution_delivery_parser.set_defaults(func=run_release_distribution_delivery_record)
+
+    release_post_approval_parser = sub.add_parser("release-post-approval-workflow", help="Run the guarded post-approval distribution and delivery workflow after owner approval.")
+    release_post_approval_parser.add_argument("--delivery-owner", default="owner_admin")
+    release_post_approval_parser.add_argument("--recipient-label", default="internal_distribution_recipient")
+    release_post_approval_parser.add_argument("--delivery-channel", default="manual_handoff")
+    release_post_approval_parser.add_argument("--notes", default="")
+    release_post_approval_parser.add_argument("--dry-run", action="store_true")
+    release_post_approval_parser.add_argument("--role", default="owner_admin", choices=["owner_admin", "team_operator", "instructor_private", "student_public"])
+    release_post_approval_parser.add_argument("--json", action="store_true")
+    release_post_approval_parser.set_defaults(func=run_release_post_approval_workflow)
 
     material_review = sub.add_parser("material-review", help="Review AIvaMax media and case material readiness.")
     material_review.add_argument("--path")

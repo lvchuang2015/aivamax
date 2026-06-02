@@ -43,6 +43,7 @@ from aivamax_services import (
     release_evidence_snapshot,
     release_owner_handoff,
     release_owner_review_package,
+    release_post_approval_workflow,
     release_review_pack,
     release_signoff_record,
     role_inventory,
@@ -154,6 +155,7 @@ def console_html() -> str:
       <button onclick="runAction('release-owner-review-package')">Owner Review Package</button>
       <button onclick="runAction('release-distribution-package')">Distribution Package</button>
       <button onclick="runAction('release-distribution-delivery-record')">Delivery Record</button>
+      <button onclick="runAction('release-post-approval-workflow')">Post Approval Workflow</button>
       <button class="primary" onclick="refreshAll()">刷新状态</button>
       <button onclick="runAction('refresh-audits')">刷新审计</button>
       <button onclick="runAction('refresh-platform-assets')">重建平台库</button>
@@ -902,6 +904,10 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                 payload = release_distribution_status(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.NOT_FOUND, payload)
                 return
+            if route == "/api/release-post-approval-workflow":
+                payload = release_post_approval_workflow(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.NOT_FOUND, payload)
+                return
             json_response(self, HTTPStatus.NOT_FOUND, {"ok": False, "error": "unknown_route", "route": route})
 
         def do_POST(self) -> None:  # noqa: N802
@@ -1090,6 +1096,15 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                     json_response(self, HTTPStatus.BAD_REQUEST, {"ok": False, "error": "invalid_json", "message": str(exc)})
                     return
                 payload = release_distribution_delivery_record(body, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.CONFLICT, payload)
+                return
+            if route == "/api/actions/release-post-approval-workflow":
+                try:
+                    body = read_json_body(self)
+                except ValueError as exc:
+                    json_response(self, HTTPStatus.BAD_REQUEST, {"ok": False, "error": "invalid_json", "message": str(exc)})
+                    return
+                payload = release_post_approval_workflow(body, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.CONFLICT, payload)
                 return
             if route == "/api/actions/export-mcp-config":

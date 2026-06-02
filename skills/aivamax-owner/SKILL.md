@@ -83,5 +83,6 @@ Owner admins make the final release decision after reviewing the release review 
 - `aivamax_repair_client_pack_batch`
 - `aivamax_export_client_pack_zip`
 - `aivamax_release_distribution_delivery_record`
+- `aivamax_release_post_approval_workflow`
 
 Owner and team roles may also use `aivamax_run_matrix` when generating new project/course assets. Student-facing hosts should prefer `aivamax_student_coach_preview` for learner-safe answers.

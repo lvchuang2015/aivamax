@@ -37,6 +37,7 @@ from aivamax_services import (
     release_decision_dry_run,
     release_evidence_snapshot,
     release_owner_review_package,
+    release_post_approval_workflow,
     release_review_pack,
     release_owner_handoff,
     release_signoff_record,
@@ -356,6 +357,23 @@ TOOL_DEFINITIONS = [
         },
     },
     {
+        "name": "aivamax_release_post_approval_workflow",
+        "description": "Run the guarded AIvaMax post-approval workflow after owner approval; before approval it reports the blocked gate.",
+        "allowed_roles": ["owner_admin"],
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "role": {"type": "string"},
+                "dry_run": {"type": "boolean", "default": False},
+                "delivery_owner": {"type": "string"},
+                "recipient_label": {"type": "string"},
+                "delivery_channel": {"type": "string"},
+                "notes": {"type": "string"},
+            },
+            "additionalProperties": False,
+        },
+    },
+    {
         "name": "aivamax_list_client_packs",
         "description": "List governed AIvaMax client delivery packs and public-safe file/report links.",
         "allowed_roles": ["owner_admin", "team_operator", "instructor_private"],
@@ -616,6 +634,8 @@ def call_tool(
             return release_distribution_package(arguments, **common)
         if name == "aivamax_release_distribution_delivery_record":
             return release_distribution_delivery_record(arguments, **common)
+        if name == "aivamax_release_post_approval_workflow":
+            return release_post_approval_workflow(arguments, **common)
         if name == "aivamax_list_client_packs":
             return list_client_packs(**common)
         if name == "aivamax_generate_client_pack":
