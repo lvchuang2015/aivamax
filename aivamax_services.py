@@ -112,11 +112,13 @@ ROLE_CONSTRAINTS: dict[str, list[str]] = {
     OWNER_ADMIN: [
         "Can record `pending_review`, `approved`, and `rejected` release signoff decisions.",
         "Can create approved distribution packages only after release gates, owner signoff, and bundle hash checks pass.",
+        "Can record owner-only distribution delivery evidence after approved package handoff.",
         "Must keep supplier source material private and route governed exports through the dedicated release/client-pack APIs.",
     ],
     TEAM_OPERATOR: [
         "Can prepare course factory outputs, client packs, final release bundles, pending review records, and review packs.",
         "Cannot record `approved` or `rejected` final release signoff decisions; escalate those decisions to `owner_admin`.",
+        "Cannot record final distribution delivery evidence; escalate delivery confirmation to `owner_admin`.",
         "Cannot bypass the approved-distribution guard; distribution remains blocked until owner approval is recorded.",
     ],
     INSTRUCTOR_PRIVATE: [
@@ -154,6 +156,7 @@ MCP_TOOL_ROLE_ALLOWLIST: dict[str, set[str]] = {
     "aivamax_release_review_pack": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_distribution_status": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_distribution_package": {OWNER_ADMIN, TEAM_OPERATOR},
+    "aivamax_release_distribution_delivery_record": {OWNER_ADMIN},
     "aivamax_list_client_packs": {OWNER_ADMIN, TEAM_OPERATOR, INSTRUCTOR_PRIVATE},
     "aivamax_generate_client_pack": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_client_pack_delivery_qa": {OWNER_ADMIN, TEAM_OPERATOR},
@@ -319,6 +322,15 @@ def release_distribution_next_actions(ctx: ServiceContext, role: str) -> list[di
             "status": status.get("distribution_status"),
         }]
     if status.get("can_generate") and status.get("has_existing_distribution"):
+        if not status.get("has_delivery_record"):
+            return [{
+                "priority": 1,
+                "title": "Record approved AIvaMax distribution delivery",
+                "command": "aivamax.ps1 release-distribution-delivery-record",
+                "owner_role": "owner_admin",
+                "release_id": release_id,
+                "status": status.get("distribution_status"),
+            }]
         return [{
             "priority": 2,
             "title": "Review approved AIvaMax distribution package",
@@ -796,7 +808,9 @@ def resolve_release_record_file(
         raise PermissionError("Release record must be under AIvaMax_Matrix/60_Reviews/Release Records.") from exc
     allowed_name = (
         candidate.name.startswith("AIvaMax-Release-Record-")
+        or candidate.name.startswith("Distribution-Delivery-Record-")
         or candidate.name.startswith("Latest-Release-Record")
+        or candidate.name.startswith("Latest-Distribution-Delivery-Record")
         or candidate.name.startswith("Release-History-Dashboard")
         or candidate.name.startswith("Release-Review-Pack")
     )
@@ -2728,6 +2742,10 @@ def release_record_id() -> str:
     return f"REL-{cli.dt.datetime.now(cli.dt.UTC).strftime('%Y%m%d%H%M%S')}"
 
 
+def distribution_delivery_id() -> str:
+    return f"DEL-{cli.dt.datetime.now(cli.dt.UTC).strftime('%Y%m%d%H%M%S')}"
+
+
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -3228,6 +3246,76 @@ def existing_distribution_file_records(ctx: ServiceContext) -> dict[str, dict[st
     return files
 
 
+def latest_distribution_delivery_record(ctx: ServiceContext) -> dict[str, Any] | None:
+    path = release_record_root(ctx) / "Latest-Distribution-Delivery-Record.json"
+    if not path.exists():
+        return None
+    try:
+        record = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    md_path = release_record_root(ctx) / "Latest-Distribution-Delivery-Record.md"
+    record["record"] = {
+        "json": release_record_file_record(path),
+        "markdown": release_record_file_record(md_path) if md_path.exists() else None,
+    }
+    return record
+
+
+def render_distribution_delivery_record_markdown(record: dict[str, Any], brand_config: dict[str, Any]) -> str:
+    brand = brand_config.get("public_brand", "AIvaMax")
+    return scrub_text(f"""---
+type: distribution_delivery_record
+public_brand: {brand}
+visibility: internal_release_record
+status: delivered
+---
+
+# {brand} Distribution Delivery Record
+
+| Field | Value |
+| --- | --- |
+| Delivery ID | {record.get("delivery_id")} |
+| Generated at | {record.get("generated_at")} |
+| Release ID | {record.get("release_id")} |
+| Distribution archive | {record.get("distribution", {}).get("archive_path")} |
+| Distribution SHA256 | {record.get("distribution", {}).get("sha256")} |
+| Delivery owner | {record.get("delivery_owner")} |
+| Recipient label | {record.get("recipient_label")} |
+| Delivery channel | {record.get("delivery_channel")} |
+
+## Delivery Notes
+
+{record.get("notes") or "No delivery notes recorded."}
+
+## Boundary
+
+This record stores AIvaMax distribution delivery evidence only. It does not include vendor documents, raw crawl storage, private source paths, or account execution material.
+""", brand_config)
+
+
+def persist_distribution_delivery_record(record: dict[str, Any], ctx: ServiceContext) -> dict[str, Any]:
+    root = release_record_root(ctx)
+    root.mkdir(parents=True, exist_ok=True)
+    stem = f"Distribution-Delivery-Record-{record['delivery_id']}"
+    json_path = root / f"{stem}.json"
+    md_path = root / f"{stem}.md"
+    latest_json = root / "Latest-Distribution-Delivery-Record.json"
+    latest_md = root / "Latest-Distribution-Delivery-Record.md"
+    json_text = json.dumps(record, ensure_ascii=False, indent=2)
+    md_text = render_distribution_delivery_record_markdown(record, ctx.brand_config)
+    json_path.write_text(json_text, encoding="utf-8")
+    md_path.write_text(md_text, encoding="utf-8")
+    latest_json.write_text(json_text, encoding="utf-8")
+    latest_md.write_text(md_text, encoding="utf-8")
+    return {
+        "json": release_record_file_record(json_path),
+        "markdown": release_record_file_record(md_path),
+        "latest_json": release_record_file_record(latest_json),
+        "latest_markdown": release_record_file_record(latest_md),
+    }
+
+
 def release_distribution_status(
     request: dict[str, Any] | None = None,
     *,
@@ -3248,6 +3336,13 @@ def release_distribution_status(
         )
     record = latest_payload.get("result", {})
     existing_files = existing_distribution_file_records(ctx)
+    delivery_record = latest_distribution_delivery_record(ctx)
+    delivery_matches_release = (
+        bool(delivery_record)
+        and delivery_record.get("release_id") == record.get("release_id")
+        and (delivery_record.get("distribution", {}).get("sha256") == record.get("bundle", {}).get("sha256"))
+    )
+    matching_delivery_record = delivery_record if delivery_matches_release else None
     status = {
         "generated_at": cli.now_iso(),
         "public_brand": ctx.brand_config.get("public_brand", "AIvaMax"),
@@ -3264,6 +3359,8 @@ def release_distribution_status(
         "bundle": record.get("bundle", {}),
         "existing_distribution_files": existing_files,
         "has_existing_distribution": "archive" in existing_files,
+        "delivery_record": matching_delivery_record,
+        "has_delivery_record": bool(matching_delivery_record),
     }
     blockers: list[str] = status["blockers"]
     if record.get("decision") != "approved":
@@ -3298,8 +3395,19 @@ def release_distribution_status(
                 else:
                     status["can_generate"] = True
                     status["distribution_status"] = "approved_distribution_exists" if status["has_existing_distribution"] else "ready_to_generate"
-                    status["required_action"] = "Run release-distribution-package to generate the formal approved distribution wrapper."
+                    if status["has_existing_distribution"] and status["has_delivery_record"]:
+                        status["required_action"] = "Review release-distribution-status and retain the recorded delivery evidence."
+                    elif status["has_existing_distribution"]:
+                        status["required_action"] = "Run release-distribution-delivery-record after the approved package is delivered."
+                    else:
+                        status["required_action"] = "Run release-distribution-package to generate the formal approved distribution wrapper."
     public_paths = [item["path"] for item in existing_files.values()]
+    if matching_delivery_record:
+        public_paths.extend(
+            item["path"]
+            for item in matching_delivery_record.get("record", {}).values()
+            if item and item.get("path")
+        )
     return service_response(
         action="aivamax_release_distribution_status",
         role=caller_role,
@@ -3396,6 +3504,91 @@ def release_distribution_package(
         result=manifest,
         public_paths=[manifest["files"]["manifest"]["path"], manifest["files"]["checklist"]["path"], manifest["files"]["archive"]["path"]],
         audit={"passed": True, "release_id": record.get("release_id"), "sha256": actual_sha},
+    )
+
+
+def release_distribution_delivery_record(
+    request: dict[str, Any] | None = None,
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    if caller_role != OWNER_ADMIN:
+        return service_response(
+            action="aivamax_release_distribution_delivery_record",
+            role=caller_role,
+            ok=False,
+            error="owner_approval_required",
+            result={
+                "required_role": OWNER_ADMIN,
+                "caller_role": caller_role,
+                "message": "Only owner_admin can record final distribution delivery evidence.",
+            },
+            audit={"passed": False, "caller_role": caller_role},
+        )
+    ctx = make_context(data_dir, brand_config_path)
+    request = request or {}
+    status_payload = release_distribution_status(request, data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+    if not status_payload.get("ok"):
+        return service_response(
+            action="aivamax_release_distribution_delivery_record",
+            role=caller_role,
+            ok=False,
+            error=status_payload.get("error", "distribution_status_failed"),
+            warnings=status_payload.get("warnings", []),
+        )
+    status = status_payload.get("result", {})
+    if not status.get("can_generate"):
+        return service_response(
+            action="aivamax_release_distribution_delivery_record",
+            role=caller_role,
+            ok=False,
+            error="distribution_not_approved",
+            result={
+                "distribution_status": status.get("distribution_status"),
+                "blockers": status.get("blockers", []),
+                "required_action": status.get("required_action") or "Repair the approved distribution gate before recording delivery.",
+            },
+            audit={"passed": False, "distribution_status": status.get("distribution_status")},
+        )
+    if not status.get("has_existing_distribution"):
+        return service_response(
+            action="aivamax_release_distribution_delivery_record",
+            role=caller_role,
+            ok=False,
+            error="distribution_package_required",
+            result={"distribution_status": status.get("distribution_status"), "required_action": "Run release-distribution-package before recording delivery."},
+            audit={"passed": False, "distribution_status": status.get("distribution_status")},
+        )
+    archive = status.get("existing_distribution_files", {}).get("archive", {})
+    record = {
+        "delivery_id": distribution_delivery_id(),
+        "generated_at": cli.now_iso(),
+        "public_brand": ctx.brand_config.get("public_brand", "AIvaMax"),
+        "release_id": status.get("release_id"),
+        "distribution_status": status.get("distribution_status"),
+        "delivery_owner": scrub_text(str(request.get("delivery_owner") or caller_role), ctx.brand_config),
+        "recipient_label": scrub_text(str(request.get("recipient_label") or "approved_distribution_recipient"), ctx.brand_config),
+        "delivery_channel": scrub_text(str(request.get("delivery_channel") or "manual_handoff"), ctx.brand_config),
+        "notes": scrub_text(str(request.get("notes") or ""), ctx.brand_config),
+        "distribution": {
+            "archive_path": archive.get("path"),
+            "archive_size": archive.get("size"),
+            "sha256": status.get("actual_sha256") or status.get("expected_sha256"),
+            "manifest_path": (status.get("existing_distribution_files", {}).get("manifest") or {}).get("path"),
+            "checklist_path": (status.get("existing_distribution_files", {}).get("checklist") or {}).get("path"),
+        },
+        "release_bundle": status.get("bundle", {}),
+    }
+    record["record"] = persist_distribution_delivery_record(record, ctx)
+    return service_response(
+        action="aivamax_release_distribution_delivery_record",
+        role=caller_role,
+        result=record,
+        public_paths=[record["record"]["json"]["path"], record["record"]["markdown"]["path"], record["record"]["latest_json"]["path"], record["record"]["latest_markdown"]["path"]],
+        audit={"passed": True, "release_id": record.get("release_id"), "delivery_id": record.get("delivery_id")},
     )
 
 
@@ -4311,6 +4504,7 @@ def render_skill(role: str) -> str:
         f"- Allowed signoff decisions: {', '.join(release_scope['allowed_signoff_decisions']) or 'none'}",
         f"- Final decision owner role: `{release_scope['final_decision_owner_role']}`",
         "- Approved distribution packages require a recorded owner approval and a matching final bundle SHA256.",
+        "- Approved distribution delivery evidence is recorded by `owner_admin` only after package handoff.",
         "- Ordinary public export listings exclude governed client packs, release bundles, and approved distribution archives.",
     ])
     role_note = {
@@ -4362,6 +4556,8 @@ def render_skill(role: str) -> str:
             "aivamax_repair_client_pack_batch",
             "aivamax_export_client_pack_zip",
         ])
+        if role == OWNER_ADMIN:
+            preferred_tools.append("aivamax_release_distribution_delivery_record")
     elif role == INSTRUCTOR_PRIVATE:
         preferred_tools.extend([
             "aivamax_student_coach_preview",

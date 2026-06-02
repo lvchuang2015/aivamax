@@ -267,6 +267,9 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertEqual(release_distribution_args.role, "owner_admin")
         release_distribution_status_args = parser.parse_args(["release-distribution-status"])
         self.assertEqual(release_distribution_status_args.role, "owner_admin")
+        delivery_record_args = parser.parse_args(["release-distribution-delivery-record"])
+        self.assertEqual(delivery_record_args.role, "owner_admin")
+        self.assertEqual(delivery_record_args.recipient_label, "internal_distribution_recipient")
         coach_args = parser.parse_args(["student-coach-preview", "--question", "账号安全怎么检查？"])
         self.assertEqual(coach_args.role, "student_public")
 
@@ -375,6 +378,7 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("aivamax_release_review_pack", tool_names)
         self.assertIn("aivamax_release_distribution_status", tool_names)
         self.assertIn("aivamax_release_distribution_package", tool_names)
+        self.assertIn("aivamax_release_distribution_delivery_record", tool_names)
         self.assertIn("aivamax_list_client_packs", tool_names)
         self.assertIn("aivamax_generate_client_pack", tool_names)
         self.assertIn("aivamax_client_pack_delivery_qa", tool_names)
@@ -579,6 +583,22 @@ class AIvaMaxCLITest(unittest.TestCase):
         )
         self.assertFalse(blocked_distribution_status["ok"])
         self.assertEqual(blocked_distribution_status["error"], "permission_denied")
+        blocked_delivery_record = mcp.call_tool(
+            "aivamax_release_distribution_delivery_record",
+            {"role": "student_public"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_delivery_record["ok"])
+        self.assertEqual(blocked_delivery_record["error"], "permission_denied")
+        blocked_team_delivery_record = mcp.call_tool(
+            "aivamax_release_distribution_delivery_record",
+            {"role": "team_operator"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_team_delivery_record["ok"])
+        self.assertEqual(blocked_team_delivery_record["error"], "owner_approval_required")
         blocked_zip = mcp.call_tool(
             "aivamax_export_client_pack_zip",
             {"role": "student_public", "pack_id": "AI-SaaS-Pilot"},
@@ -641,6 +661,14 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertFalse(blocked["ok"])
         self.assertEqual(blocked["error"], "release_not_approved")
         self.assertFalse((matrix_root / "public_export" / "approved_distribution" / "AIvaMax-Approved-Distribution.zip").exists())
+        blocked_delivery = services.release_distribution_delivery_record(
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="owner_admin",
+        )
+        self.assertFalse(blocked_delivery["ok"])
+        self.assertEqual(blocked_delivery["error"], "distribution_not_approved")
+        self.assertFalse((release_root / "Latest-Distribution-Delivery-Record.json").exists())
 
         record["decision"] = "approved"
         latest_path.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -654,6 +682,14 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertTrue(ready_status["result"]["can_generate"])
         self.assertEqual(ready_status["result"]["actual_sha256"], bundle_sha)
         self.assertFalse((matrix_root / "public_export" / "approved_distribution" / "AIvaMax-Approved-Distribution.zip").exists())
+        missing_delivery = services.release_distribution_delivery_record(
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="owner_admin",
+        )
+        self.assertFalse(missing_delivery["ok"])
+        self.assertEqual(missing_delivery["error"], "distribution_package_required")
+        self.assertFalse((release_root / "Latest-Distribution-Delivery-Record.json").exists())
         status_payload = services.get_status(
             data_dir=data_dir,
             brand_config_path=ROOT / "config" / "brand_config.json",
@@ -689,20 +725,60 @@ class AIvaMaxCLITest(unittest.TestCase):
         )
         self.assertEqual(generated_status["result"]["distribution_status"], "approved_distribution_exists")
         self.assertTrue(generated_status["result"]["has_existing_distribution"])
+        self.assertFalse(generated_status["result"]["has_delivery_record"])
         self.assertIn("archive", generated_status["result"]["existing_distribution_files"])
         generated_status_payload = services.get_status(
             data_dir=data_dir,
             brand_config_path=ROOT / "config" / "brand_config.json",
             role="owner_admin",
         )
-        self.assertTrue(any("release-distribution-status" in item.get("command", "") for item in generated_status_payload["result"]["next_actions"]))
+        self.assertTrue(any("release-distribution-delivery-record" in item.get("command", "") for item in generated_status_payload["result"]["next_actions"]))
+        team_delivery = services.release_distribution_delivery_record(
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="team_operator",
+        )
+        self.assertFalse(team_delivery["ok"])
+        self.assertEqual(team_delivery["error"], "owner_approval_required")
+        delivery = services.release_distribution_delivery_record(
+            {
+                "delivery_owner": "owner_admin",
+                "recipient_label": "internal_launch_team",
+                "delivery_channel": "manual_handoff",
+                "notes": "Delivered approved distribution archive to internal launch team.",
+            },
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="owner_admin",
+        )
+        self.assertTrue(delivery["ok"], delivery)
+        delivery_record = delivery["result"]["record"]
+        delivery_markdown_path = core.resolve_reported_path(delivery_record["markdown"]["path"])
+        self.assertTrue(delivery_markdown_path and delivery_markdown_path.exists())
+        delivery_markdown = delivery_markdown_path.read_text(encoding="utf-8")
+        self.assertIn("Distribution Delivery Record", delivery_markdown)
+        self.assertIn("internal_launch_team", delivery_markdown)
+        self.assert_public_clean(delivery_markdown)
+        delivered_status = services.release_distribution_status(
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="owner_admin",
+        )
+        self.assertTrue(delivered_status["result"]["has_delivery_record"])
+        self.assertEqual(delivered_status["result"]["delivery_record"]["delivery_id"], delivery["result"]["delivery_id"])
+        delivered_status_payload = services.get_status(
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="owner_admin",
+        )
+        self.assertTrue(any("release-distribution-status" in item.get("command", "") for item in delivered_status_payload["result"]["next_actions"]))
         with zipfile.ZipFile(distribution_archive) as archive:
             names = archive.namelist()
         self.assertIn("release_bundle/AIvaMax-Course-Factory-Final-Release.zip", names)
         checklist = checklist_path.read_text(encoding="utf-8")
         self.assertIn("Approved Distribution Checklist", checklist)
         self.assert_public_clean(checklist)
-        dumped = json.dumps(result, ensure_ascii=False)
+        dumped = json.dumps({"distribution": result, "delivery": delivery["result"]}, ensure_ascii=False)
         self.assertNotIn("source_path", dumped)
         self.assertNotIn("raw_path", dumped)
         self.assert_public_clean(dumped)
@@ -755,6 +831,8 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("Final release decisions (`approved`/`rejected`) allowed: no", team_skill)
         self.assertIn("aivamax_release_distribution_status", owner_skill)
         self.assertIn("aivamax_release_distribution_package", owner_skill)
+        self.assertIn("aivamax_release_distribution_delivery_record", owner_skill)
+        self.assertNotIn("aivamax_release_distribution_delivery_record", team_skill)
         self.assertIn("course_factory", team_skill)
         self.assertIn("client_packs", team_skill)
         self.assertIn("escalate `approved`/`rejected` decisions to `owner_admin`", team_skill)
@@ -2464,6 +2542,21 @@ Module {number} production output
                     distribution_checklist = response.read().decode("utf-8")
                 self.assertIn("Approved Distribution Checklist", distribution_checklist)
                 self.assert_public_clean(distribution_checklist)
+                delivery_request = urllib.request.Request(
+                    base + "/api/actions/release-distribution-delivery-record",
+                    data=json.dumps({
+                        "recipient_label": "console_delivery_fixture",
+                        "delivery_channel": "manual_handoff",
+                        "notes": "Console route delivery record smoke test.",
+                    }).encode("utf-8"),
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                with urllib.request.urlopen(delivery_request, timeout=60) as response:
+                    delivery_payload = json.loads(response.read().decode("utf-8"))
+                self.assertTrue(delivery_payload["ok"], delivery_payload)
+                self.assertEqual(delivery_payload["result"]["release_id"], approved_record["release_id"])
+                self.assertEqual(delivery_payload["result"]["recipient_label"], "console_delivery_fixture")
             else:
                 with self.assertRaises(urllib.error.HTTPError) as distribution_ctx:
                     urllib.request.urlopen(distribution_request, timeout=60)

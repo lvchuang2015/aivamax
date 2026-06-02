@@ -32,6 +32,7 @@ Use this skill when the user wants AIvaMax marketing matrix planning, course del
 
 - Can record `pending_review`, `approved`, and `rejected` release signoff decisions.
 - Can create approved distribution packages only after release gates, owner signoff, and bundle hash checks pass.
+- Can record owner-only distribution delivery evidence after approved package handoff.
 - Must keep supplier source material private and route governed exports through the dedicated release/client-pack APIs.
 
 ## Release And Export Boundaries
@@ -41,6 +42,7 @@ Use this skill when the user wants AIvaMax marketing matrix planning, course del
 - Allowed signoff decisions: pending_review, approved, rejected
 - Final decision owner role: `owner_admin`
 - Approved distribution packages require a recorded owner approval and a matching final bundle SHA256.
+- Approved distribution delivery evidence is recorded by `owner_admin` only after package handoff.
 - Ordinary public export listings exclude governed client packs, release bundles, and approved distribution archives.
 
 Owner admins make the final release decision after reviewing the release review pack, gates, bundle manifest, and client-pack QA.
@@ -75,5 +77,6 @@ Owner admins make the final release decision after reviewing the release review 
 - `aivamax_repair_client_pack`
 - `aivamax_repair_client_pack_batch`
 - `aivamax_export_client_pack_zip`
+- `aivamax_release_distribution_delivery_record`
 
 Owner and team roles may also use `aivamax_run_matrix` when generating new project/course assets. Student-facing hosts should prefer `aivamax_student_coach_preview` for learner-safe answers.

@@ -34,6 +34,7 @@ from aivamax_services import (
     mcp_config_export,
     release_gate,
     release_history,
+    release_distribution_delivery_record,
     release_distribution_package,
     release_distribution_status,
     release_review_pack,
@@ -144,6 +145,7 @@ def console_html() -> str:
       <button onclick="runAction('release-history')">Release History</button>
       <button onclick="runAction('release-review-pack')">Review Pack</button>
       <button onclick="runAction('release-distribution-package')">Distribution Package</button>
+      <button onclick="runAction('release-distribution-delivery-record')">Delivery Record</button>
       <button class="primary" onclick="refreshAll()">刷新状态</button>
       <button onclick="runAction('refresh-audits')">刷新审计</button>
       <button onclick="runAction('refresh-platform-assets')">重建平台库</button>
@@ -1008,6 +1010,15 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                 return
             if route == "/api/actions/release-distribution-package":
                 payload = release_distribution_package(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.CONFLICT, payload)
+                return
+            if route == "/api/actions/release-distribution-delivery-record":
+                try:
+                    body = read_json_body(self)
+                except ValueError as exc:
+                    json_response(self, HTTPStatus.BAD_REQUEST, {"ok": False, "error": "invalid_json", "message": str(exc)})
+                    return
+                payload = release_distribution_delivery_record(body, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.CONFLICT, payload)
                 return
             if route == "/api/actions/export-mcp-config":

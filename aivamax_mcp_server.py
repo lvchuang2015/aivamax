@@ -30,6 +30,7 @@ from aivamax_services import (
     repair_client_pack,
     repair_client_pack_batch,
     release_history,
+    release_distribution_delivery_record,
     release_distribution_package,
     release_distribution_status,
     release_review_pack,
@@ -256,6 +257,22 @@ TOOL_DEFINITIONS = [
         "inputSchema": {
             "type": "object",
             "properties": {"role": {"type": "string"}},
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "aivamax_release_distribution_delivery_record",
+        "description": "Record owner-only delivery evidence after the approved AIvaMax distribution package is handed off.",
+        "allowed_roles": ["owner_admin"],
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "role": {"type": "string"},
+                "delivery_owner": {"type": "string"},
+                "recipient_label": {"type": "string"},
+                "delivery_channel": {"type": "string"},
+                "notes": {"type": "string"},
+            },
             "additionalProperties": False,
         },
     },
@@ -508,6 +525,8 @@ def call_tool(
             return release_distribution_status(arguments, **common)
         if name == "aivamax_release_distribution_package":
             return release_distribution_package(arguments, **common)
+        if name == "aivamax_release_distribution_delivery_record":
+            return release_distribution_delivery_record(arguments, **common)
         if name == "aivamax_list_client_packs":
             return list_client_packs(**common)
         if name == "aivamax_generate_client_pack":

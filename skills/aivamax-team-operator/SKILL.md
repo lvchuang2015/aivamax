@@ -32,6 +32,7 @@ Use this skill when the user wants AIvaMax marketing matrix planning, course del
 
 - Can prepare course factory outputs, client packs, final release bundles, pending review records, and review packs.
 - Cannot record `approved` or `rejected` final release signoff decisions; escalate those decisions to `owner_admin`.
+- Cannot record final distribution delivery evidence; escalate delivery confirmation to `owner_admin`.
 - Cannot bypass the approved-distribution guard; distribution remains blocked until owner approval is recorded.
 
 ## Release And Export Boundaries
@@ -41,6 +42,7 @@ Use this skill when the user wants AIvaMax marketing matrix planning, course del
 - Allowed signoff decisions: pending_review
 - Final decision owner role: `owner_admin`
 - Approved distribution packages require a recorded owner approval and a matching final bundle SHA256.
+- Approved distribution delivery evidence is recorded by `owner_admin` only after package handoff.
 - Ordinary public export listings exclude governed client packs, release bundles, and approved distribution archives.
 
 Team operators prepare and repair release assets, then write `pending_review`; they must escalate `approved`/`rejected` decisions to `owner_admin`.

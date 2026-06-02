@@ -41,6 +41,7 @@ Use this skill when the user wants AIvaMax marketing matrix planning, course del
 - Allowed signoff decisions: none
 - Final decision owner role: `owner_admin`
 - Approved distribution packages require a recorded owner approval and a matching final bundle SHA256.
+- Approved distribution delivery evidence is recorded by `owner_admin` only after package handoff.
 - Ordinary public export listings exclude governed client packs, release bundles, and approved distribution archives.
 
 Instructors review private course quality and client-facing outputs, but do not create final release decisions.
