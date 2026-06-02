@@ -129,6 +129,7 @@ AUDIT_TYPES = {"brand", "artifact", "quality", "media", "case"}
 HOST_TARGETS = {"claude-code", "work-buddy", "codex", "generic-agent"}
 DEFAULT_COURSE_FACTORY_COURSE = "AIvaMax社媒自动化增长系统课"
 COURSE_FACTORY_SCENARIO_CONFIG = "90_Templates/Tables/course_factory_client_scenarios.json"
+COURSE_FACTORY_RELEASE_STATUS_BASENAME = "Course-Factory-Release-Status"
 
 
 @dataclass(frozen=True)
@@ -302,6 +303,7 @@ def get_status(
             "aivamax_student_coach_preview",
             "aivamax_get_course_factory_status",
             "aivamax_run_course_factory",
+            "aivamax_course_factory_release_status",
             "aivamax_generate_client_pack",
             "aivamax_client_pack_delivery_qa",
             "aivamax_client_pack_batch_delivery_qa",
@@ -466,6 +468,46 @@ def client_pack_report_record(path: Path) -> dict[str, Any]:
         "preview_url": f"/api/client-packs/report?path={quoted}&mode=preview",
         "download_url": f"/api/client-packs/report?path={quoted}&mode=download",
     }
+
+
+def dashboard_report_record(path: Path) -> dict[str, Any]:
+    relative = relpath(path)
+    quoted = quote(relative, safe="")
+    return {
+        "name": path.name,
+        "path": relative,
+        "size": path.stat().st_size,
+        "visibility": "internal_dashboard",
+        "preview_url": f"/api/dashboard/report?path={quoted}&mode=preview",
+        "download_url": f"/api/dashboard/report?path={quoted}&mode=download",
+    }
+
+
+def course_factory_release_status_report_paths(ctx: ServiceContext) -> tuple[Path, Path]:
+    dashboard = ctx.matrix_root / "00_Dashboards"
+    return (
+        dashboard / f"{COURSE_FACTORY_RELEASE_STATUS_BASENAME}.json",
+        dashboard / f"{COURSE_FACTORY_RELEASE_STATUS_BASENAME}.md",
+    )
+
+
+def resolve_dashboard_report_file(
+    requested_path: str,
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> Path:
+    require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    json_path, md_path = course_factory_release_status_report_paths(ctx)
+    allowed = {json_path.resolve(), md_path.resolve()}
+    candidate = core.resolve_reported_path(requested_path)
+    if not candidate or candidate.resolve() not in allowed:
+        raise PermissionError("Dashboard report is not allowlisted.")
+    if not candidate.exists():
+        raise FileNotFoundError(str(candidate))
+    return candidate
 
 
 def read_client_pack_manifest(pack_dir: Path) -> dict[str, Any]:
@@ -1853,6 +1895,230 @@ def course_factory_status(
     )
 
 
+def render_course_factory_release_status_markdown(report: dict[str, Any], brand_config: dict[str, Any]) -> str:
+    brand = brand_config.get("public_brand", "AIvaMax")
+    gates = report.get("gates", {})
+    gate_rows = "\n".join(
+        f"| {name} | {item.get('status')} | {item.get('detail')} |"
+        for name, item in gates.items()
+    ) or "| - | - | - |"
+    action_rows = "\n".join(
+        f"| {item.get('priority')} | {item.get('title')} | {item.get('command')} |"
+        for item in report.get("next_actions", [])
+    ) or "| - | - | - |"
+    return scrub_text(f"""---
+type: course_factory_release_status
+public_brand: {brand}
+visibility: internal_dashboard
+status: {report.get("readiness")}
+---
+
+# {brand} Course Factory Release Status
+
+| Field | Value |
+| --- | --- |
+| Generated at | {report.get("generated_at")} |
+| Readiness | {report.get("readiness")} |
+| Ready to release | {report.get("ready_to_release")} |
+| Course | {report.get("course", {}).get("name")} |
+| Course modules | {report.get("course", {}).get("module_count")} |
+| Client packs | {report.get("client_packs", {}).get("pack_count")} |
+| Deliverable packs | {report.get("client_packs", {}).get("deliverable_count")} |
+| ZIP exports | {report.get("client_packs", {}).get("zip_count")} |
+
+## Gates
+
+| Gate | Status | Detail |
+| --- | --- | --- |
+{gate_rows}
+
+## Latest Reports
+
+| Report | Path |
+| --- | --- |
+| Production | {report.get("production", {}).get("report_path") or "-"} |
+| Batch QA | {report.get("client_packs", {}).get("batch_qa_report") or "-"} |
+| Batch Repair | {report.get("client_packs", {}).get("batch_repair_report") or "-"} |
+
+## Next Actions
+
+| Priority | Action | Command |
+| --- | --- | --- |
+{action_rows}
+
+## Boundary
+
+This dashboard summarizes AIvaMax course-factory delivery readiness only. It excludes vendor documents, crawl storage, and private execution material.
+""", brand_config)
+
+
+def persist_course_factory_release_status_report(report: dict[str, Any], ctx: ServiceContext) -> dict[str, Any]:
+    json_path, md_path = course_factory_release_status_report_paths(ctx)
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    md_path.write_text(render_course_factory_release_status_markdown(report, ctx.brand_config), encoding="utf-8")
+    return {
+        "json": dashboard_report_record(json_path),
+        "markdown": dashboard_report_record(md_path),
+    }
+
+
+def course_factory_release_next_actions(gates: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    actions: list[dict[str, Any]] = []
+    if gates.get("course_factory", {}).get("status") != "passed":
+        actions.append({
+            "priority": 1,
+            "title": "Rebuild and audit course factory modules",
+            "command": "aivamax.ps1 course-factory-build --force && aivamax.ps1 course-factory-audit",
+        })
+    if gates.get("production_report", {}).get("status") != "passed":
+        actions.append({
+            "priority": 2,
+            "title": "Run the course factory production pipeline",
+            "command": "aivamax.ps1 course-factory-run-all --format html --force",
+        })
+    if gates.get("client_delivery_qa", {}).get("status") != "passed":
+        actions.append({
+            "priority": 3,
+            "title": "Run batch client-pack repair, then Delivery QA",
+            "command": "aivamax.ps1 console",
+        })
+    if gates.get("zip_exports", {}).get("status") != "passed":
+        actions.append({
+            "priority": 4,
+            "title": "Export ZIPs for all deliverable client packs",
+            "command": "aivamax.ps1 console",
+        })
+    if gates.get("release_gate", {}).get("status") != "passed":
+        actions.append({
+            "priority": 5,
+            "title": "Refresh release gate and inspect failed audits",
+            "command": "aivamax.ps1 release-gate",
+        })
+    if not actions:
+        actions.append({
+            "priority": 1,
+            "title": "Ready for final human release review",
+            "command": "Open the sales preview, full export, and client ZIPs for final signoff.",
+        })
+    return actions
+
+
+def course_factory_release_status(
+    request: dict[str, Any] | None = None,
+    *,
+    course: str | None = None,
+    course_dir: str | None = None,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    request = request or {}
+    course = course or request.get("course")
+    course_dir = course_dir or request.get("course_dir")
+    factory_payload = course_factory_status(
+        course=course,
+        course_dir=course_dir,
+        data_dir=ctx.data_dir,
+        brand_config_path=ctx.brand_config_path,
+        role=caller_role,
+    )
+    if not factory_payload.get("ok"):
+        return service_response(
+            action="aivamax_course_factory_release_status",
+            role=caller_role,
+            ok=False,
+            error=factory_payload.get("error", "course_factory_not_found"),
+            warnings=factory_payload.get("warnings", []),
+        )
+    factory = factory_payload.get("result", {})
+    release = release_gate(data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role).get("result", {})
+    packs_payload = list_client_packs(data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role).get("result", {})
+    packs = packs_payload.get("packs", []) if isinstance(packs_payload.get("packs"), list) else []
+    batch = packs_payload.get("batch_report") or {}
+    repair = packs_payload.get("batch_repair_report") or {}
+    latest_report = factory.get("latest_report") or {}
+    pack_count = int(packs_payload.get("pack_count") or len(packs))
+    deliverable_count = int(batch.get("deliverable_count") or sum(1 for item in packs if (item.get("qa_report") or {}).get("passed")))
+    needs_revision_count = int(batch.get("needs_revision_count") or max(0, pack_count - deliverable_count))
+    zip_count = sum(1 for item in packs if item.get("archive"))
+    scenario = factory.get("scenario_config") or {}
+    production_passed = bool(latest_report.get("passed"))
+    release_passed = bool(release.get("passed"))
+    gates = {
+        "course_factory": {
+            "status": "passed" if factory.get("audit_passed") else "review",
+            "detail": f"{factory.get('module_count', 0)} modules audited",
+        },
+        "scenario_config": {
+            "status": "passed" if int(scenario.get("scenario_count") or 0) > 0 else "review",
+            "detail": f"{scenario.get('scenario_count', 0)} client scenarios",
+        },
+        "production_report": {
+            "status": "passed" if production_passed else "review",
+            "detail": latest_report.get("path") or "no production report",
+        },
+        "release_gate": {
+            "status": "passed" if release_passed else "review",
+            "detail": f"{sum(1 for item in (release.get('audits') or {}).values() if item.get('passed'))}/{len(release.get('audits') or {})} audits passed",
+        },
+        "client_delivery_qa": {
+            "status": "passed" if pack_count > 0 and deliverable_count == pack_count and needs_revision_count == 0 else "review",
+            "detail": f"{deliverable_count}/{pack_count} deliverable, {needs_revision_count} needs revision",
+        },
+        "zip_exports": {
+            "status": "passed" if pack_count > 0 and zip_count >= pack_count else "review",
+            "detail": f"{zip_count}/{pack_count} ZIP exports",
+        },
+        "repair_status": {
+            "status": "passed" if needs_revision_count == 0 else "review",
+            "detail": f"{repair.get('repaired_count', 0)} repaired in latest batch repair",
+        },
+    }
+    ready_to_release = all(item.get("status") == "passed" for item in gates.values())
+    report = {
+        "generated_at": cli.now_iso(),
+        "public_brand": ctx.brand_config.get("public_brand", "AIvaMax"),
+        "readiness": "ready" if ready_to_release else "review",
+        "ready_to_release": ready_to_release,
+        "course": {
+            "name": factory.get("course_name"),
+            "path": factory.get("course_dir"),
+            "module_count": factory.get("module_count", 0),
+            "audit_passed": bool(factory.get("audit_passed")),
+        },
+        "production": {
+            "passed": production_passed,
+            "report_path": latest_report.get("path"),
+            "full_export": latest_report.get("full_export", {}),
+            "sales_preview": latest_report.get("sales_preview", {}),
+        },
+        "release_gate": release,
+        "client_packs": {
+            "root": packs_payload.get("root"),
+            "pack_count": pack_count,
+            "deliverable_count": deliverable_count,
+            "needs_revision_count": needs_revision_count,
+            "zip_count": zip_count,
+            "average_score": batch.get("average_score"),
+            "batch_qa_report": (batch.get("markdown") or {}).get("path"),
+            "batch_repair_report": (repair.get("markdown") or {}).get("path"),
+        },
+        "gates": gates,
+        "next_actions": course_factory_release_next_actions(gates),
+    }
+    report["report"] = persist_course_factory_release_status_report(report, ctx)
+    return service_response(
+        action="aivamax_course_factory_release_status",
+        role=caller_role,
+        result=report,
+        public_paths=[report["report"]["markdown"]["path"], report["report"]["json"]["path"]],
+        audit={"passed": ready_to_release, "readiness": report["readiness"]},
+    )
+
+
 def init_course_factory_scenarios(
     *,
     force: bool = False,
@@ -2692,6 +2958,7 @@ def render_skill(role: str) -> str:
             "aivamax_export_mcp_config",
             "aivamax_get_course_factory_status",
             "aivamax_run_course_factory",
+            "aivamax_course_factory_release_status",
             "aivamax_generate_client_pack",
             "aivamax_client_pack_delivery_qa",
             "aivamax_client_pack_batch_delivery_qa",

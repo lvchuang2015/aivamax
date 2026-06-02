@@ -152,7 +152,7 @@ class AIvaMaxCLITest(unittest.TestCase):
                     payload = json.loads(response.read().decode("utf-8"))
                 self.assertIsInstance(payload, dict)
                 self.assertTrue(payload["ok"])
-            for route in ["/api/release-gate", "/api/material-review"]:
+            for route in ["/api/release-gate", "/api/material-review", "/api/course-factory-release-status"]:
                 with urllib.request.urlopen(base + route, timeout=15) as response:
                     payload = json.loads(response.read().decode("utf-8"))
                 self.assertIsInstance(payload, dict)
@@ -172,6 +172,8 @@ class AIvaMaxCLITest(unittest.TestCase):
             self.assertIn("Work Buddy", html)
             self.assertIn("MCP", html)
             self.assertIn("Run Course Factory", html)
+            self.assertIn("Release Status", html)
+            self.assertIn("Course Factory Release Status", html)
             self.assertIn("Client Scenario Editor", html)
             self.assertIn("Generate Pack", html)
             self.assertIn("Run QA", html)
@@ -294,6 +296,7 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("aivamax_student_coach_preview", tool_names)
         self.assertIn("aivamax_get_course_factory_status", tool_names)
         self.assertIn("aivamax_run_course_factory", tool_names)
+        self.assertIn("aivamax_course_factory_release_status", tool_names)
         self.assertIn("aivamax_generate_client_pack", tool_names)
         self.assertIn("aivamax_client_pack_delivery_qa", tool_names)
         self.assertIn("aivamax_client_pack_batch_delivery_qa", tool_names)
@@ -395,6 +398,14 @@ class AIvaMaxCLITest(unittest.TestCase):
         )
         self.assertFalse(blocked_batch_repair["ok"])
         self.assertEqual(blocked_batch_repair["error"], "permission_denied")
+        blocked_release_status = mcp.call_tool(
+            "aivamax_course_factory_release_status",
+            {"role": "student_public"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_release_status["ok"])
+        self.assertEqual(blocked_release_status["error"], "permission_denied")
         blocked_zip = mcp.call_tool(
             "aivamax_export_client_pack_zip",
             {"role": "student_public", "pack_id": "AI-SaaS-Pilot"},
@@ -1923,6 +1934,25 @@ Module {number} production output
             self.assertTrue(repaired_batch_payload["ok"], repaired_batch_payload)
             self.assertEqual(repaired_batch_payload["result"]["needs_revision_count"], 0)
             self.assertGreaterEqual(repaired_batch_payload["result"]["deliverable_count"], 5)
+
+            request = urllib.request.Request(base + "/api/actions/course-factory-release-status", method="POST")
+            with urllib.request.urlopen(request, timeout=60) as response:
+                release_status_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(release_status_payload["ok"], release_status_payload)
+            release_status = release_status_payload["result"]
+            self.assertIn("ready_to_release", release_status)
+            self.assertIn("client_delivery_qa", release_status["gates"])
+            self.assertIn("zip_exports", release_status["gates"])
+            self.assertIn("report", release_status)
+            release_report_path = core.resolve_reported_path(release_status["report"]["json"]["path"])
+            self.assertIsNotNone(release_report_path)
+            release_report_json = json.loads(release_report_path.read_text(encoding="utf-8"))
+            self.assertNotIn("source_path", json.dumps(release_report_json, ensure_ascii=False))
+            self.assertNotIn("raw_path", json.dumps(release_report_json, ensure_ascii=False))
+            with urllib.request.urlopen(base + release_status["report"]["markdown"]["preview_url"], timeout=20) as response:
+                release_status_markdown = response.read().decode("utf-8")
+            self.assertIn("Course Factory Release Status", release_status_markdown)
+            self.assert_public_clean(release_status_markdown)
 
             with urllib.request.urlopen(base + "/api/course-factory", timeout=20) as response:
                 factory_payload = json.loads(response.read().decode("utf-8"))

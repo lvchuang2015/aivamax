@@ -12,6 +12,7 @@ from aivamax_mcp_server import list_tools
 from aivamax_services import (
     OWNER_ADMIN,
     client_pack_batch_delivery_qa,
+    course_factory_release_status,
     course_factory_status,
     client_pack_delivery_qa,
     delete_course_factory_scenario,
@@ -43,6 +44,7 @@ from aivamax_services import (
     resolve_client_pack_archive_file,
     resolve_client_pack_file,
     resolve_client_pack_report_file,
+    resolve_dashboard_report_file,
     upsert_course_factory_scenario,
 )
 
@@ -122,6 +124,7 @@ def console_html() -> str:
     <div class="toolbar">
       <button onclick="runAction('course-factory-init-scenarios')">Init Client Scenarios</button>
       <button class="primary" onclick="runAction('course-factory-run-all')">Run Course Factory</button>
+      <button onclick="runAction('course-factory-release-status')">Release Status</button>
       <button class="primary" onclick="refreshAll()">刷新状态</button>
       <button onclick="runAction('refresh-audits')">刷新审计</button>
       <button onclick="runAction('refresh-platform-assets')">重建平台库</button>
@@ -238,6 +241,10 @@ def console_html() -> str:
         </table>
       </div>
       <div class="panel wide">
+        <h2>Course Factory Release Status</h2>
+        <div id="courseFactoryReleaseRows"></div>
+      </div>
+      <div class="panel wide">
         <h2>Client Delivery Packs</h2>
         <div class="toolbar">
           <button onclick="runBatchQa(false)">Run Batch QA</button>
@@ -291,7 +298,7 @@ def console_html() -> str:
       });
     }
     async function refreshAll() {
-      const [status, roles, mcp, skills, runtime, hostIntegration, coachPreview, releaseGate, material, courseFactory, clientPacks] = await Promise.all([
+      const [status, roles, mcp, skills, runtime, hostIntegration, coachPreview, releaseGate, material, courseFactory, courseFactoryRelease, clientPacks] = await Promise.all([
         getJson('/api/status'),
         getJson('/api/roles'),
         getJson('/api/mcp/tools'),
@@ -302,6 +309,7 @@ def console_html() -> str:
         getJson('/api/release-gate'),
         getJson('/api/material-review'),
         getJson('/api/course-factory'),
+        getJson('/api/course-factory-release-status'),
         getJson('/api/client-packs')
       ]);
       render(status.result || status, {
@@ -314,6 +322,7 @@ def console_html() -> str:
         releaseGate,
         material,
         courseFactory: courseFactory.result || {},
+        courseFactoryRelease: courseFactoryRelease.result || {},
         clientPacks: clientPacks.result || {}
       });
     }
@@ -475,6 +484,14 @@ def console_html() -> str:
         <div class="row"><div><strong>Client scenarios</strong><div class="path">${esc(scenario.path || '')}</div></div>${pill(!!scenario.exists, `${scenario.scenario_count || 0} scenarios`)}</div>
         <div class="row"><div><strong>Latest production report</strong><div class="path">${esc(report.path || 'No report yet')}</div></div>${pill(!!report.passed, report.exists ? (report.passed ? 'passed' : 'review') : 'none')}</div>
         <div class="row"><div><strong>Last client packs</strong><div class="path">${esc(factory.recommended_command || '')}</div></div><span class="pill">${esc(report.client_pack_count || 0)} packs</span></div>`;
+      const factoryRelease = extra.courseFactoryRelease || {};
+      const factoryReleaseReport = factoryRelease.report || {};
+      const factoryReleaseGates = Object.entries(factoryRelease.gates || {}).map(([name, item]) => `
+        <div class="row"><div><strong>${esc(name)}</strong><div class="path">${esc(item.detail || '')}</div></div>${pill(item.status === 'passed', esc(item.status || 'review'))}</div>
+      `).join('');
+      document.getElementById('courseFactoryReleaseRows').innerHTML = `
+        <div class="row"><div><strong>${esc(factoryRelease.readiness || 'unknown')}</strong><div class="path">${esc((factoryReleaseReport.markdown || {}).path || '')}</div></div>${pill(!!factoryRelease.ready_to_release, factoryRelease.ready_to_release ? 'ready' : 'review')}${factoryReleaseReport.markdown ? ` <a href="${esc(factoryReleaseReport.markdown.preview_url)}" target="_blank">Status Report</a>` : ''}</div>
+        ${factoryReleaseGates || '<p>No release status report yet.</p>'}`;
       document.getElementById('scenarioRows').innerHTML = (scenario.scenarios || []).map(item => `
         <tr>
           <td>${esc(item.client_code)}</td>
@@ -628,6 +645,18 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
             if route == "/api/client-packs":
                 json_response(self, HTTPStatus.OK, list_client_packs(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN))
                 return
+            if route == "/api/dashboard/report":
+                query = parse_qs(parsed.query)
+                requested_path = (query.get("path") or [""])[0]
+                mode = (query.get("mode") or ["preview"])[0]
+                try:
+                    file_path = resolve_dashboard_report_file(requested_path, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                except (PermissionError, FileNotFoundError) as exc:
+                    json_response(self, HTTPStatus.FORBIDDEN, {"ok": False, "error": "blocked_dashboard_report", "message": str(exc)})
+                    return
+                content_type = "application/json; charset=utf-8" if file_path.suffix.lower() == ".json" else "text/markdown; charset=utf-8"
+                binary_file_response(self, file_path, content_type, download=mode == "download")
+                return
             if route == "/api/client-packs/file":
                 query = parse_qs(parsed.query)
                 requested_path = (query.get("path") or [""])[0]
@@ -704,6 +733,10 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                 return
             if route == "/api/course-factory":
                 payload = course_factory_status(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK, payload)
+                return
+            if route == "/api/course-factory-release-status":
+                payload = course_factory_release_status(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK, payload)
                 return
             json_response(self, HTTPStatus.NOT_FOUND, {"ok": False, "error": "unknown_route", "route": route})
@@ -807,6 +840,10 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                 return
             if route == "/api/actions/course-factory-run-all":
                 payload = run_course_factory_production(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.INTERNAL_SERVER_ERROR, payload)
+                return
+            if route == "/api/actions/course-factory-release-status":
+                payload = course_factory_release_status(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.INTERNAL_SERVER_ERROR, payload)
                 return
             if route == "/api/actions/export-mcp-config":

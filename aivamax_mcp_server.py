@@ -13,6 +13,7 @@ from aivamax_services import (
     DEFAULT_DATA_DIR,
     client_pack_batch_delivery_qa,
     client_pack_delivery_qa,
+    course_factory_release_status,
     course_factory_status,
     export_course,
     export_client_pack_zip,
@@ -160,6 +161,20 @@ TOOL_DEFINITIONS = [
                 "course": {"type": "string"},
                 "format": {"type": "string", "default": "html"},
                 "build": {"type": "boolean", "default": False},
+                "role": {"type": "string"},
+            },
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "aivamax_course_factory_release_status",
+        "description": "Generate the AIvaMax course-factory release readiness dashboard report.",
+        "allowed_roles": ["owner_admin", "team_operator"],
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "course": {"type": "string"},
+                "course_dir": {"type": "string"},
                 "role": {"type": "string"},
             },
             "additionalProperties": False,
@@ -390,6 +405,8 @@ def call_tool(
                 build=bool(arguments.get("build", False)),
                 **common,
             )
+        if name == "aivamax_course_factory_release_status":
+            return course_factory_release_status(arguments, **common)
         if name == "aivamax_generate_client_pack":
             return generate_client_pack_from_scenario(arguments, **common)
         if name == "aivamax_export_client_pack_zip":

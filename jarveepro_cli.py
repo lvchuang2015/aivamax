@@ -7252,6 +7252,30 @@ def run_release_gate(args: argparse.Namespace) -> int:
     return 0 if result.get("ok") else 1
 
 
+def run_course_factory_release_status(args: argparse.Namespace) -> int:
+    from aivamax_services import course_factory_release_status
+
+    result = course_factory_release_status(
+        course=args.course,
+        course_dir=args.course_dir,
+        data_dir=Path(args.data_dir),
+        brand_config_path=Path(args.brand_config),
+        role=args.role,
+    )
+    if args.json:
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+    else:
+        payload = result.get("result", {})
+        report = payload.get("report", {})
+        print(f"Course factory release status: {payload.get('readiness')}")
+        print(f"Ready to release: {payload.get('ready_to_release')}")
+        print(f"Course: {payload.get('course', {}).get('name')}")
+        print(f"Client packs: {payload.get('client_packs', {}).get('deliverable_count')}/{payload.get('client_packs', {}).get('pack_count')} deliverable")
+        if report.get("markdown"):
+            print(f"Report: {report['markdown'].get('path')}")
+    return 0 if result.get("ok") else 1
+
+
 def run_material_review(args: argparse.Namespace) -> int:
     from aivamax_services import material_review
 
@@ -7473,6 +7497,13 @@ def build_parser() -> argparse.ArgumentParser:
     release_gate.add_argument("--role", default="owner_admin", choices=["owner_admin", "team_operator", "instructor_private", "student_public"])
     release_gate.add_argument("--json", action="store_true")
     release_gate.set_defaults(func=run_release_gate)
+
+    course_factory_release_status_parser = sub.add_parser("course-factory-release-status", help="Generate the AIvaMax course-factory release status dashboard report.")
+    course_factory_release_status_parser.add_argument("--course")
+    course_factory_release_status_parser.add_argument("--course-dir")
+    course_factory_release_status_parser.add_argument("--role", default="owner_admin", choices=["owner_admin", "team_operator", "instructor_private", "student_public"])
+    course_factory_release_status_parser.add_argument("--json", action="store_true")
+    course_factory_release_status_parser.set_defaults(func=run_course_factory_release_status)
 
     material_review = sub.add_parser("material-review", help="Review AIvaMax media and case material readiness.")
     material_review.add_argument("--path")

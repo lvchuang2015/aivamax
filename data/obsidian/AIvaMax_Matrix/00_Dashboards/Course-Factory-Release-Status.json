@@ -1,0 +1,111 @@
+{
+  "generated_at": "2026-06-02T05:57:42+00:00",
+  "public_brand": "AIvaMax",
+  "readiness": "ready",
+  "ready_to_release": true,
+  "course": {
+    "name": "AIvaMax社媒自动化增长系统课",
+    "path": "data/obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课",
+    "module_count": 12,
+    "audit_passed": true
+  },
+  "production": {
+    "passed": true,
+    "report_path": "data/obsidian/AIvaMax_Matrix/00_Dashboards/course_factory_run_20260602011534.json",
+    "full_export": {
+      "out_dir": "obsidian/AIvaMax_Matrix/public_export/AIvaMax社媒自动化增长系统课/course_factory_full_export",
+      "file_count": 10,
+      "brand_audit_passed": true,
+      "violation_count": 0
+    },
+    "sales_preview": {
+      "out_dir": "obsidian/AIvaMax_Matrix/public_export/AIvaMax社媒自动化增长系统课/course_factory_sales_preview",
+      "file_count": 10,
+      "brand_audit_passed": true,
+      "violation_count": 0
+    }
+  },
+  "release_gate": {
+    "passed": true,
+    "project": "data/obsidian/AIvaMax_Matrix/50_Projects/2026-05-31_linkedin-b2b-private-leadgen-14d",
+    "course": "data/obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课/12-client-delivery-pack-generation",
+    "audits": {
+      "brand_public_export": {
+        "path": "data/obsidian/AIvaMax_Matrix/public_export",
+        "passed": true,
+        "violation_count": 0,
+        "sample": []
+      },
+      "artifact": {
+        "passed": true,
+        "violation_count": 0
+      },
+      "media": {
+        "path": "data/media",
+        "passed": true,
+        "violation_count": 0,
+        "pending": 0,
+        "approved": 0,
+        "blocked": 0
+      },
+      "case": {
+        "path": "data/obsidian/AIvaMax_Matrix/40_Playbooks/Case_Plans",
+        "passed": true,
+        "violation_count": 0,
+        "warning_count": 5
+      },
+      "quality": {
+        "passed": true,
+        "score": 100,
+        "violations": 0
+      }
+    }
+  },
+  "client_packs": {
+    "root": "data/obsidian/AIvaMax_Matrix/50_Projects/Samples",
+    "pack_count": 7,
+    "deliverable_count": 7,
+    "needs_revision_count": 0,
+    "zip_count": 7,
+    "average_score": 97,
+    "batch_qa_report": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/Delivery-QA-Summary.md",
+    "batch_repair_report": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/Delivery-Repair-Summary.md"
+  },
+  "gates": {
+    "course_factory": {
+      "status": "passed",
+      "detail": "12 modules audited"
+    },
+    "scenario_config": {
+      "status": "passed",
+      "detail": "3 client scenarios"
+    },
+    "production_report": {
+      "status": "passed",
+      "detail": "data/obsidian/AIvaMax_Matrix/00_Dashboards/course_factory_run_20260602011534.json"
+    },
+    "release_gate": {
+      "status": "passed",
+      "detail": "5/5 audits passed"
+    },
+    "client_delivery_qa": {
+      "status": "passed",
+      "detail": "7/7 deliverable, 0 needs revision"
+    },
+    "zip_exports": {
+      "status": "passed",
+      "detail": "7/7 ZIP exports"
+    },
+    "repair_status": {
+      "status": "passed",
+      "detail": "0 repaired in latest batch repair"
+    }
+  },
+  "next_actions": [
+    {
+      "priority": 1,
+      "title": "Ready for final human release review",
+      "command": "Open the sales preview, full export, and client ZIPs for final signoff."
+    }
+  ]
+}
