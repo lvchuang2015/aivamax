@@ -164,6 +164,53 @@ def make_context(data_dir: Path | str | None = None, brand_config_path: Path | s
     )
 
 
+def latest_release_overview(ctx: ServiceContext) -> dict[str, Any] | None:
+    path = release_record_root(ctx) / "Latest-Release-Record.json"
+    if not path.exists():
+        return None
+    try:
+        record = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    decision = str(record.get("decision") or "pending_review")
+    review_status = release_review_status(record)
+    return {
+        "release_id": record.get("release_id"),
+        "decision": decision,
+        "review_status": review_status,
+        "ready_to_release": bool(record.get("ready_to_release")),
+        "human_decision_required": decision == "pending_review",
+        "version": record.get("version"),
+    }
+
+
+def release_review_next_actions(ctx: ServiceContext, role: str) -> list[dict[str, Any]]:
+    if "course_factory" not in ROLE_PERMISSIONS.get(role, set()):
+        return []
+    overview = latest_release_overview(ctx)
+    if not overview:
+        return []
+    if overview["decision"] == "pending_review":
+        return [{
+            "priority": 1,
+            "title": "Review pending AIvaMax release",
+            "command": "aivamax.ps1 release-review-pack",
+            "owner_role": "owner_admin",
+            "release_id": overview.get("release_id"),
+            "status": overview.get("review_status"),
+        }]
+    if overview["decision"] == "rejected":
+        return [{
+            "priority": 1,
+            "title": "Remediate rejected AIvaMax release",
+            "command": "aivamax.ps1 course-factory-release-status",
+            "owner_role": "owner_admin",
+            "release_id": overview.get("release_id"),
+            "status": overview.get("review_status"),
+        }]
+    return []
+
+
 def service_response(
     *,
     action: str,
@@ -285,6 +332,13 @@ def get_status(
     ctx = make_context(data_dir, brand_config_path)
     status = core.console_status(ctx.data_dir, ctx.brand_config_path)
     status["version"] = "1.3.0"
+    release_overview = latest_release_overview(ctx) if "course_factory" in ROLE_PERMISSIONS[role] else None
+    if release_overview:
+        status["release_review"] = release_overview
+    status["next_actions"] = [
+        *release_review_next_actions(ctx, role),
+        *status.get("next_actions", []),
+    ]
     status["service"] = {
         "roles": sorted(ROLES),
         "current_role": role,
@@ -3247,12 +3301,12 @@ def agent_run_items(ctx: ServiceContext, *, limit: int = 10) -> list[dict[str, A
     return items
 
 
-def runtime_next_actions(status: dict[str, Any], runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def runtime_next_actions(status: dict[str, Any], runs: list[dict[str, Any]], ctx: ServiceContext | None = None, role: str = OWNER_ADMIN) -> list[dict[str, Any]]:
     courses = status.get("courses", {})
     latest_course_module = courses.get("latest_course_module")
     latest_project = courses.get("latest_project")
     latest_run = runs[0] if runs else None
-    actions: list[dict[str, Any]] = []
+    actions: list[dict[str, Any]] = release_review_next_actions(ctx, role) if ctx else []
     if latest_course_module and latest_project:
         course_parts = str(latest_course_module).replace("\\", "/").split("/")
         course_name = course_parts[-2] if len(course_parts) >= 2 else "<course>"
@@ -3309,7 +3363,7 @@ def runtime_status(
         "recent_runs": runs,
         "latest_run": runs[0] if runs else None,
         "flow_template": flow_template,
-        "next_actions": runtime_next_actions(status, runs),
+        "next_actions": runtime_next_actions(status, runs, ctx, role),
         "latest_project": status.get("courses", {}).get("latest_project"),
         "latest_course_module": status.get("courses", {}).get("latest_course_module"),
     }

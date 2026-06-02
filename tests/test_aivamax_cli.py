@@ -2069,6 +2069,18 @@ Module {number} production output
             self.assertTrue(latest_signoff_payload["ok"], latest_signoff_payload)
             self.assertEqual(latest_signoff_payload["result"]["release_id"], signoff["release_id"])
 
+            with urllib.request.urlopen(base + "/api/status", timeout=20) as response:
+                status_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(status_payload["ok"], status_payload)
+            self.assertEqual(status_payload["result"]["release_review"]["release_id"], signoff["release_id"])
+            self.assertEqual(status_payload["result"]["release_review"]["decision"], "pending_review")
+            self.assertTrue(any("release-review-pack" in item.get("command", "") for item in status_payload["result"]["next_actions"]))
+
+            with urllib.request.urlopen(base + "/api/runtime", timeout=20) as response:
+                runtime_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(runtime_payload["ok"], runtime_payload)
+            self.assertTrue(any("release-review-pack" in item.get("command", "") for item in runtime_payload["result"]["next_actions"]))
+
             request = urllib.request.Request(base + "/api/actions/release-history", method="POST")
             with urllib.request.urlopen(request, timeout=60) as response:
                 history_payload = json.loads(response.read().decode("utf-8"))
