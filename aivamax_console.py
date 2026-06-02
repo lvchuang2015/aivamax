@@ -12,6 +12,7 @@ from aivamax_mcp_server import list_tools
 from aivamax_services import (
     OWNER_ADMIN,
     course_factory_status,
+    delete_course_factory_scenario,
     export_course,
     generate_platform_assets,
     get_status,
@@ -31,6 +32,8 @@ from aivamax_services import (
     skill_inventory,
     student_coach_preview,
     init_course_factory_scenarios,
+    reset_course_factory_scenarios,
+    upsert_course_factory_scenario,
 )
 
 
@@ -79,6 +82,9 @@ def console_html() -> str:
     .toolbar { display: flex; gap: 8px; flex-wrap: wrap; }
     button { border: 1px solid var(--line); background: var(--panel); color: var(--text); border-radius: 7px; padding: 8px 12px; cursor: pointer; font-size: 13px; }
     button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    button.danger { border-color: #f1b4ad; color: var(--bad); }
+    .form-grid { display: grid; grid-template-columns: repeat(6, minmax(120px, 1fr)); gap: 8px; margin: 10px 0 14px; }
+    input, select { border: 1px solid var(--line); border-radius: 7px; padding: 8px 10px; font-size: 13px; min-width: 0; background: #fff; color: var(--text); }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th, td { text-align: left; border-bottom: 1px solid var(--line); padding: 9px 8px; vertical-align: top; }
     th { color: var(--muted); font-weight: 600; }
@@ -92,7 +98,7 @@ def console_html() -> str:
     pre { white-space: pre-wrap; word-break: break-word; background: #111827; color: #e5e7eb; border-radius: 8px; padding: 14px; max-height: 260px; overflow: auto; font-size: 12px; }
     @media (max-width: 980px) {
       header { align-items: flex-start; flex-direction: column; }
-      .metrics, .sections, .arch, .persona, .roles { grid-template-columns: 1fr; }
+      .metrics, .sections, .arch, .persona, .roles, .form-grid { grid-template-columns: 1fr; }
       main { padding: 16px; }
     }
   </style>
@@ -198,6 +204,28 @@ def console_html() -> str:
       <div class="panel wide">
         <h2>Course Factory Production</h2>
         <div id="courseFactoryRows"></div>
+        <h3>Client Scenario Editor</h3>
+        <div class="form-grid">
+          <input id="scenarioClientCode" placeholder="Client code" />
+          <input id="scenarioIndustry" placeholder="Industry" />
+          <input id="scenarioProduct" placeholder="Product or offer" />
+          <input id="scenarioMarket" placeholder="Market" />
+          <select id="scenarioGoal">
+            <option value="lead_generation">lead_generation</option>
+            <option value="appointment_generation">appointment_generation</option>
+            <option value="course_sales">course_sales</option>
+            <option value="brand_visibility">brand_visibility</option>
+          </select>
+          <input id="scenarioDays" type="number" min="1" max="365" value="30" />
+        </div>
+        <div class="toolbar">
+          <button class="primary" onclick="saveScenario()">Save Scenario</button>
+          <button onclick="runAction('course-factory-reset-scenarios')">Reset Defaults</button>
+        </div>
+        <table>
+          <thead><tr><th>Client</th><th>Industry</th><th>Product</th><th>Market</th><th>Goal</th><th>Days</th><th>Action</th></tr></thead>
+          <tbody id="scenarioRows"></tbody>
+        </table>
       </div>
       <div class="panel wide">
         <h2>发布门禁</h2>
@@ -235,6 +263,13 @@ def console_html() -> str:
       if (!res.ok) throw new Error(JSON.stringify(payload, null, 2));
       return payload;
     }
+    async function postJson(url, payload) {
+      return getJson(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload || {})
+      });
+    }
     async function refreshAll() {
       const [status, roles, mcp, skills, runtime, hostIntegration, coachPreview, releaseGate, material, courseFactory] = await Promise.all([
         getJson('/api/status'),
@@ -269,6 +304,36 @@ def console_html() -> str:
         await refreshAll();
       } catch (err) {
         log.textContent = `Action failed: ${err.message}`;
+      }
+    }
+    async function saveScenario() {
+      const payload = {
+        client_code: document.getElementById('scenarioClientCode').value,
+        industry: document.getElementById('scenarioIndustry').value,
+        product: document.getElementById('scenarioProduct').value,
+        market: document.getElementById('scenarioMarket').value,
+        goal: document.getElementById('scenarioGoal').value,
+        days: Number(document.getElementById('scenarioDays').value || 30)
+      };
+      const log = document.getElementById('actionLog');
+      log.textContent = 'Saving scenario...';
+      try {
+        const result = await postJson('/api/actions/course-factory-upsert-scenario', payload);
+        log.textContent = JSON.stringify(result, null, 2);
+        await refreshAll();
+      } catch (err) {
+        log.textContent = `Scenario save failed: ${err.message}`;
+      }
+    }
+    async function removeScenario(clientCode) {
+      const log = document.getElementById('actionLog');
+      log.textContent = `Removing scenario ${clientCode}...`;
+      try {
+        const result = await postJson('/api/actions/course-factory-delete-scenario', { client_code: clientCode });
+        log.textContent = JSON.stringify(result, null, 2);
+        await refreshAll();
+      } catch (err) {
+        log.textContent = `Scenario delete failed: ${err.message}`;
       }
     }
     function render(data, extra) {
@@ -322,6 +387,16 @@ def console_html() -> str:
         <div class="row"><div><strong>Client scenarios</strong><div class="path">${esc(scenario.path || '')}</div></div>${pill(!!scenario.exists, `${scenario.scenario_count || 0} scenarios`)}</div>
         <div class="row"><div><strong>Latest production report</strong><div class="path">${esc(report.path || 'No report yet')}</div></div>${pill(!!report.passed, report.exists ? (report.passed ? 'passed' : 'review') : 'none')}</div>
         <div class="row"><div><strong>Last client packs</strong><div class="path">${esc(factory.recommended_command || '')}</div></div><span class="pill">${esc(report.client_pack_count || 0)} packs</span></div>`;
+      document.getElementById('scenarioRows').innerHTML = (scenario.scenarios || []).map(item => `
+        <tr>
+          <td>${esc(item.client_code)}</td>
+          <td>${esc(item.industry)}</td>
+          <td>${esc(item.product)}</td>
+          <td>${esc(item.market)}</td>
+          <td>${esc(item.goal)}</td>
+          <td>${esc(item.days)}</td>
+          <td><button class="danger" data-client-code="${esc(item.client_code)}" onclick="removeScenario(this.dataset.clientCode)">Delete</button></td>
+        </tr>`).join('');
       document.getElementById('releaseGateRows').innerHTML = extra.releaseGate.result ? Object.entries(extra.releaseGate.result.audits || {}).map(([name, item]) => `
         <div class="row"><div><strong>${name}</strong><div class="path">${extra.releaseGate.result.course || ''}</div></div>${pill(item.passed, item.score ? `score ${item.score}` : (item.passed ? 'passed' : 'review'))}</div>`).join('') : '';
       document.getElementById('materialRows').innerHTML = extra.material.result ? [
@@ -358,6 +433,19 @@ def text_response(handler: BaseHTTPRequestHandler, status: HTTPStatus, body: str
     handler.send_header("Content-Length", str(len(raw)))
     handler.end_headers()
     handler.wfile.write(raw)
+
+
+def read_json_body(handler: BaseHTTPRequestHandler) -> dict:
+    length = int(handler.headers.get("Content-Length") or 0)
+    if not length:
+        return {}
+    try:
+        payload = json.loads(handler.rfile.read(length).decode("utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Invalid JSON body: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise ValueError("JSON body must be an object.")
+    return payload
 
 
 def latest_export_action(data_dir: Path, brand_config_path: Path) -> dict:
@@ -470,6 +558,28 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
             if route == "/api/actions/course-factory-init-scenarios":
                 payload = init_course_factory_scenarios(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.INTERNAL_SERVER_ERROR, payload)
+                return
+            if route == "/api/actions/course-factory-reset-scenarios":
+                payload = reset_course_factory_scenarios(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.INTERNAL_SERVER_ERROR, payload)
+                return
+            if route == "/api/actions/course-factory-upsert-scenario":
+                try:
+                    body = read_json_body(self)
+                except ValueError as exc:
+                    json_response(self, HTTPStatus.BAD_REQUEST, {"ok": False, "error": "invalid_json", "message": str(exc)})
+                    return
+                payload = upsert_course_factory_scenario(body, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.BAD_REQUEST, payload)
+                return
+            if route == "/api/actions/course-factory-delete-scenario":
+                try:
+                    body = read_json_body(self)
+                except ValueError as exc:
+                    json_response(self, HTTPStatus.BAD_REQUEST, {"ok": False, "error": "invalid_json", "message": str(exc)})
+                    return
+                payload = delete_course_factory_scenario(str(body.get("client_code", "")), data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.BAD_REQUEST, payload)
                 return
             if route == "/api/actions/course-factory-run-all":
                 payload = run_course_factory_production(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)

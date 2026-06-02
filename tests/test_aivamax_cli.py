@@ -168,6 +168,7 @@ class AIvaMaxCLITest(unittest.TestCase):
             self.assertIn("Work Buddy", html)
             self.assertIn("MCP", html)
             self.assertIn("Run Course Factory", html)
+            self.assertIn("Client Scenario Editor", html)
         finally:
             server.shutdown()
             server.server_close()
@@ -1525,6 +1526,13 @@ Module {number} production output
                 brand_config_path=ROOT / "config" / "brand_config.json",
                 role="student_public",
             )
+        invalid = services.upsert_course_factory_scenario(
+            {"client_code": "bad", "industry": "AI SaaS", "product": "Offer", "market": "US", "goal": "lead_generation", "days": 366},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="owner_admin",
+        )
+        self.assertFalse(invalid["ok"])
 
         server = build_server(host="127.0.0.1", port=0, data_dir=data_dir, brand_config_path=ROOT / "config" / "brand_config.json")
         thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -1536,6 +1544,43 @@ Module {number} production output
                 init_payload = json.loads(response.read().decode("utf-8"))
             self.assertTrue(init_payload["ok"], init_payload)
             self.assertTrue((data_dir / "obsidian" / "AIvaMax_Matrix" / "90_Templates" / "Tables" / "course_factory_client_scenarios.json").exists())
+            self.assertEqual(init_payload["result"]["scenario_count"], 3)
+
+            scenario_body = {
+                "client_code": "Healthcare-Pilot",
+                "industry": "local service",
+                "product": "clinic appointment offer",
+                "market": "United States",
+                "goal": "appointment_generation",
+                "days": 21,
+            }
+            request = urllib.request.Request(
+                base + "/api/actions/course-factory-upsert-scenario",
+                data=json.dumps(scenario_body).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(request, timeout=20) as response:
+                upsert_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(upsert_payload["ok"], upsert_payload)
+            self.assertEqual(upsert_payload["result"]["scenario_config"]["scenario_count"], 4)
+
+            request = urllib.request.Request(
+                base + "/api/actions/course-factory-delete-scenario",
+                data=json.dumps({"client_code": "Healthcare-Pilot"}).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(request, timeout=20) as response:
+                delete_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(delete_payload["ok"], delete_payload)
+            self.assertEqual(delete_payload["result"]["scenario_config"]["scenario_count"], 3)
+
+            request = urllib.request.Request(base + "/api/actions/course-factory-reset-scenarios", method="POST")
+            with urllib.request.urlopen(request, timeout=20) as response:
+                reset_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(reset_payload["ok"], reset_payload)
+            self.assertEqual(reset_payload["result"]["scenario_count"], 3)
 
             request = urllib.request.Request(base + "/api/actions/course-factory-run-all", method="POST")
             with urllib.request.urlopen(request, timeout=90) as response:

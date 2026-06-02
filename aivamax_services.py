@@ -564,6 +564,28 @@ def render_course_factory_scenario_config(ctx: ServiceContext) -> dict[str, Any]
     }
 
 
+def normalize_service_course_factory_scenario(ctx: ServiceContext, raw: dict[str, Any], index: int = 1) -> dict[str, Any]:
+    scenario = cli.normalize_course_factory_client_scenario(raw, index)
+    for field in ["client_code", "industry", "product", "market", "goal"]:
+        scenario[field] = scrub_text(str(scenario.get(field, "")).strip(), ctx.brand_config)
+        if not scenario[field]:
+            raise ValueError(f"Scenario field is required: {field}")
+    scenario["days"] = int(scenario.get("days") or 30)
+    if scenario["days"] < 1 or scenario["days"] > 365:
+        raise ValueError("Scenario days must be between 1 and 365.")
+    return scenario
+
+
+def course_factory_scenario_config_doc(ctx: ServiceContext, scenarios: list[dict[str, Any]]) -> dict[str, Any]:
+    return {
+        "schema_version": "aivamax.course_factory.client_scenarios.v1",
+        "visibility": "internal",
+        "public_brand": ctx.brand_config.get("public_brand", "AIvaMax"),
+        "description": "Internal client-pack scenarios used by course-factory-run-all.",
+        "scenarios": scenarios,
+    }
+
+
 def ensure_course_factory_scenario_config(ctx: ServiceContext, *, force: bool = False) -> Path:
     path = course_factory_scenario_config_path(ctx)
     if path.exists() and not force:
@@ -571,6 +593,17 @@ def ensure_course_factory_scenario_config(ctx: ServiceContext, *, force: bool = 
     path.parent.mkdir(parents=True, exist_ok=True)
     content = render_course_factory_scenario_config(ctx)
     path.write_text(json.dumps(content, ensure_ascii=False, indent=2), encoding="utf-8")
+    return path
+
+
+def write_course_factory_scenario_config(ctx: ServiceContext, scenarios: list[dict[str, Any]]) -> Path:
+    path = course_factory_scenario_config_path(ctx)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    normalized = [
+        normalize_service_course_factory_scenario(ctx, scenario, index)
+        for index, scenario in enumerate(scenarios, 1)
+    ]
+    path.write_text(json.dumps(course_factory_scenario_config_doc(ctx, normalized), ensure_ascii=False, indent=2), encoding="utf-8")
     return path
 
 
@@ -596,6 +629,18 @@ def read_course_factory_scenario_config(ctx: ServiceContext) -> dict[str, Any]:
         "scenario_count": len(scenarios),
         "scenarios": scenarios,
     }
+
+
+def existing_course_factory_scenarios(ctx: ServiceContext) -> list[dict[str, Any]]:
+    ensure_course_factory_scenario_config(ctx)
+    config = read_course_factory_scenario_config(ctx)
+    scenarios = config.get("scenarios", [])
+    if not isinstance(scenarios, list):
+        return []
+    return [
+        normalize_service_course_factory_scenario(ctx, scenario, index)
+        for index, scenario in enumerate(scenarios, 1)
+    ]
 
 
 def resolve_service_course_factory(ctx: ServiceContext, *, course: str | None = None, course_dir: str | None = None) -> Path:
@@ -679,6 +724,82 @@ def init_course_factory_scenarios(
     scenario_config = read_course_factory_scenario_config(ctx)
     return service_response(
         action="aivamax_init_course_factory_scenarios",
+        role=caller_role,
+        result=scenario_config,
+        public_paths=[relpath(path)],
+    )
+
+
+def upsert_course_factory_scenario(
+    scenario: dict[str, Any],
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    try:
+        normalized = normalize_service_course_factory_scenario(ctx, scenario, 1)
+        scenarios = existing_course_factory_scenarios(ctx)
+        replaced = False
+        for index, item in enumerate(scenarios):
+            if item["client_code"].lower() == normalized["client_code"].lower():
+                scenarios[index] = normalized
+                replaced = True
+                break
+        if not replaced:
+            scenarios.append(normalized)
+        path = write_course_factory_scenario_config(ctx, scenarios)
+    except ValueError as exc:
+        return service_response(action="aivamax_upsert_course_factory_scenario", role=caller_role, ok=False, error="invalid_scenario", warnings=[str(exc)])
+    scenario_config = read_course_factory_scenario_config(ctx)
+    return service_response(
+        action="aivamax_upsert_course_factory_scenario",
+        role=caller_role,
+        result={"path": relpath(path), "replaced": replaced, "scenario": normalized, "scenario_config": scenario_config},
+        public_paths=[relpath(path)],
+    )
+
+
+def delete_course_factory_scenario(
+    client_code: str,
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    code = scrub_text(str(client_code or "").strip(), ctx.brand_config)
+    if not code:
+        return service_response(action="aivamax_delete_course_factory_scenario", role=caller_role, ok=False, error="missing_client_code")
+    scenarios = existing_course_factory_scenarios(ctx)
+    kept = [item for item in scenarios if item["client_code"].lower() != code.lower()]
+    if len(kept) == len(scenarios):
+        return service_response(action="aivamax_delete_course_factory_scenario", role=caller_role, ok=False, error="scenario_not_found", warnings=[code])
+    path = write_course_factory_scenario_config(ctx, kept)
+    scenario_config = read_course_factory_scenario_config(ctx)
+    return service_response(
+        action="aivamax_delete_course_factory_scenario",
+        role=caller_role,
+        result={"path": relpath(path), "deleted": code, "scenario_config": scenario_config},
+        public_paths=[relpath(path)],
+    )
+
+
+def reset_course_factory_scenarios(
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    path = ensure_course_factory_scenario_config(ctx, force=True)
+    scenario_config = read_course_factory_scenario_config(ctx)
+    return service_response(
+        action="aivamax_reset_course_factory_scenarios",
         role=caller_role,
         result=scenario_config,
         public_paths=[relpath(path)],

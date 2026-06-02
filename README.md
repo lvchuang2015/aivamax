@@ -135,9 +135,12 @@ Course factory production is also exposed through:
 
 - `GET /api/course-factory`
 - `POST /api/actions/course-factory-init-scenarios`
+- `POST /api/actions/course-factory-upsert-scenario`
+- `POST /api/actions/course-factory-delete-scenario`
+- `POST /api/actions/course-factory-reset-scenarios`
 - `POST /api/actions/course-factory-run-all`
 
-The scenario file is internal production configuration. Public exports and sales previews are generated separately under `AIvaMax_Matrix/public_export`.
+The scenario file is internal production configuration. The Console editor can add, replace, delete, and reset scenarios by `client_code`; public exports and sales previews are generated separately under `AIvaMax_Matrix/public_export`.
 
 ## MCP and Skill Layer
 
