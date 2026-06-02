@@ -1,0 +1,93 @@
+{
+  "generated_at": "2026-06-02T14:08:06+00:00",
+  "public_brand": "AIvaMax",
+  "distribution_status": "approved_for_distribution",
+  "release_id": "REL-20260602140756",
+  "approved_at": "2026-06-02T14:07:56+00:00",
+  "approved_signer": "owner_admin",
+  "version": "course-factory-v1",
+  "course": {
+    "name": "AIvaMax社媒自动化增长系统课",
+    "path": "data/obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课",
+    "module_count": 12,
+    "audit_passed": true
+  },
+  "bundle": {
+    "archive_path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release.zip",
+    "archive_size": 87289,
+    "sha256": "8e36071436e8e33b95ee1d937aaf52ed98e62386b1df5e5447ca30e3176220a6",
+    "included_file_count": 51
+  },
+  "client_packs": {
+    "pack_count": 7,
+    "deliverable_count": 7,
+    "zip_count": 7,
+    "average_score": 97
+  },
+  "gates": {
+    "course_factory": {
+      "status": "passed",
+      "detail": "12 modules audited"
+    },
+    "scenario_config": {
+      "status": "passed",
+      "detail": "3 client scenarios"
+    },
+    "production_report": {
+      "status": "passed",
+      "detail": "data/obsidian/AIvaMax_Matrix/00_Dashboards/course_factory_run_20260602011534.json"
+    },
+    "release_gate": {
+      "status": "passed",
+      "detail": "5/5 audits passed"
+    },
+    "client_delivery_qa": {
+      "status": "passed",
+      "detail": "7/7 deliverable, 0 needs revision"
+    },
+    "zip_exports": {
+      "status": "passed",
+      "detail": "7/7 ZIP exports"
+    },
+    "repair_status": {
+      "status": "passed",
+      "detail": "0 repaired in latest batch repair"
+    }
+  },
+  "release_record": {
+    "json": {
+      "name": "Latest-Release-Record.json",
+      "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Latest-Release-Record.json",
+      "size": 2004,
+      "visibility": "release_record",
+      "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FLatest-Release-Record.json&mode=preview",
+      "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FLatest-Release-Record.json&mode=download"
+    },
+    "markdown": {
+      "name": "Latest-Release-Record.md",
+      "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Latest-Release-Record.md",
+      "size": 1832,
+      "visibility": "release_record",
+      "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FLatest-Release-Record.md&mode=preview",
+      "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FLatest-Release-Record.md&mode=download"
+    }
+  },
+  "files": {
+    "root": "data/obsidian/AIvaMax_Matrix/public_export/approved_distribution",
+    "manifest": {
+      "name": "AIvaMax-Approved-Distribution-Manifest.json",
+      "path": "data/obsidian/AIvaMax_Matrix/public_export/approved_distribution/AIvaMax-Approved-Distribution-Manifest.json",
+      "visibility": "approved_distribution"
+    },
+    "checklist": {
+      "name": "AIvaMax-Approved-Distribution-Checklist.md",
+      "path": "data/obsidian/AIvaMax_Matrix/public_export/approved_distribution/AIvaMax-Approved-Distribution-Checklist.md",
+      "visibility": "approved_distribution"
+    },
+    "archive": {
+      "name": "AIvaMax-Approved-Distribution.zip",
+      "path": "data/obsidian/AIvaMax_Matrix/public_export/approved_distribution/AIvaMax-Approved-Distribution.zip",
+      "visibility": "approved_distribution"
+    }
+  }
+}

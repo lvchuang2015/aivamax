@@ -2,25 +2,25 @@
 type: owner_decision_runbook
 public_brand: AIvaMax
 visibility: internal_release_record
-status: ready_for_owner_decision
+status: approved_recorded
 ---
 
 # AIvaMax Owner Decision Runbook
 
 | Field | Value |
 | --- | --- |
-| Generated at | 2026-06-02T13:03:19+00:00 |
-| Runbook status | ready_for_owner_decision |
+| Generated at | 2026-06-02T14:09:04+00:00 |
+| Runbook status | approved_recorded |
 | Caller role | owner_admin |
-| Release ID | REL-20260602061539 |
-| Release decision | pending_review |
-| Review status | awaiting_owner_approval |
-| Distribution status | release_not_approved |
-| PRD acceptance | ready_for_owner_review |
-| Owner review package | ready_for_owner_review |
+| Release ID | REL-20260602140756 |
+| Release decision | approved |
+| Review status | approved_recorded |
+| Distribution status | approved_distribution_exists |
+| PRD acceptance | accepted |
+| Owner review package | review |
 | Evidence files | 15 |
-| Approved distribution exists | False |
-| Delivery record exists | False |
+| Approved distribution exists | True |
+| Delivery record exists | True |
 
 ## Owner Confirmation Phrases
 
@@ -33,11 +33,11 @@ status: ready_for_owner_decision
 
 | Evidence | Status | Path | Preview | Download |
 | --- | --- | --- | --- | --- |
-| Owner review package archive | ready_for_owner_review | data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/AIvaMax-Owner-Review-Package.zip | - | /api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FAIvaMax-Owner-Review-Package.zip&mode=download |
-| Owner review checklist | ready_for_owner_review | data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Owner-Review-Package-Checklist.md | /api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Review-Package-Checklist.md&mode=preview | /api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Review-Package-Checklist.md&mode=download |
-| Owner review manifest | ready_for_owner_review | data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Owner-Review-Package-Manifest.json | /api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Review-Package-Manifest.json&mode=preview | /api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Review-Package-Manifest.json&mode=download |
-| Evidence snapshot | ready_for_owner_review | data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-Evidence-Snapshot.md | /api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Evidence-Snapshot.md&mode=preview | /api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Evidence-Snapshot.md&mode=download |
-| Post-approval workflow report | blocked_pre_approval | data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Post-Approval-Workflow.md | /api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FPost-Approval-Workflow.md&mode=preview | /api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FPost-Approval-Workflow.md&mode=download |
+| Owner review package archive | review | data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/AIvaMax-Owner-Review-Package.zip | - | /api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FAIvaMax-Owner-Review-Package.zip&mode=download |
+| Owner review checklist | review | data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Owner-Review-Package-Checklist.md | /api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Review-Package-Checklist.md&mode=preview | /api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Review-Package-Checklist.md&mode=download |
+| Owner review manifest | review | data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Owner-Review-Package-Manifest.json | /api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Review-Package-Manifest.json&mode=preview | /api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Review-Package-Manifest.json&mode=download |
+| Evidence snapshot | review | data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-Evidence-Snapshot.md | /api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Evidence-Snapshot.md&mode=preview | /api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Evidence-Snapshot.md&mode=download |
+| Post-approval workflow report | completed | data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Post-Approval-Workflow.md | /api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FPost-Approval-Workflow.md&mode=preview | /api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FPost-Approval-Workflow.md&mode=download |
 
 ## Command Plan
 

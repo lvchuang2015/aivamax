@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-06-02T13:03:15+00:00",
+  "generated_at": "2026-06-02T14:09:00+00:00",
   "public_brand": "AIvaMax",
-  "snapshot_status": "ready_for_owner_review",
+  "snapshot_status": "review",
   "release": {
-    "release_id": "REL-20260602061539",
-    "decision": "pending_review",
-    "review_status": "awaiting_owner_approval",
-    "distribution_status": "release_not_approved",
+    "release_id": "REL-20260602140756",
+    "decision": "approved",
+    "review_status": "approved_recorded",
+    "distribution_status": "approved_distribution_exists",
     "ready_to_release": true,
-    "can_generate_distribution": false
+    "can_generate_distribution": true
   },
   "prd": {
-    "acceptance_status": "ready_for_owner_review",
+    "acceptance_status": "accepted",
     "summary": {
-      "passed": 8,
-      "pending_owner": 3,
+      "passed": 11,
+      "pending_owner": 0,
       "review": 0,
       "total": 11
     }
@@ -39,8 +39,8 @@
       "group": "release_review",
       "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Latest-Release-Record.json",
       "exists": true,
-      "size": 2040,
-      "sha256": "e3873cb23de06d36897a73503acd9f7d667737b5bccae3a9950132ceb3f7b1ab",
+      "size": 2004,
+      "sha256": "f6c0db33e4ca977df7669b6aeedb37add85d200ffd299595a45972f06839c61e",
       "visibility": "release_record",
       "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FLatest-Release-Record.json&mode=preview",
       "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FLatest-Release-Record.json&mode=download"
@@ -50,8 +50,8 @@
       "group": "release_review",
       "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Latest-Release-Record.md",
       "exists": true,
-      "size": 1874,
-      "sha256": "6534515d01e83a7fa33e1db958807c98f9aa220d71184955d5ce458b0c65a177",
+      "size": 1832,
+      "sha256": "aa166948466eb220afa464f3d127ce26b163b08c0d67e0075a841efe502d162a",
       "visibility": "release_record",
       "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FLatest-Release-Record.md&mode=preview",
       "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FLatest-Release-Record.md&mode=download"
@@ -61,8 +61,8 @@
       "group": "release_review",
       "path": "data/obsidian/AIvaMax_Matrix/00_Dashboards/Course-Factory-PRD-Status.json",
       "exists": true,
-      "size": 19051,
-      "sha256": "e2be808ef8c60b20852c08ae78f947a9f75d3b3854d64326ce6479e5e25e05d4",
+      "size": 19013,
+      "sha256": "7aef94eea49d984af6e84c5305d1f5468367d91ce1334b863fb44385f12ae499",
       "visibility": "internal_dashboard",
       "preview_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-PRD-Status.json&mode=preview",
       "download_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-PRD-Status.json&mode=download"
@@ -72,8 +72,8 @@
       "group": "release_review",
       "path": "data/obsidian/AIvaMax_Matrix/00_Dashboards/Course-Factory-PRD-Status.md",
       "exists": true,
-      "size": 3786,
-      "sha256": "4633fac33fcdd1720359ad475c3cb3e8c7b1e251bcc414fa3a41185857b9b177",
+      "size": 3171,
+      "sha256": "af1806c73fabb1e48e5468f5dc87a255c7177acda4d94000b1590a6fd1b30cdd",
       "visibility": "internal_dashboard",
       "preview_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-PRD-Status.md&mode=preview",
       "download_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-PRD-Status.md&mode=download"
@@ -83,8 +83,8 @@
       "group": "release_review",
       "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-Review-Pack.json",
       "exists": true,
-      "size": 10861,
-      "sha256": "6f34e728cf9d84807c13f6e057c03a1c883220233a02151b0d0e50a5b0d80181",
+      "size": 10850,
+      "sha256": "5f3425c4e1c2d16f3c07e978802b40173de64a693e0c4127778b7c3062d8ab85",
       "visibility": "release_record",
       "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Review-Pack.json&mode=preview",
       "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Review-Pack.json&mode=download"
@@ -94,8 +94,8 @@
       "group": "release_review",
       "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-Review-Pack.md",
       "exists": true,
-      "size": 5428,
-      "sha256": "1ce011070b800552da635cb01dd73f014fe0ce3254f9ca8e5413151bbeedf083",
+      "size": 5411,
+      "sha256": "1d76ae612927768c9d3ba68cc9b96b7cd8dc7e56dd649032f6da28f9ee8c7408",
       "visibility": "release_record",
       "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Review-Pack.md&mode=preview",
       "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Review-Pack.md&mode=download"
@@ -105,8 +105,8 @@
       "group": "release_review",
       "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Owner-Release-Handoff.json",
       "exists": true,
-      "size": 7933,
-      "sha256": "c763632bb88dcaea2209b7445a951eecdf90abd546f5058733b8dbda39a41cc1",
+      "size": 7111,
+      "sha256": "6f81ffb9fd98b5dbd9b16b8ade749787bfcfa24e84d90ca6e184e7bf05672cf7",
       "visibility": "release_record",
       "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Release-Handoff.json&mode=preview",
       "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Release-Handoff.json&mode=download"
@@ -116,8 +116,8 @@
       "group": "release_review",
       "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Owner-Release-Handoff.md",
       "exists": true,
-      "size": 4025,
-      "sha256": "170906ad4f8a27476cf449b34e1308aa28dbb569547162cac8f14467f520af54",
+      "size": 3523,
+      "sha256": "3f615bf1cbe6ca8941d313ba5dc4d7a0bac213dadb1bf5ab303e9735dd805966",
       "visibility": "release_record",
       "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Release-Handoff.md&mode=preview",
       "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FOwner-Release-Handoff.md&mode=download"
@@ -127,8 +127,8 @@
       "group": "release_review",
       "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-Decision-Dry-Run.json",
       "exists": true,
-      "size": 3610,
-      "sha256": "90f88df84b905e322430a361c4d813002569b5d79dad28f60667451182b53ce5",
+      "size": 3614,
+      "sha256": "5f90b19c85f8a3b9ffbcefe00027891fecc33906c5231d400698498d746e2f97",
       "visibility": "release_record",
       "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Decision-Dry-Run.json&mode=preview",
       "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Decision-Dry-Run.json&mode=download"
@@ -138,8 +138,8 @@
       "group": "release_review",
       "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-Decision-Dry-Run.md",
       "exists": true,
-      "size": 2020,
-      "sha256": "cae998e06ab6cc5ee8cafa8157e4bdcb1b9de536197d97c885f0bc46331f87da",
+      "size": 2014,
+      "sha256": "c01bc15bfb601c1092b572953f6fb445eaab26d89271a1025eddb868ae41b556",
       "visibility": "release_record",
       "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Decision-Dry-Run.md&mode=preview",
       "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Decision-Dry-Run.md&mode=download"
@@ -149,8 +149,8 @@
       "group": "final_release_bundle",
       "path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release.zip",
       "exists": true,
-      "size": 87291,
-      "sha256": "b226e8ac0db5769328c7754ab034c184212000950414ca4fc6ef2b992d324e26",
+      "size": 87289,
+      "sha256": "8e36071436e8e33b95ee1d937aaf52ed98e62386b1df5e5447ca30e3176220a6",
       "visibility": "final_release_bundle"
     },
     {
@@ -159,7 +159,7 @@
       "path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release-Manifest.json",
       "exists": true,
       "size": 19461,
-      "sha256": "14437b013905b30a734dad558b63ee8c635776dadba0ea505dd34a4c738a55f3",
+      "sha256": "db2af7f73ee2469b939397e4a69b701dc1b6e6edda9537af78127bb66adc3708",
       "visibility": "final_release_bundle"
     },
     {
@@ -168,7 +168,7 @@
       "path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release-Signoff-Checklist.md",
       "exists": true,
       "size": 1798,
-      "sha256": "f2d46cd6911fe06149afca169aa61af4ec589f6b7f9fefef15f029c2b956365f",
+      "sha256": "6322e8fe204f6fc7806c6ef3302d48fa644d1500ea98c2d1c1c31820647e75dc",
       "visibility": "final_release_bundle"
     },
     {
@@ -177,7 +177,7 @@
       "path": "data/obsidian/AIvaMax_Matrix/00_Dashboards/Course-Factory-Release-Status.md",
       "exists": true,
       "size": 1664,
-      "sha256": "06030f7b14c3f23a8d1001f3cae6bce1f6e1d182e274c12db033af88de82e684",
+      "sha256": "d01a9b973f2b6bc488a2f110d427fd1a54e442e465b83f0dec7d1374471124e4",
       "visibility": "internal_dashboard",
       "preview_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-Release-Status.md&mode=preview",
       "download_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-Release-Status.md&mode=download"
@@ -187,8 +187,8 @@
       "group": "review_evidence",
       "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-History-Dashboard.md",
       "exists": true,
-      "size": 789,
-      "sha256": "44fe175c2da293960c5bca7dad437421a39a810e5a8493e8be783d4bd226f627",
+      "size": 858,
+      "sha256": "07c5de88112555b355a8091e77ce27aa7daf3574156e739148cc6bb17e262e16",
       "visibility": "release_record",
       "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-History-Dashboard.md&mode=preview",
       "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-History-Dashboard.md&mode=download"

@@ -1,19 +1,19 @@
 {
-  "generated_at": "2026-06-02T13:03:14+00:00",
+  "generated_at": "2026-06-02T14:08:59+00:00",
   "public_brand": "AIvaMax",
-  "handoff_status": "ready_for_owner_review",
+  "handoff_status": "approved_recorded",
   "release": {
-    "release_id": "REL-20260602061539",
-    "decision": "pending_review",
-    "review_status": "awaiting_owner_approval",
-    "distribution_status": "release_not_approved",
+    "release_id": "REL-20260602140756",
+    "decision": "approved",
+    "review_status": "approved_recorded",
+    "distribution_status": "approved_distribution_exists",
     "ready_to_release": true
   },
   "prd": {
-    "acceptance_status": "ready_for_owner_review",
+    "acceptance_status": "accepted",
     "summary": {
-      "passed": 8,
-      "pending_owner": 3,
+      "passed": 11,
+      "pending_owner": 0,
       "review": 0,
       "total": 11
     },
@@ -21,7 +21,7 @@
       "json": {
         "name": "Course-Factory-PRD-Status.json",
         "path": "data/obsidian/AIvaMax_Matrix/00_Dashboards/Course-Factory-PRD-Status.json",
-        "size": 19051,
+        "size": 19013,
         "visibility": "internal_dashboard",
         "preview_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-PRD-Status.json&mode=preview",
         "download_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-PRD-Status.json&mode=download"
@@ -29,7 +29,7 @@
       "markdown": {
         "name": "Course-Factory-PRD-Status.md",
         "path": "data/obsidian/AIvaMax_Matrix/00_Dashboards/Course-Factory-PRD-Status.md",
-        "size": 3786,
+        "size": 3171,
         "visibility": "internal_dashboard",
         "preview_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-PRD-Status.md&mode=preview",
         "download_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-PRD-Status.md&mode=download"
@@ -40,7 +40,7 @@
     "json": {
       "name": "Release-Review-Pack.json",
       "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-Review-Pack.json",
-      "size": 10861,
+      "size": 10850,
       "visibility": "release_record",
       "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Review-Pack.json&mode=preview",
       "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Review-Pack.json&mode=download"
@@ -48,7 +48,7 @@
     "markdown": {
       "name": "Release-Review-Pack.md",
       "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-Review-Pack.md",
-      "size": 5428,
+      "size": 5411,
       "visibility": "release_record",
       "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Review-Pack.md&mode=preview",
       "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-Review-Pack.md&mode=download"
@@ -63,7 +63,7 @@
       "label": "Final release archive",
       "name": "AIvaMax-Course-Factory-Final-Release.zip",
       "path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release.zip",
-      "size": 87291,
+      "size": 87289,
       "visibility": "final_release_bundle",
       "preview_url": null,
       "download_url": "/api/release-bundle/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Frelease_bundle%2FAIvaMax-Course-Factory-Final-Release.zip&mode=download"
@@ -90,7 +90,7 @@
       "label": "Latest release record",
       "name": "Latest-Release-Record.md",
       "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Latest-Release-Record.md",
-      "size": 1874,
+      "size": 1832,
       "visibility": "release_record",
       "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FLatest-Release-Record.md&mode=preview",
       "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FLatest-Release-Record.md&mode=download"
@@ -108,7 +108,7 @@
       "label": "Release history dashboard",
       "name": "Release-History-Dashboard.md",
       "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-History-Dashboard.md",
-      "size": 789,
+      "size": 858,
       "visibility": "release_record",
       "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-History-Dashboard.md&mode=preview",
       "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-History-Dashboard.md&mode=download"
@@ -116,34 +116,9 @@
   ],
   "next_actions": [
     {
-      "priority": 4,
-      "title": "Generate or refresh owner review ZIP package",
-      "command": "aivamax.ps1 release-owner-review-package"
-    },
-    {
-      "priority": 5,
-      "title": "Generate owner decision runbook",
-      "command": "aivamax.ps1 release-owner-decision-runbook"
-    },
-    {
-      "priority": 6,
-      "title": "Refresh owner handoff dashboard",
-      "command": "aivamax.ps1 release-owner-handoff"
-    },
-    {
-      "priority": 7,
-      "title": "Refresh owner evidence snapshot",
-      "command": "aivamax.ps1 release-evidence-snapshot"
-    },
-    {
-      "priority": 8,
-      "title": "Dry-run owner approval path before signoff",
-      "command": "aivamax.ps1 release-decision-dry-run --decision approved --json"
-    },
-    {
-      "priority": 9,
-      "title": "After owner approval, run guarded post-approval workflow",
-      "command": "aivamax.ps1 release-post-approval-workflow"
+      "priority": 1,
+      "title": "Review PRD status and retain release evidence",
+      "command": "aivamax.ps1 course-factory-prd-status"
     }
   ],
   "guardrails": [

@@ -9,7 +9,7 @@ status: ready
 
 | Field | Value |
 | --- | --- |
-| Generated at | 2026-06-02T06:15:39+00:00 |
+| Generated at | 2026-06-02T14:07:56+00:00 |
 | Readiness | ready |
 | Ready to release | True |
 | Bundle archive | data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release.zip |

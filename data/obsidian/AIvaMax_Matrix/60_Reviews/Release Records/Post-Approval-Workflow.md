@@ -2,28 +2,29 @@
 type: post_approval_workflow
 public_brand: AIvaMax
 visibility: internal_release_record
-status: blocked_pre_approval
+status: completed
 ---
 
 # AIvaMax Post Approval Workflow
 
 | Field | Value |
 | --- | --- |
-| Generated at | 2026-06-02T08:56:35+00:00 |
-| Workflow status | blocked_pre_approval |
+| Generated at | 2026-06-02T14:14:03+00:00 |
+| Workflow status | completed |
 | Dry run | False |
-| Release ID | REL-20260602061539 |
-| Decision | pending_review |
-| Distribution status | release_not_approved |
+| Release ID | REL-20260602140756 |
+| Decision | approved |
+| Distribution status | approved_distribution_exists |
 | Approved package generated | False |
-| Delivery recorded | False |
+| Delivery recorded | True |
 
 ## Steps
 
 | Step | Status | Detail |
 | --- | --- | --- |
-| distribution_status | release_not_approved | decision=pending_review, can_generate=False, has_distribution=False, has_delivery=False |
-| owner_approval_gate | blocked | Latest release signoff is not approved. |
+| distribution_status | approved_distribution_exists | decision=approved, can_generate=True, has_distribution=True, has_delivery=False |
+| approved_distribution_package | already_exists | Using existing approved distribution package. |
+| delivery_record | recorded | DEL-20260602141403 |
 
 ## Boundary
 

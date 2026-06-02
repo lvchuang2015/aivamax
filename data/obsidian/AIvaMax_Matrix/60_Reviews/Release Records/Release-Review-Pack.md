@@ -2,21 +2,21 @@
 type: release_review_pack
 public_brand: AIvaMax
 visibility: internal_release_record
-status: awaiting_owner_approval
+status: approved_recorded
 ---
 
 # AIvaMax Owner Release Review Pack
 
 | Field | Value |
 | --- | --- |
-| Generated at | 2026-06-02T13:03:32+00:00 |
-| Review status | awaiting_owner_approval |
-| Human decision required | True |
-| Release ID | REL-20260602061539 |
-| Latest decision | pending_review |
+| Generated at | 2026-06-02T15:07:13+00:00 |
+| Review status | approved_recorded |
+| Human decision required | False |
+| Release ID | REL-20260602140756 |
+| Latest decision | approved |
 | Ready to release | True |
 | Version | course-factory-v1 |
-| Bundle SHA256 | b226e8ac0db5769328c7754ab034c184212000950414ca4fc6ef2b992d324e26 |
+| Bundle SHA256 | 8e36071436e8e33b95ee1d937aaf52ed98e62386b1df5e5447ca30e3176220a6 |
 | Bundle files | 51 |
 | Client packs | 7 |
 | Deliverable packs | 7 |

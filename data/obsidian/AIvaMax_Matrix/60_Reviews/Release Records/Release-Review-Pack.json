@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-06-02T13:03:32+00:00",
+  "generated_at": "2026-06-02T15:07:13+00:00",
   "public_brand": "AIvaMax",
-  "review_status": "awaiting_owner_approval",
-  "human_decision_required": true,
+  "review_status": "approved_recorded",
+  "human_decision_required": false,
   "approval_blockers": [],
-  "release_id": "REL-20260602061539",
-  "latest_decision": "pending_review",
+  "release_id": "REL-20260602140756",
+  "latest_decision": "approved",
   "ready_to_release": true,
   "version": "course-factory-v1",
   "signer": "owner_admin",
@@ -17,8 +17,8 @@
   },
   "bundle": {
     "archive_path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release.zip",
-    "archive_size": 87291,
-    "sha256": "b226e8ac0db5769328c7754ab034c184212000950414ca4fc6ef2b992d324e26",
+    "archive_size": 87289,
+    "sha256": "8e36071436e8e33b95ee1d937aaf52ed98e62386b1df5e5447ca30e3176220a6",
     "included_file_count": 51,
     "manifest_path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release-Manifest.json",
     "checklist_path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release-Signoff-Checklist.md"
@@ -63,7 +63,7 @@
     "json": {
       "name": "Latest-Release-Record.json",
       "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Latest-Release-Record.json",
-      "size": 2040,
+      "size": 2004,
       "visibility": "release_record",
       "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FLatest-Release-Record.json&mode=preview",
       "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FLatest-Release-Record.json&mode=download"
@@ -71,7 +71,7 @@
     "markdown": {
       "name": "Latest-Release-Record.md",
       "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Latest-Release-Record.md",
-      "size": 1874,
+      "size": 1832,
       "visibility": "release_record",
       "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FLatest-Release-Record.md&mode=preview",
       "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FLatest-Release-Record.md&mode=download"
@@ -99,7 +99,7 @@
     "json": {
       "name": "Release-History-Dashboard.json",
       "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-History-Dashboard.json",
-      "size": 2402,
+      "size": 4451,
       "visibility": "release_record",
       "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-History-Dashboard.json&mode=preview",
       "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-History-Dashboard.json&mode=download"
@@ -107,7 +107,7 @@
     "markdown": {
       "name": "Release-History-Dashboard.md",
       "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-History-Dashboard.md",
-      "size": 789,
+      "size": 858,
       "visibility": "release_record",
       "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-History-Dashboard.md&mode=preview",
       "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-History-Dashboard.md&mode=download"
@@ -118,7 +118,7 @@
       "label": "Final release archive",
       "name": "AIvaMax-Course-Factory-Final-Release.zip",
       "path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release.zip",
-      "size": 87291,
+      "size": 87289,
       "visibility": "final_release_bundle",
       "preview_url": null,
       "download_url": "/api/release-bundle/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Frelease_bundle%2FAIvaMax-Course-Factory-Final-Release.zip&mode=download"
@@ -145,7 +145,7 @@
       "label": "Latest release record",
       "name": "Latest-Release-Record.md",
       "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Latest-Release-Record.md",
-      "size": 1874,
+      "size": 1832,
       "visibility": "release_record",
       "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FLatest-Release-Record.md&mode=preview",
       "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FLatest-Release-Record.md&mode=download"
@@ -163,7 +163,7 @@
       "label": "Release history dashboard",
       "name": "Release-History-Dashboard.md",
       "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Release-History-Dashboard.md",
-      "size": 789,
+      "size": 858,
       "visibility": "release_record",
       "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-History-Dashboard.md&mode=preview",
       "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FRelease-History-Dashboard.md&mode=download"

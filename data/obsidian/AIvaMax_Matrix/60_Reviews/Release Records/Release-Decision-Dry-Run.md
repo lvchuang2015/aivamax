@@ -9,11 +9,11 @@ status: approval_ready
 
 | Field | Value |
 | --- | --- |
-| Generated at | 2026-06-02T13:03:15+00:00 |
+| Generated at | 2026-06-02T14:09:00+00:00 |
 | Dry run status | approval_ready |
 | Requested decision | approved |
-| Current release ID | REL-20260602061539 |
-| Current decision | pending_review |
+| Current release ID | REL-20260602140756 |
+| Current decision | approved |
 | Ready to release | True |
 | Service/CLI can record | True |
 | Console can record | False |
@@ -27,7 +27,7 @@ status: approval_ready
 | role_permission | passed | caller_role=owner_admin, final_decision_owner=owner_admin |
 | release_ready | passed | require_ready=True, ready_to_release=True |
 | bundle_archive | passed | data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release.zip |
-| bundle_hash | passed | expected=b226e8ac0db5, actual=b226e8ac0db5 |
+| bundle_hash | passed | expected=8e36071436e8, actual=8e36071436e8 |
 | console_confirmation | blocked | confirmation phrase required for Console final decision |
 
 ## Blockers

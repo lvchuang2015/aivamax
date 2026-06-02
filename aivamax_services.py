@@ -740,6 +740,7 @@ def distribution_file_record(path: Path) -> dict[str, Any]:
         "name": path.name,
         "path": relative,
         "size": path.stat().st_size,
+        "sha256": sha256_file(path),
         "visibility": "approved_distribution",
         "preview_url": None if is_archive else f"/api/distribution/file?path={quoted}&mode=preview",
         "download_url": f"/api/distribution/file?path={quoted}&mode=download",
@@ -5011,7 +5012,8 @@ status: delivered
 | Generated at | {record.get("generated_at")} |
 | Release ID | {record.get("release_id")} |
 | Distribution archive | {record.get("distribution", {}).get("archive_path")} |
-| Distribution SHA256 | {record.get("distribution", {}).get("sha256")} |
+| Distribution archive SHA256 | {record.get("distribution", {}).get("sha256")} |
+| Release bundle SHA256 | {record.get("release_bundle", {}).get("sha256")} |
 | Delivery owner | {record.get("delivery_owner")} |
 | Recipient label | {record.get("recipient_label")} |
 | Delivery channel | {record.get("delivery_channel")} |
@@ -5068,11 +5070,13 @@ def release_distribution_status(
         )
     record = latest_payload.get("result", {})
     existing_files = existing_distribution_file_records(ctx)
+    distribution_archive_sha = (existing_files.get("archive") or {}).get("sha256")
     delivery_record = latest_distribution_delivery_record(ctx)
     delivery_matches_release = (
         bool(delivery_record)
         and delivery_record.get("release_id") == record.get("release_id")
-        and (delivery_record.get("distribution", {}).get("sha256") == record.get("bundle", {}).get("sha256"))
+        and (delivery_record.get("release_bundle", {}).get("sha256") == record.get("bundle", {}).get("sha256"))
+        and (not distribution_archive_sha or delivery_record.get("distribution", {}).get("sha256") == distribution_archive_sha)
     )
     matching_delivery_record = delivery_record if delivery_matches_release else None
     status = {
@@ -5088,6 +5092,7 @@ def release_distribution_status(
         "required_action": "",
         "expected_sha256": record.get("bundle", {}).get("sha256"),
         "actual_sha256": None,
+        "distribution_archive_sha256": distribution_archive_sha,
         "bundle": record.get("bundle", {}),
         "existing_distribution_files": existing_files,
         "has_existing_distribution": "archive" in existing_files,
@@ -5308,7 +5313,8 @@ def release_distribution_delivery_record(
         "distribution": {
             "archive_path": archive.get("path"),
             "archive_size": archive.get("size"),
-            "sha256": status.get("actual_sha256") or status.get("expected_sha256"),
+            "sha256": archive.get("sha256"),
+            "release_bundle_sha256": status.get("actual_sha256") or status.get("expected_sha256"),
             "manifest_path": (status.get("existing_distribution_files", {}).get("manifest") or {}).get("path"),
             "checklist_path": (status.get("existing_distribution_files", {}).get("checklist") or {}).get("path"),
         },

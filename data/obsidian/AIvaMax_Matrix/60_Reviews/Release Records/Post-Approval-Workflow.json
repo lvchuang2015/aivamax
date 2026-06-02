@@ -1,53 +1,145 @@
 {
-  "generated_at": "2026-06-02T08:56:35+00:00",
+  "generated_at": "2026-06-02T14:14:03+00:00",
   "public_brand": "AIvaMax",
   "dry_run": false,
-  "workflow_status": "blocked_pre_approval",
-  "release_id": "REL-20260602061539",
-  "decision": "pending_review",
-  "distribution_status": "release_not_approved",
+  "workflow_status": "completed",
+  "release_id": "REL-20260602140756",
+  "decision": "approved",
+  "distribution_status": "approved_distribution_exists",
   "approved_package_generated": false,
-  "delivery_recorded": false,
+  "delivery_recorded": true,
   "status": {
-    "generated_at": "2026-06-02T08:56:35+00:00",
+    "generated_at": "2026-06-02T14:14:03+00:00",
     "public_brand": "AIvaMax",
-    "release_id": "REL-20260602061539",
-    "decision": "pending_review",
-    "review_status": "awaiting_owner_approval",
+    "release_id": "REL-20260602140756",
+    "decision": "approved",
+    "review_status": "approved_recorded",
     "ready_to_release": true,
-    "can_generate": false,
-    "distribution_status": "release_not_approved",
-    "blockers": [
-      "release_not_approved"
-    ],
-    "required_action": "Run release-review-pack and record an approved signoff before distribution.",
-    "expected_sha256": "b226e8ac0db5769328c7754ab034c184212000950414ca4fc6ef2b992d324e26",
-    "actual_sha256": null,
+    "can_generate": true,
+    "distribution_status": "approved_distribution_exists",
+    "blockers": [],
+    "required_action": "Run release-distribution-delivery-record after the approved package is delivered.",
+    "expected_sha256": "8e36071436e8e33b95ee1d937aaf52ed98e62386b1df5e5447ca30e3176220a6",
+    "actual_sha256": "8e36071436e8e33b95ee1d937aaf52ed98e62386b1df5e5447ca30e3176220a6",
+    "distribution_archive_sha256": "b96f99fd1c1f7df3f8fe2b5f5cdf743f047b27f7e47341217dded3b78cffe10c",
     "bundle": {
       "archive_path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release.zip",
-      "archive_size": 87291,
-      "sha256": "b226e8ac0db5769328c7754ab034c184212000950414ca4fc6ef2b992d324e26",
+      "archive_size": 87289,
+      "sha256": "8e36071436e8e33b95ee1d937aaf52ed98e62386b1df5e5447ca30e3176220a6",
       "included_file_count": 51,
       "manifest_path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release-Manifest.json",
       "checklist_path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release-Signoff-Checklist.md"
     },
-    "existing_distribution_files": {},
-    "has_existing_distribution": false,
+    "existing_distribution_files": {
+      "manifest": {
+        "name": "AIvaMax-Approved-Distribution-Manifest.json",
+        "path": "data/obsidian/AIvaMax_Matrix/public_export/approved_distribution/AIvaMax-Approved-Distribution-Manifest.json",
+        "size": 3717,
+        "sha256": "b50843d13b8a06b967dfadece4c06a7ce065462bfae3df75704485c50080c2f0",
+        "visibility": "approved_distribution",
+        "preview_url": "/api/distribution/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fapproved_distribution%2FAIvaMax-Approved-Distribution-Manifest.json&mode=preview",
+        "download_url": "/api/distribution/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fapproved_distribution%2FAIvaMax-Approved-Distribution-Manifest.json&mode=download"
+      },
+      "checklist": {
+        "name": "AIvaMax-Approved-Distribution-Checklist.md",
+        "path": "data/obsidian/AIvaMax_Matrix/public_export/approved_distribution/AIvaMax-Approved-Distribution-Checklist.md",
+        "size": 1584,
+        "sha256": "4b39091e62e85350e23ebcf2f9c4bfb6adbd85a43c10df53cdace25c65d661bf",
+        "visibility": "approved_distribution",
+        "preview_url": "/api/distribution/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fapproved_distribution%2FAIvaMax-Approved-Distribution-Checklist.md&mode=preview",
+        "download_url": "/api/distribution/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fapproved_distribution%2FAIvaMax-Approved-Distribution-Checklist.md&mode=download"
+      },
+      "archive": {
+        "name": "AIvaMax-Approved-Distribution.zip",
+        "path": "data/obsidian/AIvaMax_Matrix/public_export/approved_distribution/AIvaMax-Approved-Distribution.zip",
+        "size": 82778,
+        "sha256": "b96f99fd1c1f7df3f8fe2b5f5cdf743f047b27f7e47341217dded3b78cffe10c",
+        "visibility": "approved_distribution",
+        "preview_url": null,
+        "download_url": "/api/distribution/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Fapproved_distribution%2FAIvaMax-Approved-Distribution.zip&mode=download"
+      }
+    },
+    "has_existing_distribution": true,
     "delivery_record": null,
     "has_delivery_record": false
   },
   "package": null,
-  "delivery": null,
+  "delivery": {
+    "delivery_id": "DEL-20260602141403",
+    "generated_at": "2026-06-02T14:14:03+00:00",
+    "public_brand": "AIvaMax",
+    "release_id": "REL-20260602140756",
+    "distribution_status": "approved_distribution_exists",
+    "delivery_owner": "owner_admin",
+    "recipient_label": "internal_distribution_recipient",
+    "delivery_channel": "manual_handoff",
+    "notes": "Approved distribution package handed off by post-approval workflow.",
+    "distribution": {
+      "archive_path": "data/obsidian/AIvaMax_Matrix/public_export/approved_distribution/AIvaMax-Approved-Distribution.zip",
+      "archive_size": 82778,
+      "sha256": "b96f99fd1c1f7df3f8fe2b5f5cdf743f047b27f7e47341217dded3b78cffe10c",
+      "release_bundle_sha256": "8e36071436e8e33b95ee1d937aaf52ed98e62386b1df5e5447ca30e3176220a6",
+      "manifest_path": "data/obsidian/AIvaMax_Matrix/public_export/approved_distribution/AIvaMax-Approved-Distribution-Manifest.json",
+      "checklist_path": "data/obsidian/AIvaMax_Matrix/public_export/approved_distribution/AIvaMax-Approved-Distribution-Checklist.md"
+    },
+    "release_bundle": {
+      "archive_path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release.zip",
+      "archive_size": 87289,
+      "sha256": "8e36071436e8e33b95ee1d937aaf52ed98e62386b1df5e5447ca30e3176220a6",
+      "included_file_count": 51,
+      "manifest_path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release-Manifest.json",
+      "checklist_path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release-Signoff-Checklist.md"
+    },
+    "record": {
+      "json": {
+        "name": "Distribution-Delivery-Record-DEL-20260602141403.json",
+        "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Distribution-Delivery-Record-DEL-20260602141403.json",
+        "size": 1631,
+        "visibility": "release_record",
+        "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FDistribution-Delivery-Record-DEL-20260602141403.json&mode=preview",
+        "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FDistribution-Delivery-Record-DEL-20260602141403.json&mode=download"
+      },
+      "markdown": {
+        "name": "Distribution-Delivery-Record-DEL-20260602141403.md",
+        "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Distribution-Delivery-Record-DEL-20260602141403.md",
+        "size": 1057,
+        "visibility": "release_record",
+        "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FDistribution-Delivery-Record-DEL-20260602141403.md&mode=preview",
+        "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FDistribution-Delivery-Record-DEL-20260602141403.md&mode=download"
+      },
+      "latest_json": {
+        "name": "Latest-Distribution-Delivery-Record.json",
+        "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Latest-Distribution-Delivery-Record.json",
+        "size": 1631,
+        "visibility": "release_record",
+        "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FLatest-Distribution-Delivery-Record.json&mode=preview",
+        "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FLatest-Distribution-Delivery-Record.json&mode=download"
+      },
+      "latest_markdown": {
+        "name": "Latest-Distribution-Delivery-Record.md",
+        "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/Latest-Distribution-Delivery-Record.md",
+        "size": 1057,
+        "visibility": "release_record",
+        "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FLatest-Distribution-Delivery-Record.md&mode=preview",
+        "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FLatest-Distribution-Delivery-Record.md&mode=download"
+      }
+    }
+  },
   "steps": [
     {
       "step": "distribution_status",
-      "status": "release_not_approved",
-      "detail": "decision=pending_review, can_generate=False, has_distribution=False, has_delivery=False"
+      "status": "approved_distribution_exists",
+      "detail": "decision=approved, can_generate=True, has_distribution=True, has_delivery=False"
     },
     {
-      "step": "owner_approval_gate",
-      "status": "blocked",
-      "detail": "Latest release signoff is not approved."
+      "step": "approved_distribution_package",
+      "status": "already_exists",
+      "detail": "Using existing approved distribution package."
+    },
+    {
+      "step": "delivery_record",
+      "status": "recorded",
+      "detail": "DEL-20260602141403"
     }
   ],
   "guardrails": [

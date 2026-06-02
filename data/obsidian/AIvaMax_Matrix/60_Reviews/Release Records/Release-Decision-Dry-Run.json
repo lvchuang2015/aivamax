@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-02T13:03:15+00:00",
+  "generated_at": "2026-06-02T14:09:00+00:00",
   "public_brand": "AIvaMax",
   "dry_run": true,
   "dry_run_status": "approval_ready",
@@ -7,13 +7,13 @@
   "require_ready": true,
   "caller_role": "owner_admin",
   "current_release": {
-    "release_id": "REL-20260602061539",
-    "decision": "pending_review",
-    "review_status": "awaiting_owner_approval",
-    "distribution_status": "release_not_approved",
+    "release_id": "REL-20260602140756",
+    "decision": "approved",
+    "review_status": "approved_recorded",
+    "distribution_status": "approved_distribution_exists",
     "ready_to_release": true,
     "version": "course-factory-v1",
-    "bundle_sha256": "b226e8ac0db5769328c7754ab034c184212000950414ca4fc6ef2b992d324e26",
+    "bundle_sha256": "8e36071436e8e33b95ee1d937aaf52ed98e62386b1df5e5447ca30e3176220a6",
     "bundle_archive": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release.zip"
   },
   "intended_record": {
@@ -57,7 +57,7 @@
     },
     "bundle_hash": {
       "status": "passed",
-      "detail": "expected=b226e8ac0db5, actual=b226e8ac0db5"
+      "detail": "expected=8e36071436e8, actual=8e36071436e8"
     },
     "console_confirmation": {
       "status": "blocked",
@@ -72,7 +72,7 @@
   },
   "distribution_effect": {
     "would_unlock_distribution": true,
-    "current_distribution_status": "release_not_approved",
+    "current_distribution_status": "approved_distribution_exists",
     "post_decision_expected_status": "ready_to_generate"
   },
   "next_steps": [

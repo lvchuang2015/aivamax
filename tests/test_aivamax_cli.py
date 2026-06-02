@@ -839,6 +839,8 @@ class AIvaMaxCLITest(unittest.TestCase):
         checklist_path = core.resolve_reported_path(result["files"]["checklist"]["path"])
         self.assertTrue(distribution_archive and distribution_archive.exists())
         self.assertTrue(checklist_path and checklist_path.exists())
+        distribution_archive_sha = services.sha256_file(distribution_archive)
+        self.assertEqual(result["files"]["archive"]["sha256"], distribution_archive_sha)
         self.assertIn("/api/distribution/file", result["files"]["checklist"]["preview_url"])
         generated_status = services.release_distribution_status(
             data_dir=data_dir,
@@ -849,6 +851,7 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertTrue(generated_status["result"]["has_existing_distribution"])
         self.assertFalse(generated_status["result"]["has_delivery_record"])
         self.assertIn("archive", generated_status["result"]["existing_distribution_files"])
+        self.assertEqual(generated_status["result"]["distribution_archive_sha256"], distribution_archive_sha)
         generated_status_payload = services.get_status(
             data_dir=data_dir,
             brand_config_path=ROOT / "config" / "brand_config.json",
@@ -874,11 +877,15 @@ class AIvaMaxCLITest(unittest.TestCase):
             role="owner_admin",
         )
         self.assertTrue(delivery["ok"], delivery)
+        self.assertEqual(delivery["result"]["distribution"]["sha256"], distribution_archive_sha)
+        self.assertEqual(delivery["result"]["release_bundle"]["sha256"], bundle_sha)
         delivery_record = delivery["result"]["record"]
         delivery_markdown_path = core.resolve_reported_path(delivery_record["markdown"]["path"])
         self.assertTrue(delivery_markdown_path and delivery_markdown_path.exists())
         delivery_markdown = delivery_markdown_path.read_text(encoding="utf-8")
         self.assertIn("Distribution Delivery Record", delivery_markdown)
+        self.assertIn("Distribution archive SHA256", delivery_markdown)
+        self.assertIn("Release bundle SHA256", delivery_markdown)
         self.assertIn("internal_launch_team", delivery_markdown)
         self.assert_public_clean(delivery_markdown)
         delivered_status = services.release_distribution_status(
@@ -888,6 +895,7 @@ class AIvaMaxCLITest(unittest.TestCase):
         )
         self.assertTrue(delivered_status["result"]["has_delivery_record"])
         self.assertEqual(delivered_status["result"]["delivery_record"]["delivery_id"], delivery["result"]["delivery_id"])
+        self.assertEqual(delivered_status["result"]["delivery_record"]["distribution"]["sha256"], distribution_archive_sha)
         completed_workflow = services.release_post_approval_workflow(
             data_dir=data_dir,
             brand_config_path=ROOT / "config" / "brand_config.json",
