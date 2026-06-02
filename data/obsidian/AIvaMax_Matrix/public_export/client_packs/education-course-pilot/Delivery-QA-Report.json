@@ -1,0 +1,104 @@
+{
+  "pack_id": "education-course-pilot",
+  "generated_at": "2026-06-02T02:07:03+00:00",
+  "passed": true,
+  "decision": "deliverable",
+  "score": 100,
+  "checks": [
+    {
+      "id": "client_files_complete",
+      "label": "Client file set",
+      "passed": true,
+      "weight": 10,
+      "critical": true,
+      "detail": "8/8 client-facing files present."
+    },
+    {
+      "id": "brand_and_internal_boundary",
+      "label": "Brand/internal boundary",
+      "passed": true,
+      "weight": 10,
+      "critical": true,
+      "detail": "No private brand terms, raw paths, source fields, or internal markers detected."
+    },
+    {
+      "id": "client_goal",
+      "label": "Client goal",
+      "passed": true,
+      "weight": 10,
+      "critical": false,
+      "detail": "Goal: course_sales"
+    },
+    {
+      "id": "delivery_duration",
+      "label": "Delivery duration",
+      "passed": true,
+      "weight": 10,
+      "critical": false,
+      "detail": "Duration: 30 days; calendar rows: 30."
+    },
+    {
+      "id": "platform_weights",
+      "label": "Platform weights",
+      "passed": true,
+      "weight": 10,
+      "critical": false,
+      "detail": "Weighted platform rows: 5."
+    },
+    {
+      "id": "content_calendar",
+      "label": "Content calendar",
+      "passed": true,
+      "weight": 10,
+      "critical": false,
+      "detail": "Calendar rows: 30."
+    },
+    {
+      "id": "account_matrix",
+      "label": "Account matrix",
+      "passed": true,
+      "weight": 10,
+      "critical": false,
+      "detail": "Account roles and owners are present."
+    },
+    {
+      "id": "review_forecast",
+      "label": "Review and forecast",
+      "passed": true,
+      "weight": 10,
+      "critical": false,
+      "detail": "Forecast model uses assumptions and signal ranges."
+    },
+    {
+      "id": "risk_boundary",
+      "label": "Risk boundary",
+      "passed": true,
+      "weight": 10,
+      "critical": false,
+      "detail": "Risk rules cover claims, messages, and forecast limits."
+    },
+    {
+      "id": "client_readability",
+      "label": "Client readability",
+      "passed": true,
+      "weight": 10,
+      "critical": false,
+      "detail": "All client-facing files have enough substance."
+    }
+  ],
+  "critical_failure_count": 0,
+  "failed_check_count": 0,
+  "recommended_fixes": [],
+  "audited_files": [
+    "00_Client-Brief.md",
+    "01_Strategy-Plan.md",
+    "02_Account-Matrix.md",
+    "03_Platform-Weights.md",
+    "04_Content-Calendar.md",
+    "05_Content-Topic-Bank.md",
+    "06_Review-Forecast.md",
+    "07_Risk-Boundary.md"
+  ],
+  "missing_files": [],
+  "brand_violation_count": 0
+}

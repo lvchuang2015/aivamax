@@ -1624,6 +1624,12 @@ Module {number} production output
         self.assertTrue(failed_qa["ok"], failed_qa)
         self.assertFalse(failed_qa["result"]["passed"])
         self.assertEqual(failed_qa["result"]["decision"], "needs_revision")
+        self.assertIn("report", failed_qa["result"])
+        failed_report_path = core.resolve_reported_path(failed_qa["result"]["report"]["json"]["path"])
+        self.assertIsNotNone(failed_report_path)
+        failed_report_data = json.loads(failed_report_path.read_text(encoding="utf-8"))
+        self.assertFalse(failed_report_data["passed"])
+        self.assertNotIn("path", failed_report_data)
         blocked_zip = services.export_client_pack_zip(
             {"pack_id": "broken-pack"},
             data_dir=data_dir,
@@ -1632,6 +1638,7 @@ Module {number} production output
         )
         self.assertFalse(blocked_zip["ok"], blocked_zip)
         self.assertEqual(blocked_zip["error"], "client_pack_qa_failed")
+        self.assertIn("report", blocked_zip["result"]["delivery_qa"])
 
         server = build_server(host="127.0.0.1", port=0, data_dir=data_dir, brand_config_path=ROOT / "config" / "brand_config.json")
         thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -1710,6 +1717,15 @@ Module {number} production output
             self.assertEqual(qa_payload["result"]["decision"], "deliverable")
             self.assertGreaterEqual(qa_payload["result"]["score"], 80)
             self.assertEqual(qa_payload["result"]["failed_check_count"], 0)
+            self.assertIn("report", qa_payload["result"])
+            with urllib.request.urlopen(base + qa_payload["result"]["report"]["markdown"]["preview_url"], timeout=20) as response:
+                report_markdown = response.read().decode("utf-8")
+            self.assertIn("Client Pack Delivery QA", report_markdown)
+            self.assertIn("Delivery-QA", qa_payload["result"]["report"]["json"]["name"])
+            with urllib.request.urlopen(base + qa_payload["result"]["report"]["json"]["preview_url"], timeout=20) as response:
+                report_json = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(report_json["passed"])
+            self.assertNotIn("path", report_json)
 
             request = urllib.request.Request(
                 base + "/api/actions/client-pack-export-zip",
@@ -1734,6 +1750,7 @@ Module {number} production output
             self.assertTrue(zip_payload["result"]["artifact_boundary"]["internal_files_excluded"])
             self.assertTrue(zip_payload["result"]["delivery_qa"]["passed"])
             self.assertGreaterEqual(zip_payload["result"]["delivery_qa"]["score"], 80)
+            self.assertIn("report", zip_payload["result"]["delivery_qa"])
             with urllib.request.urlopen(base + zip_payload["result"]["archive"]["download_url"], timeout=20) as response:
                 archive_bytes = response.read()
             with zipfile.ZipFile(io.BytesIO(archive_bytes)) as archive:

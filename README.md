@@ -145,9 +145,10 @@ Course factory production is also exposed through:
 - `GET /api/client-packs`
 - `GET /api/client-packs/file?path=<encoded-path>&mode=preview|download`
 - `GET /api/client-packs/archive?path=<encoded-path>&mode=download`
+- `GET /api/client-packs/report?path=<encoded-path>&mode=preview|download`
 
 The scenario file is internal production configuration. The Console editor can add, replace, delete, and reset scenarios by `client_code`; public exports and sales previews are generated separately under `AIvaMax_Matrix/public_export`.
-Client-pack file links are restricted to the fixed client-facing `00-07_*.md` whitelist under `AIvaMax_Matrix/50_Projects/Samples/<pack>`. ZIP exports live under `AIvaMax_Matrix/public_export/client_packs/<pack>` and contain only those eight files; internal README and manifest files are not exposed through preview, download, or ZIP routes. ZIP export is gated by Delivery QA: goal, duration, platform weights, content calendar, account matrix, review forecast, risk boundary, brand boundary, and client-readability checks must pass.
+Client-pack file links are restricted to the fixed client-facing `00-07_*.md` whitelist under `AIvaMax_Matrix/50_Projects/Samples/<pack>`. Delivery QA writes `Delivery-QA-Report.json` and `Delivery-QA-Report.md` under `AIvaMax_Matrix/public_export/client_packs/<pack>`. ZIP exports live in the same folder and contain only the eight client files; internal README and manifest files are not exposed through preview, download, report, or ZIP routes. ZIP export is gated by Delivery QA: goal, duration, platform weights, content calendar, account matrix, review forecast, risk boundary, brand boundary, and client-readability checks must pass.
 
 ## MCP and Skill Layer
 

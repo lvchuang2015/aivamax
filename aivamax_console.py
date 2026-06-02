@@ -39,6 +39,7 @@ from aivamax_services import (
     reset_course_factory_scenarios,
     resolve_client_pack_archive_file,
     resolve_client_pack_file,
+    resolve_client_pack_report_file,
     upsert_course_factory_scenario,
 )
 
@@ -446,7 +447,7 @@ def console_html() -> str:
       document.getElementById('clientPackRows').innerHTML = (packs.packs || []).slice(0, 8).map(pack => `
         <div class="card">
           <div class="row"><div><strong>${esc(pack.pack_id)}</strong><div class="path">${esc(pack.path)}</div></div><span class="pill">${esc(pack.client_file_count || 0)} files</span></div>
-          <div class="toolbar"><button data-pack-id="${esc(pack.pack_id)}" onclick="runPackQa(this.dataset.packId)">Run QA</button> <button class="primary" data-pack-id="${esc(pack.pack_id)}" onclick="exportPackZip(this.dataset.packId)">Export ZIP</button>${pack.archive ? ` <a href="${esc(pack.archive.download_url)}" target="_blank">Download ZIP</a>` : ''}</div>
+          <div class="toolbar"><button data-pack-id="${esc(pack.pack_id)}" onclick="runPackQa(this.dataset.packId)">Run QA</button> <button class="primary" data-pack-id="${esc(pack.pack_id)}" onclick="exportPackZip(this.dataset.packId)">Export ZIP</button>${pack.qa_report && pack.qa_report.markdown ? ` <a href="${esc(pack.qa_report.markdown.preview_url)}" target="_blank">QA Report</a>` : ''}${pack.archive ? ` <a href="${esc(pack.archive.download_url)}" target="_blank">Download ZIP</a>` : ''}</div>
           <table>
             <thead><tr><th>File</th><th>Size</th><th>Links</th></tr></thead>
             <tbody>${(pack.files || []).filter(file => file.visibility === 'client_delivery').map(file => `
@@ -597,6 +598,18 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                     json_response(self, HTTPStatus.FORBIDDEN, {"ok": False, "error": "blocked_client_pack_archive", "message": str(exc)})
                     return
                 binary_file_response(self, file_path, "application/zip", download=mode == "download")
+                return
+            if route == "/api/client-packs/report":
+                query = parse_qs(parsed.query)
+                requested_path = (query.get("path") or [""])[0]
+                mode = (query.get("mode") or ["preview"])[0]
+                try:
+                    file_path = resolve_client_pack_report_file(requested_path, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                except (PermissionError, FileNotFoundError) as exc:
+                    json_response(self, HTTPStatus.FORBIDDEN, {"ok": False, "error": "blocked_client_pack_report", "message": str(exc)})
+                    return
+                content_type = "application/json; charset=utf-8" if file_path.suffix.lower() == ".json" else "text/markdown; charset=utf-8"
+                binary_file_response(self, file_path, content_type, download=mode == "download")
                 return
             if route == "/api/audits":
                 payload = get_status(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
