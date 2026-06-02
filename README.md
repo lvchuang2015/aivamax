@@ -103,9 +103,9 @@ The v1.3 service layer is in `aivamax_services.py`. It owns role permissions, pu
 Role model:
 
 ```text
-owner_admin: full local operator, can run matrix jobs and export skills.
-team_operator: team execution role, can run matrix jobs, audits, exports, and material review.
-instructor_private: course delivery role, can read public course assets, run audits, and export course material.
+owner_admin: full local operator, can run matrix jobs, course-factory production, client-pack workflows, skill export, and final release approval.
+team_operator: team execution role, can run production/audit/export/client-pack workflows and create pending release reviews, but cannot record approved/rejected final decisions.
+instructor_private: course delivery role, can read course assets, run audits, export course material, and review client-facing pack outputs without production or final signoff authority.
 student_public: student coach role, can only read public course assets, platform playbooks, and public-safe knowledge summaries.
 ```
 
@@ -115,7 +115,7 @@ Start the local console:
 .\aivamax.ps1 console --host 127.0.0.1 --port 8765
 ```
 
-Then open `http://127.0.0.1:8765`. The v1.3 console is local-only and starts from a read-first posture. It shows source statistics, five-platform readiness, course/export package status, audit state, MCP/Skill status, external host integration status, student coach preview, role permissions, release gate status, material review status, three role views, and the Agent OS architecture map.
+Then open `http://127.0.0.1:8765`. The v1.3 console is local-only and starts from a read-first posture. It shows source statistics, five-platform readiness, course/export package status, audit state, MCP/Skill status, external host integration status, student coach preview, role permissions, release gate status, material review status, role views, and the Agent OS architecture map.
 
 The safe action buttons are allowlisted only:
 
@@ -261,7 +261,7 @@ Export role Skills:
 .\aivamax.ps1 role-audit --role student_public
 ```
 
-Generated Skills live under `skills/` and act as role instructions for external agent hosts. They do not replace AIvaMax Core.
+Generated Skills live under `skills/` and act as role instructions for external agent hosts. They include the current release/export boundary: owner admins can record final `approved`/`rejected` decisions, team operators can prepare assets and record `pending_review`, and governed client-pack/release/distribution exports must use their dedicated APIs. They do not replace AIvaMax Core.
 
 Student coach preview:
 
