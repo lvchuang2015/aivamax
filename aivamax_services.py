@@ -432,6 +432,23 @@ def list_courses(
     )
 
 
+GOVERNED_PUBLIC_EXPORT_DIRS = {
+    "client_packs": "client_pack_delivery",
+    "release_bundle": "final_release_bundle",
+    "approved_distribution": "approved_distribution",
+}
+
+
+def governed_public_export_category(path: Path, public_export_root: Path) -> str | None:
+    try:
+        relative = path.resolve().relative_to(public_export_root.resolve())
+    except ValueError:
+        return None
+    if not relative.parts:
+        return None
+    return GOVERNED_PUBLIC_EXPORT_DIRS.get(relative.parts[0])
+
+
 def list_public_exports(
     *,
     data_dir: Path | str | None = None,
@@ -442,14 +459,34 @@ def list_public_exports(
     ctx = make_context(data_dir, brand_config_path)
     root = ctx.matrix_root / "public_export"
     exports: list[dict[str, Any]] = []
+    governed_counts: dict[str, dict[str, Any]] = {}
     if root.exists():
         for path in sorted([p for p in root.rglob("*") if p.is_file()]):
-            if not is_blocked_path(path):
-                exports.append({"path": relpath(path), "size": path.stat().st_size})
+            if is_blocked_path(path):
+                continue
+            governed_category = governed_public_export_category(path, root)
+            if governed_category:
+                item = governed_counts.setdefault(
+                    governed_category,
+                    {
+                        "category": governed_category,
+                        "root": relpath(root / next(name for name, category in GOVERNED_PUBLIC_EXPORT_DIRS.items() if category == governed_category)),
+                        "file_count": 0,
+                        "visibility": "governed_export",
+                    },
+                )
+                item["file_count"] += 1
+                continue
+            exports.append({"path": relpath(path), "size": path.stat().st_size, "visibility": "public_course_export"})
     return service_response(
         action="aivamax_list_public_exports",
         role=role,
-        result={"root": relpath(root), "files": exports, "file_count": len(exports)},
+        result={
+            "root": relpath(root),
+            "files": exports,
+            "file_count": len(exports),
+            "governed_exports": sorted(governed_counts.values(), key=lambda item: item["category"]),
+        },
         public_paths=[item["path"] for item in exports],
     )
 

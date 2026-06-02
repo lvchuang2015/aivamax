@@ -138,6 +138,7 @@ class AIvaMaxCLITest(unittest.TestCase):
                 "/api/status",
                 "/api/platforms",
                 "/api/courses",
+                "/api/public-exports",
                 "/api/audits",
                 "/api/architecture",
                 "/api/roles",
@@ -311,6 +312,44 @@ class AIvaMaxCLITest(unittest.TestCase):
         )
         self.assertFalse(blocked_rejection["ok"])
         self.assertEqual(blocked_rejection["error"], "owner_approval_required")
+
+    def test_public_exports_exclude_governed_release_and_client_assets(self) -> None:
+        data_dir = self.make_console_fixture()
+        matrix_root = data_dir / "obsidian" / "AIvaMax_Matrix"
+        public_root = matrix_root / "public_export"
+        normal_file = public_root / "AIvaMax Course" / "module-1" / "AIvaMax_Student_Manual.md"
+        normal_file.parent.mkdir(parents=True, exist_ok=True)
+        normal_file.write_text("# AIvaMax Student Manual\n", encoding="utf-8")
+        governed_files = [
+            public_root / "client_packs" / "demo-pack" / "demo-pack-client-delivery.zip",
+            public_root / "client_packs" / "demo-pack" / "Delivery-QA-Report.md",
+            public_root / "release_bundle" / "AIvaMax-Course-Factory-Final-Release.zip",
+            public_root / "release_bundle" / "AIvaMax-Course-Factory-Final-Release-Manifest.json",
+            public_root / "approved_distribution" / "AIvaMax-Approved-Distribution.zip",
+        ]
+        for path in governed_files:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("AIvaMax governed export\n", encoding="utf-8")
+
+        exports = services.list_public_exports(
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="owner_admin",
+        )
+        self.assertTrue(exports["ok"], exports)
+        result = exports["result"]
+        file_paths = [item["path"] for item in result["files"]]
+        public_paths = exports["public_paths"]
+        self.assertIn(core.relpath(normal_file), file_paths)
+        dumped_files = json.dumps(file_paths, ensure_ascii=False)
+        dumped_public_paths = json.dumps(public_paths, ensure_ascii=False)
+        for fragment in ["client_packs", "release_bundle", "approved_distribution"]:
+            self.assertNotIn(fragment, dumped_files)
+            self.assertNotIn(fragment, dumped_public_paths)
+        governed = {item["category"]: item for item in result["governed_exports"]}
+        self.assertEqual(governed["client_pack_delivery"]["file_count"], 2)
+        self.assertEqual(governed["final_release_bundle"]["file_count"], 2)
+        self.assertEqual(governed["approved_distribution"]["file_count"], 1)
 
     def test_mcp_tools_enforce_student_boundary(self) -> None:
         data_dir = self.make_console_fixture()
