@@ -139,12 +139,14 @@ Course factory production is also exposed through:
 - `POST /api/actions/course-factory-delete-scenario`
 - `POST /api/actions/course-factory-reset-scenarios`
 - `POST /api/actions/client-pack-generate`
+- `POST /api/actions/client-pack-export-zip`
 - `POST /api/actions/course-factory-run-all`
 - `GET /api/client-packs`
 - `GET /api/client-packs/file?path=<encoded-path>&mode=preview|download`
+- `GET /api/client-packs/archive?path=<encoded-path>&mode=download`
 
 The scenario file is internal production configuration. The Console editor can add, replace, delete, and reset scenarios by `client_code`; public exports and sales previews are generated separately under `AIvaMax_Matrix/public_export`.
-Client-pack file links are restricted to `AIvaMax_Matrix/50_Projects/Samples/<pack>/00-07_*.md`; internal README and manifest files are not exposed through the preview/download route.
+Client-pack file links are restricted to the fixed client-facing `00-07_*.md` whitelist under `AIvaMax_Matrix/50_Projects/Samples/<pack>`. ZIP exports live under `AIvaMax_Matrix/public_export/client_packs/<pack>` and contain only those eight files; internal README and manifest files are not exposed through preview, download, or ZIP routes.
 
 ## MCP and Skill Layer
 
@@ -200,6 +202,7 @@ aivamax_student_coach_preview
 aivamax_get_course_factory_status
 aivamax_run_course_factory
 aivamax_generate_client_pack
+aivamax_export_client_pack_zip
 ```
 
 The MCP layer never exposes arbitrary shell, arbitrary file reads, raw source mirrors, internal project folders, or internal evidence metadata.

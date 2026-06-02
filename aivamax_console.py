@@ -14,6 +14,7 @@ from aivamax_services import (
     course_factory_status,
     delete_course_factory_scenario,
     export_course,
+    export_client_pack_zip,
     generate_client_pack_from_scenario,
     generate_platform_assets,
     get_status,
@@ -35,6 +36,7 @@ from aivamax_services import (
     student_coach_preview,
     init_course_factory_scenarios,
     reset_course_factory_scenarios,
+    resolve_client_pack_archive_file,
     resolve_client_pack_file,
     upsert_course_factory_scenario,
 )
@@ -356,6 +358,17 @@ def console_html() -> str:
         log.textContent = `Client pack generation failed: ${err.message}`;
       }
     }
+    async function exportPackZip(packId) {
+      const log = document.getElementById('actionLog');
+      log.textContent = `Exporting ZIP for ${packId}...`;
+      try {
+        const result = await postJson('/api/actions/client-pack-export-zip', { pack_id: packId });
+        log.textContent = JSON.stringify(result, null, 2);
+        await refreshAll();
+      } catch (err) {
+        log.textContent = `Client pack ZIP export failed: ${err.message}`;
+      }
+    }
     function render(data, extra) {
       document.getElementById('status').textContent = `${data.public_brand} v${data.version} | ${data.generated_at} | ${data.data_dir}`;
       document.getElementById('metrics').innerHTML = [
@@ -421,6 +434,7 @@ def console_html() -> str:
       document.getElementById('clientPackRows').innerHTML = (packs.packs || []).slice(0, 8).map(pack => `
         <div class="card">
           <div class="row"><div><strong>${esc(pack.pack_id)}</strong><div class="path">${esc(pack.path)}</div></div><span class="pill">${esc(pack.client_file_count || 0)} files</span></div>
+          <div class="toolbar"><button class="primary" data-pack-id="${esc(pack.pack_id)}" onclick="exportPackZip(this.dataset.packId)">Export ZIP</button>${pack.archive ? ` <a href="${esc(pack.archive.download_url)}" target="_blank">Download ZIP</a>` : ''}</div>
           <table>
             <thead><tr><th>File</th><th>Size</th><th>Links</th></tr></thead>
             <tbody>${(pack.files || []).filter(file => file.visibility === 'client_delivery').map(file => `
@@ -471,6 +485,17 @@ def markdown_file_response(handler: BaseHTTPRequestHandler, path: Path, *, downl
     raw = path.read_bytes()
     handler.send_response(HTTPStatus.OK)
     handler.send_header("Content-Type", "text/markdown; charset=utf-8")
+    handler.send_header("Content-Length", str(len(raw)))
+    if download:
+        handler.send_header("Content-Disposition", f'attachment; filename="{path.name}"')
+    handler.end_headers()
+    handler.wfile.write(raw)
+
+
+def binary_file_response(handler: BaseHTTPRequestHandler, path: Path, content_type: str, *, download: bool = False) -> None:
+    raw = path.read_bytes()
+    handler.send_response(HTTPStatus.OK)
+    handler.send_header("Content-Type", content_type)
     handler.send_header("Content-Length", str(len(raw)))
     if download:
         handler.send_header("Content-Disposition", f'attachment; filename="{path.name}"')
@@ -549,6 +574,17 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                     json_response(self, HTTPStatus.FORBIDDEN, {"ok": False, "error": "blocked_client_pack_file", "message": str(exc)})
                     return
                 markdown_file_response(self, file_path, download=mode == "download")
+                return
+            if route == "/api/client-packs/archive":
+                query = parse_qs(parsed.query)
+                requested_path = (query.get("path") or [""])[0]
+                mode = (query.get("mode") or ["download"])[0]
+                try:
+                    file_path = resolve_client_pack_archive_file(requested_path, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                except (PermissionError, FileNotFoundError) as exc:
+                    json_response(self, HTTPStatus.FORBIDDEN, {"ok": False, "error": "blocked_client_pack_archive", "message": str(exc)})
+                    return
+                binary_file_response(self, file_path, "application/zip", download=mode == "download")
                 return
             if route == "/api/audits":
                 payload = get_status(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
@@ -646,6 +682,15 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                     json_response(self, HTTPStatus.BAD_REQUEST, {"ok": False, "error": "invalid_json", "message": str(exc)})
                     return
                 payload = generate_client_pack_from_scenario(body, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.BAD_REQUEST, payload)
+                return
+            if route == "/api/actions/client-pack-export-zip":
+                try:
+                    body = read_json_body(self)
+                except ValueError as exc:
+                    json_response(self, HTTPStatus.BAD_REQUEST, {"ok": False, "error": "invalid_json", "message": str(exc)})
+                    return
+                payload = export_client_pack_zip(body, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.BAD_REQUEST, payload)
                 return
             if route == "/api/actions/course-factory-run-all":

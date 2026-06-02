@@ -4,6 +4,7 @@ import json
 import re
 import subprocess
 import sys
+import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -301,6 +302,7 @@ def get_status(
             "aivamax_get_course_factory_status",
             "aivamax_run_course_factory",
             "aivamax_generate_client_pack",
+            "aivamax_export_client_pack_zip",
         ],
         "mcp_modes": ["http-json", "stdio-jsonrpc"],
         "skills": [
@@ -384,15 +386,33 @@ def list_public_exports(
     )
 
 
-CLIENT_PACK_PUBLIC_FILE_RE = re.compile(r"^(0[0-7])_.+\.md$", re.I)
+CLIENT_PACK_PUBLIC_FILENAMES = [
+    "00_Client-Brief.md",
+    "01_Strategy-Plan.md",
+    "02_Account-Matrix.md",
+    "03_Platform-Weights.md",
+    "04_Content-Calendar.md",
+    "05_Content-Topic-Bank.md",
+    "06_Review-Forecast.md",
+    "07_Risk-Boundary.md",
+]
+CLIENT_PACK_PUBLIC_FILE_SET = set(CLIENT_PACK_PUBLIC_FILENAMES)
 
 
 def client_pack_root(ctx: ServiceContext) -> Path:
     return ctx.matrix_root / "50_Projects" / "Samples"
 
 
+def client_pack_export_root(ctx: ServiceContext) -> Path:
+    return ctx.matrix_root / "public_export" / "client_packs"
+
+
 def is_client_pack_public_file(path: Path) -> bool:
-    return path.is_file() and bool(CLIENT_PACK_PUBLIC_FILE_RE.match(path.name))
+    return path.is_file() and path.name in CLIENT_PACK_PUBLIC_FILE_SET
+
+
+def client_pack_public_files(pack_dir: Path) -> list[Path]:
+    return [pack_dir / name for name in CLIENT_PACK_PUBLIC_FILENAMES if (pack_dir / name).is_file()]
 
 
 def client_pack_file_record(path: Path) -> dict[str, Any]:
@@ -411,6 +431,18 @@ def client_pack_file_record(path: Path) -> dict[str, Any]:
     return record
 
 
+def client_pack_archive_record(path: Path) -> dict[str, Any]:
+    relative = relpath(path)
+    quoted = quote(relative, safe="")
+    return {
+        "name": path.name,
+        "path": relative,
+        "size": path.stat().st_size,
+        "visibility": "client_delivery_archive",
+        "download_url": f"/api/client-packs/archive?path={quoted}&mode=download",
+    }
+
+
 def read_client_pack_manifest(pack_dir: Path) -> dict[str, Any]:
     manifest_path = pack_dir / "manifest.json"
     if not manifest_path.exists():
@@ -420,6 +452,16 @@ def read_client_pack_manifest(pack_dir: Path) -> dict[str, Any]:
     except json.JSONDecodeError:
         return {}
     return data if isinstance(data, dict) else {}
+
+
+def latest_client_pack_archive(ctx: ServiceContext, pack_id: str) -> dict[str, Any] | None:
+    archive_dir = client_pack_export_root(ctx) / cli.slugify(pack_id, fallback="client-pack", max_len=72)
+    if not archive_dir.exists():
+        return None
+    archives = sorted(archive_dir.glob("*.zip"), key=lambda path: path.stat().st_mtime, reverse=True)
+    if not archives:
+        return None
+    return client_pack_archive_record(archives[0])
 
 
 def list_client_packs(
@@ -437,10 +479,12 @@ def list_client_packs(
         for pack_dir in pack_dirs:
             files = sorted([path for path in pack_dir.iterdir() if path.is_file()])
             manifest = read_client_pack_manifest(pack_dir)
-            public_files = [path for path in files if is_client_pack_public_file(path)]
+            public_files = client_pack_public_files(pack_dir)
             file_records = [client_pack_file_record(path) for path in public_files]
+            pack_id = str(manifest.get("pack_id") or pack_dir.name)
+            archive = latest_client_pack_archive(ctx, pack_id)
             packs.append({
-                "pack_id": manifest.get("pack_id") or pack_dir.name,
+                "pack_id": pack_id,
                 "path": relpath(pack_dir),
                 "generated_at": manifest.get("generated_at"),
                 "industry": manifest.get("industry", ""),
@@ -452,6 +496,7 @@ def list_client_packs(
                 "client_file_count": len(file_records),
                 "internal_file_count": len(files) - len(file_records),
                 "files": file_records,
+                "archive": archive,
             })
     result = {"root": relpath(root), "pack_count": len(packs), "packs": packs}
     return service_response(
@@ -483,6 +528,148 @@ def resolve_client_pack_file(
     if not is_client_pack_public_file(candidate):
         raise PermissionError("Only client-facing package files 00-07_*.md can be previewed or downloaded.")
     return candidate
+
+
+def resolve_client_pack_dir(
+    request: dict[str, Any],
+    ctx: ServiceContext,
+) -> Path:
+    root = client_pack_root(ctx).resolve()
+    requested_path = str(request.get("path", "") or "").strip()
+    pack_id = str(request.get("pack_id", "") or request.get("client_code", "") or "").strip()
+    if requested_path:
+        candidate = core.resolve_reported_path(requested_path)
+        if candidate is None:
+            candidate = Path(requested_path)
+        candidate = candidate.resolve()
+        try:
+            candidate.relative_to(root)
+        except ValueError as exc:
+            raise PermissionError("Client pack directory must be under AIvaMax_Matrix/50_Projects/Samples.") from exc
+        if not candidate.is_dir():
+            raise FileNotFoundError(f"Client pack directory not found: {requested_path}")
+        return candidate
+    if not pack_id:
+        raise ValueError("pack_id or path is required.")
+    slug = cli.slugify(pack_id, fallback="client-pack", max_len=72)
+    direct = root / slug
+    if direct.is_dir():
+        return direct
+    if root.exists():
+        for pack_dir in root.iterdir():
+            if not pack_dir.is_dir():
+                continue
+            manifest = read_client_pack_manifest(pack_dir)
+            candidates = {pack_dir.name.lower(), str(manifest.get("pack_id", "")).lower()}
+            if pack_id.lower() in candidates or slug.lower() in candidates:
+                return pack_dir
+    raise FileNotFoundError(f"Client pack not found: {pack_id}")
+
+
+def resolve_client_pack_archive_file(
+    requested_path: str,
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> Path:
+    require_permission(role, "client_packs")
+    ctx = make_context(data_dir, brand_config_path)
+    root = client_pack_export_root(ctx).resolve()
+    candidate = core.resolve_reported_path(requested_path)
+    if candidate is None:
+        candidate = Path(requested_path)
+    candidate = candidate.resolve()
+    try:
+        candidate.relative_to(root)
+    except ValueError as exc:
+        raise PermissionError("Client pack archive must be under AIvaMax_Matrix/public_export/client_packs.") from exc
+    if not candidate.is_file() or candidate.suffix.lower() != ".zip":
+        raise PermissionError("Only exported client pack ZIP archives can be downloaded.")
+    return candidate
+
+
+def audit_client_pack_public_files(public_files: list[Path], brand_config: dict[str, Any]) -> list[dict[str, Any]]:
+    violations: list[dict[str, Any]] = []
+    for path in public_files:
+        violations.extend(cli.scan_brand_violations(path, brand_config))
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for line_no, line in enumerate(text.splitlines(), 1):
+            for term in BLOCKED_PUBLIC_TERMS:
+                if re.search(re.escape(term), line, flags=re.I):
+                    violations.append({
+                        "path": relpath(path),
+                        "term": term,
+                        "line": line_no,
+                        "text": line.strip()[:240],
+                    })
+    return violations
+
+
+def export_client_pack_zip(
+    request: dict[str, Any] | None = None,
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    request = request or {}
+    try:
+        pack_dir = resolve_client_pack_dir(request, ctx)
+    except (PermissionError, FileNotFoundError, ValueError) as exc:
+        return service_response(action="aivamax_export_client_pack_zip", role=caller_role, ok=False, error="client_pack_not_found", warnings=[str(exc)])
+
+    manifest = read_client_pack_manifest(pack_dir)
+    pack_id = str(manifest.get("pack_id") or pack_dir.name)
+    public_files = client_pack_public_files(pack_dir)
+    present_names = {path.name for path in public_files}
+    missing = [name for name in CLIENT_PACK_PUBLIC_FILENAMES if name not in present_names]
+    if missing:
+        return service_response(
+            action="aivamax_export_client_pack_zip",
+            role=caller_role,
+            ok=False,
+            error="incomplete_client_pack",
+            result={"pack_id": pack_id, "path": relpath(pack_dir), "missing_files": missing},
+            warnings=missing,
+        )
+
+    brand_violations = audit_client_pack_public_files(public_files, ctx.brand_config)
+    if brand_violations:
+        return service_response(
+            action="aivamax_export_client_pack_zip",
+            role=caller_role,
+            ok=False,
+            error="client_pack_audit_failed",
+            result={"pack_id": pack_id, "path": relpath(pack_dir), "violations": brand_violations[:20]},
+            audit={"passed": False, "violation_count": len(brand_violations)},
+        )
+
+    archive_dir = client_pack_export_root(ctx) / cli.slugify(pack_id, fallback="client-pack", max_len=72)
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    archive_path = archive_dir / f"{cli.slugify(pack_id, fallback='client-pack', max_len=72)}-client-delivery.zip"
+    with zipfile.ZipFile(archive_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for path in public_files:
+            archive.write(path, arcname=path.name)
+    archive_record = client_pack_archive_record(archive_path)
+    result = {
+        "pack_id": pack_id,
+        "pack_path": relpath(pack_dir),
+        "archive": archive_record,
+        "included_files": [path.name for path in public_files],
+        "excluded_internal_files": ["08_Delivery-README.md", "manifest.json"],
+        "brand_audit": {"passed": True, "violation_count": 0},
+        "artifact_boundary": {"passed": True, "internal_files_excluded": True},
+    }
+    return service_response(
+        action="aivamax_export_client_pack_zip",
+        role=caller_role,
+        result=result,
+        public_paths=[archive_record["path"]],
+        audit={"passed": True, "violation_count": 0},
+    )
 
 
 def search_public_knowledge(
@@ -1657,6 +1844,7 @@ def render_skill(role: str) -> str:
             "aivamax_get_course_factory_status",
             "aivamax_run_course_factory",
             "aivamax_generate_client_pack",
+            "aivamax_export_client_pack_zip",
         ])
     if role == STUDENT_PUBLIC:
         preferred_tools.append("aivamax_student_coach_preview")

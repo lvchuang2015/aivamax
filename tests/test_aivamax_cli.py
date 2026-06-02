@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import io
 import json
 import sys
 import threading
@@ -10,6 +11,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import uuid
+import zipfile
 from pathlib import Path
 
 
@@ -172,6 +174,7 @@ class AIvaMaxCLITest(unittest.TestCase):
             self.assertIn("Run Course Factory", html)
             self.assertIn("Client Scenario Editor", html)
             self.assertIn("Generate Pack", html)
+            self.assertIn("Export ZIP", html)
             self.assertIn("Client Delivery Packs", html)
         finally:
             server.shutdown()
@@ -288,6 +291,7 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("aivamax_get_course_factory_status", tool_names)
         self.assertIn("aivamax_run_course_factory", tool_names)
         self.assertIn("aivamax_generate_client_pack", tool_names)
+        self.assertIn("aivamax_export_client_pack_zip", tool_names)
         self.assertIn("inputSchema", tools[0])
         status = mcp.call_tool(
             "aivamax_get_status",
@@ -351,6 +355,14 @@ class AIvaMaxCLITest(unittest.TestCase):
         )
         self.assertFalse(blocked_pack["ok"])
         self.assertEqual(blocked_pack["error"], "permission_denied")
+        blocked_zip = mcp.call_tool(
+            "aivamax_export_client_pack_zip",
+            {"role": "student_public", "pack_id": "AI-SaaS-Pilot"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_zip["ok"])
+        self.assertEqual(blocked_zip["error"], "permission_denied")
 
     def test_mcp_jsonrpc_stdio_protocol_shape(self) -> None:
         data_dir = self.make_console_fixture()
@@ -1552,6 +1564,13 @@ Module {number} production output
                 brand_config_path=ROOT / "config" / "brand_config.json",
                 role="student_public",
             )
+        with self.assertRaises(PermissionError):
+            services.export_client_pack_zip(
+                {"pack_id": "AI-SaaS-Pilot"},
+                data_dir=data_dir,
+                brand_config_path=ROOT / "config" / "brand_config.json",
+                role="student_public",
+            )
         invalid = services.upsert_course_factory_scenario(
             {"client_code": "bad", "industry": "AI SaaS", "product": "Offer", "market": "US", "goal": "lead_generation", "days": 366},
             data_dir=data_dir,
@@ -1623,6 +1642,35 @@ Module {number} production output
             generated_names = {item["name"] for item in generated_pack["files"]}
             self.assertNotIn("08_Delivery-README.md", generated_names)
             self.assertNotIn("manifest.json", generated_names)
+
+            request = urllib.request.Request(
+                base + "/api/actions/client-pack-export-zip",
+                data=json.dumps({"pack_id": "ai-saas-pilot"}).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(request, timeout=30) as response:
+                zip_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(zip_payload["ok"], zip_payload)
+            expected_client_files = [
+                "00_Client-Brief.md",
+                "01_Strategy-Plan.md",
+                "02_Account-Matrix.md",
+                "03_Platform-Weights.md",
+                "04_Content-Calendar.md",
+                "05_Content-Topic-Bank.md",
+                "06_Review-Forecast.md",
+                "07_Risk-Boundary.md",
+            ]
+            self.assertEqual(zip_payload["result"]["included_files"], expected_client_files)
+            self.assertTrue(zip_payload["result"]["artifact_boundary"]["internal_files_excluded"])
+            with urllib.request.urlopen(base + zip_payload["result"]["archive"]["download_url"], timeout=20) as response:
+                archive_bytes = response.read()
+            with zipfile.ZipFile(io.BytesIO(archive_bytes)) as archive:
+                archive_names = set(archive.namelist())
+            self.assertEqual(archive_names, set(expected_client_files))
+            self.assertNotIn("08_Delivery-README.md", archive_names)
+            self.assertNotIn("manifest.json", archive_names)
 
             request = urllib.request.Request(base + "/api/actions/course-factory-run-all", method="POST")
             with urllib.request.urlopen(request, timeout=90) as response:
