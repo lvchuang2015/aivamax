@@ -7304,6 +7304,35 @@ def run_final_release_bundle(args: argparse.Namespace) -> int:
     return 0 if result.get("ok") else 1
 
 
+def run_release_signoff_record(args: argparse.Namespace) -> int:
+    from aivamax_services import release_signoff_record
+
+    result = release_signoff_record(
+        {
+            "decision": args.decision,
+            "signer": args.signer,
+            "version": args.version,
+            "notes": args.notes,
+            "require_ready": args.require_ready,
+        },
+        data_dir=Path(args.data_dir),
+        brand_config_path=Path(args.brand_config),
+        role=args.role,
+    )
+    if args.json:
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+    else:
+        payload = result.get("result", {})
+        bundle = payload.get("bundle", {})
+        record = payload.get("record", {})
+        print(f"Release record: {payload.get('decision')}")
+        print(f"Release ID: {payload.get('release_id')}")
+        print(f"Bundle SHA256: {bundle.get('sha256')}")
+        if record.get("markdown"):
+            print(f"Record: {record['markdown'].get('path')}")
+    return 0 if result.get("ok") else 1
+
+
 def run_material_review(args: argparse.Namespace) -> int:
     from aivamax_services import material_review
 
@@ -7540,6 +7569,16 @@ def build_parser() -> argparse.ArgumentParser:
     final_release_bundle_parser.add_argument("--require-ready", action=argparse.BooleanOptionalAction, default=True)
     final_release_bundle_parser.add_argument("--json", action="store_true")
     final_release_bundle_parser.set_defaults(func=run_final_release_bundle)
+
+    release_signoff_record_parser = sub.add_parser("release-signoff-record", help="Write a release signoff record with bundle hash, decision, signer, and release gates.")
+    release_signoff_record_parser.add_argument("--decision", default="pending_review", choices=["pending_review", "approved", "rejected"])
+    release_signoff_record_parser.add_argument("--signer", default="owner_admin")
+    release_signoff_record_parser.add_argument("--version", default="course-factory-v1")
+    release_signoff_record_parser.add_argument("--notes", default="")
+    release_signoff_record_parser.add_argument("--role", default="owner_admin", choices=["owner_admin", "team_operator", "instructor_private", "student_public"])
+    release_signoff_record_parser.add_argument("--require-ready", action=argparse.BooleanOptionalAction, default=True)
+    release_signoff_record_parser.add_argument("--json", action="store_true")
+    release_signoff_record_parser.set_defaults(func=run_release_signoff_record)
 
     material_review = sub.add_parser("material-review", help="Review AIvaMax media and case material readiness.")
     material_review.add_argument("--path")

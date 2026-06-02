@@ -1,0 +1,61 @@
+{
+  "release_id": "REL-20260602061539",
+  "generated_at": "2026-06-02T06:15:39+00:00",
+  "public_brand": "AIvaMax",
+  "decision": "pending_review",
+  "signer": "owner_admin",
+  "version": "course-factory-v1",
+  "notes": "Automated release record generated for final human review.",
+  "course": {
+    "name": "AIvaMax社媒自动化增长系统课",
+    "path": "data/obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课",
+    "module_count": 12,
+    "audit_passed": true
+  },
+  "bundle": {
+    "archive_path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release.zip",
+    "archive_size": 87291,
+    "sha256": "b226e8ac0db5769328c7754ab034c184212000950414ca4fc6ef2b992d324e26",
+    "included_file_count": 51,
+    "manifest_path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release-Manifest.json",
+    "checklist_path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release-Signoff-Checklist.md"
+  },
+  "client_packs": {
+    "pack_count": 7,
+    "deliverable_count": 7,
+    "zip_count": 7,
+    "average_score": 97
+  },
+  "gates": {
+    "course_factory": {
+      "status": "passed",
+      "detail": "12 modules audited"
+    },
+    "scenario_config": {
+      "status": "passed",
+      "detail": "3 client scenarios"
+    },
+    "production_report": {
+      "status": "passed",
+      "detail": "data/obsidian/AIvaMax_Matrix/00_Dashboards/course_factory_run_20260602011534.json"
+    },
+    "release_gate": {
+      "status": "passed",
+      "detail": "5/5 audits passed"
+    },
+    "client_delivery_qa": {
+      "status": "passed",
+      "detail": "7/7 deliverable, 0 needs revision"
+    },
+    "zip_exports": {
+      "status": "passed",
+      "detail": "7/7 ZIP exports"
+    },
+    "repair_status": {
+      "status": "passed",
+      "detail": "0 repaired in latest batch repair"
+    }
+  },
+  "ready_to_release": true,
+  "warnings": []
+}

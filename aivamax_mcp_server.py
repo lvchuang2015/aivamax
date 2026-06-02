@@ -28,6 +28,7 @@ from aivamax_services import (
     mcp_config_export,
     repair_client_pack,
     repair_client_pack_batch,
+    release_signoff_record,
     runtime_status,
     run_audit,
     run_course_factory_production,
@@ -190,6 +191,23 @@ TOOL_DEFINITIONS = [
             "properties": {
                 "course": {"type": "string"},
                 "course_dir": {"type": "string"},
+                "require_ready": {"type": "boolean", "default": True},
+                "role": {"type": "string"},
+            },
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "aivamax_release_signoff_record",
+        "description": "Write a release signoff record with bundle hash, signoff decision, course version, and release gates.",
+        "allowed_roles": ["owner_admin", "team_operator"],
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "decision": {"type": "string", "enum": ["pending_review", "approved", "rejected"], "default": "pending_review"},
+                "signer": {"type": "string"},
+                "version": {"type": "string"},
+                "notes": {"type": "string"},
                 "require_ready": {"type": "boolean", "default": True},
                 "role": {"type": "string"},
             },
@@ -425,6 +443,8 @@ def call_tool(
             return course_factory_release_status(arguments, **common)
         if name == "aivamax_final_release_bundle":
             return final_release_bundle(arguments, **common)
+        if name == "aivamax_release_signoff_record":
+            return release_signoff_record(arguments, **common)
         if name == "aivamax_generate_client_pack":
             return generate_client_pack_from_scenario(arguments, **common)
         if name == "aivamax_export_client_pack_zip":

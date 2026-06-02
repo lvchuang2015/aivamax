@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import subprocess
@@ -306,6 +307,7 @@ def get_status(
             "aivamax_run_course_factory",
             "aivamax_course_factory_release_status",
             "aivamax_final_release_bundle",
+            "aivamax_release_signoff_record",
             "aivamax_generate_client_pack",
             "aivamax_client_pack_delivery_qa",
             "aivamax_client_pack_batch_delivery_qa",
@@ -499,6 +501,19 @@ def release_bundle_file_record(path: Path) -> dict[str, Any]:
     }
 
 
+def release_record_file_record(path: Path) -> dict[str, Any]:
+    relative = relpath(path)
+    quoted = quote(relative, safe="")
+    return {
+        "name": path.name,
+        "path": relative,
+        "size": path.stat().st_size,
+        "visibility": "release_record",
+        "preview_url": f"/api/release-record/file?path={quoted}&mode=preview",
+        "download_url": f"/api/release-record/file?path={quoted}&mode=download",
+    }
+
+
 def course_factory_release_status_report_paths(ctx: ServiceContext) -> tuple[Path, Path]:
     dashboard = ctx.matrix_root / "00_Dashboards"
     return (
@@ -519,6 +534,36 @@ def final_release_bundle_paths(ctx: ServiceContext) -> dict[str, Path]:
         "checklist": root / f"{FINAL_RELEASE_BUNDLE_BASENAME}-Signoff-Checklist.md",
         "archive": root / f"{FINAL_RELEASE_BUNDLE_BASENAME}.zip",
     }
+
+
+def release_record_root(ctx: ServiceContext) -> Path:
+    return ctx.matrix_root / "60_Reviews" / "Release Records"
+
+
+def resolve_release_record_file(
+    requested_path: str,
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> Path:
+    require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    root = release_record_root(ctx).resolve()
+    candidate = core.resolve_reported_path(requested_path)
+    if not candidate:
+        raise FileNotFoundError("Missing release record path.")
+    resolved = candidate.resolve()
+    try:
+        resolved.relative_to(root)
+    except ValueError as exc:
+        raise PermissionError("Release record must be under AIvaMax_Matrix/60_Reviews/Release Records.") from exc
+    allowed_name = candidate.name.startswith("AIvaMax-Release-Record-") or candidate.name.startswith("Latest-Release-Record")
+    if candidate.suffix.lower() not in {".json", ".md"} or not allowed_name:
+        raise PermissionError("Release record file is not allowlisted.")
+    if not candidate.exists():
+        raise FileNotFoundError(str(candidate))
+    return candidate
 
 
 def resolve_release_bundle_file(
@@ -2419,6 +2464,205 @@ def final_release_bundle(
     )
 
 
+def release_record_id() -> str:
+    return f"REL-{cli.dt.datetime.now(cli.dt.UTC).strftime('%Y%m%d%H%M%S')}"
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def normalize_signoff_decision(value: Any) -> str:
+    decision = str(value or "pending_review").strip().lower().replace("-", "_")
+    allowed = {"pending_review", "approved", "rejected"}
+    if decision not in allowed:
+        raise ValueError(f"Unsupported signoff decision: {decision}")
+    return decision
+
+
+def render_release_record_markdown(record: dict[str, Any], brand_config: dict[str, Any]) -> str:
+    brand = brand_config.get("public_brand", "AIvaMax")
+    gate_rows = "\n".join(
+        f"| {name} | {item.get('status')} | {item.get('detail')} |"
+        for name, item in record.get("gates", {}).items()
+    ) or "| - | - | - |"
+    return scrub_text(f"""---
+type: release_signoff_record
+public_brand: {brand}
+visibility: internal_release_record
+status: {record.get("decision")}
+---
+
+# {brand} Release Signoff Record
+
+| Field | Value |
+| --- | --- |
+| Release ID | {record.get("release_id")} |
+| Generated at | {record.get("generated_at")} |
+| Decision | {record.get("decision")} |
+| Signer | {record.get("signer")} |
+| Course | {record.get("course", {}).get("name")} |
+| Version | {record.get("version")} |
+| Bundle archive | {record.get("bundle", {}).get("archive_path")} |
+| Bundle SHA256 | {record.get("bundle", {}).get("sha256")} |
+| Bundle files | {record.get("bundle", {}).get("included_file_count")} |
+| Client packs | {record.get("client_packs", {}).get("pack_count")} |
+| Deliverable packs | {record.get("client_packs", {}).get("deliverable_count")} |
+| ZIP exports | {record.get("client_packs", {}).get("zip_count")} |
+
+## Signoff Notes
+
+{record.get("notes") or "No notes recorded."}
+
+## Gates
+
+| Gate | Status | Detail |
+| --- | --- | --- |
+{gate_rows}
+
+## Follow-Up
+
+- If `Decision` is `pending_review`, open the final release bundle and complete human signoff before external distribution.
+- If `Decision` is `approved`, this record is the release evidence for the referenced bundle hash.
+- If `Decision` is `rejected`, create a new release bundle after remediation and record a new signoff.
+
+## Boundary
+
+This record stores release evidence only. It references the AIvaMax final release bundle and public-safe reports; it does not include vendor documents, raw crawl storage, or private execution material.
+""", brand_config)
+
+
+def persist_release_record(record: dict[str, Any], ctx: ServiceContext) -> dict[str, Any]:
+    root = release_record_root(ctx)
+    root.mkdir(parents=True, exist_ok=True)
+    stem = f"AIvaMax-Release-Record-{record['release_id']}"
+    json_path = root / f"{stem}.json"
+    md_path = root / f"{stem}.md"
+    latest_json = root / "Latest-Release-Record.json"
+    latest_md = root / "Latest-Release-Record.md"
+    json_text = json.dumps(record, ensure_ascii=False, indent=2)
+    md_text = render_release_record_markdown(record, ctx.brand_config)
+    json_path.write_text(json_text, encoding="utf-8")
+    md_path.write_text(md_text, encoding="utf-8")
+    latest_json.write_text(json_text, encoding="utf-8")
+    latest_md.write_text(md_text, encoding="utf-8")
+    return {
+        "json": release_record_file_record(json_path),
+        "markdown": release_record_file_record(md_path),
+        "latest_json": release_record_file_record(latest_json),
+        "latest_markdown": release_record_file_record(latest_md),
+    }
+
+
+def latest_release_record(
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    path = release_record_root(ctx) / "Latest-Release-Record.json"
+    if not path.exists():
+        return service_response(action="aivamax_latest_release_record", role=caller_role, ok=False, error="no_release_record")
+    try:
+        record = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return service_response(action="aivamax_latest_release_record", role=caller_role, ok=False, error="invalid_release_record", warnings=[str(exc)])
+    latest_md = release_record_root(ctx) / "Latest-Release-Record.md"
+    record["record"] = {
+        "json": release_record_file_record(path),
+        "markdown": release_record_file_record(latest_md) if latest_md.exists() else None,
+    }
+    return service_response(
+        action="aivamax_latest_release_record",
+        role=caller_role,
+        result=record,
+        public_paths=public_paths_from_result(record),
+        audit={"passed": record.get("decision") == "approved", "decision": record.get("decision")},
+    )
+
+
+def release_signoff_record(
+    request: dict[str, Any] | None = None,
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    request = request or {}
+    try:
+        decision = normalize_signoff_decision(request.get("decision"))
+    except ValueError as exc:
+        return service_response(action="aivamax_release_signoff_record", role=caller_role, ok=False, error="invalid_decision", warnings=[str(exc)])
+    bundle_payload = final_release_bundle(
+        {
+            "course": request.get("course"),
+            "course_dir": request.get("course_dir"),
+            "require_ready": request_bool(request, "require_ready", True),
+        },
+        data_dir=ctx.data_dir,
+        brand_config_path=ctx.brand_config_path,
+        role=caller_role,
+    )
+    if not bundle_payload.get("ok"):
+        return service_response(
+            action="aivamax_release_signoff_record",
+            role=caller_role,
+            ok=False,
+            error=bundle_payload.get("error", "final_release_bundle_failed"),
+            warnings=bundle_payload.get("warnings", []),
+        )
+    bundle = bundle_payload.get("result", {})
+    archive_path = core.resolve_reported_path((bundle.get("files", {}).get("archive") or {}).get("path"))
+    if not archive_path or not archive_path.exists():
+        return service_response(action="aivamax_release_signoff_record", role=caller_role, ok=False, error="missing_release_archive")
+    gates = bundle.get("release_status", {}).get("gates", {})
+    client_packs = bundle.get("release_status", {}).get("client_packs", {})
+    record = {
+        "release_id": release_record_id(),
+        "generated_at": cli.now_iso(),
+        "public_brand": ctx.brand_config.get("public_brand", "AIvaMax"),
+        "decision": decision,
+        "signer": scrub_text(str(request.get("signer") or caller_role), ctx.brand_config),
+        "version": scrub_text(str(request.get("version") or "course-factory-v1"), ctx.brand_config),
+        "notes": scrub_text(str(request.get("notes") or ""), ctx.brand_config),
+        "course": bundle.get("course", {}),
+        "bundle": {
+            "archive_path": relpath(archive_path),
+            "archive_size": archive_path.stat().st_size,
+            "sha256": sha256_file(archive_path),
+            "included_file_count": bundle.get("included_file_count"),
+            "manifest_path": (bundle.get("files", {}).get("manifest") or {}).get("path"),
+            "checklist_path": (bundle.get("files", {}).get("checklist") or {}).get("path"),
+        },
+        "client_packs": {
+            "pack_count": client_packs.get("pack_count"),
+            "deliverable_count": client_packs.get("deliverable_count"),
+            "zip_count": client_packs.get("zip_count"),
+            "average_score": client_packs.get("average_score"),
+        },
+        "gates": gates,
+        "ready_to_release": bool(bundle.get("ready_to_release")),
+        "warnings": bundle.get("warnings", []),
+    }
+    record["record"] = persist_release_record(record, ctx)
+    return service_response(
+        action="aivamax_release_signoff_record",
+        role=caller_role,
+        result=record,
+        public_paths=[record["record"]["json"]["path"], record["record"]["markdown"]["path"], record["record"]["latest_json"]["path"], record["record"]["latest_markdown"]["path"]],
+        warnings=record.get("warnings", []),
+        audit={"passed": decision == "approved" and bool(record.get("ready_to_release")), "decision": decision, "ready_to_release": record.get("ready_to_release")},
+    )
+
+
 def init_course_factory_scenarios(
     *,
     force: bool = False,
@@ -3260,6 +3504,7 @@ def render_skill(role: str) -> str:
             "aivamax_run_course_factory",
             "aivamax_course_factory_release_status",
             "aivamax_final_release_bundle",
+            "aivamax_release_signoff_record",
             "aivamax_generate_client_pack",
             "aivamax_client_pack_delivery_qa",
             "aivamax_client_pack_batch_delivery_qa",

@@ -29,9 +29,11 @@ from aivamax_services import (
     list_client_packs,
     list_platforms,
     list_public_exports,
+    latest_release_record,
     material_review,
     mcp_config_export,
     release_gate,
+    release_signoff_record,
     role_inventory,
     run_audit,
     run_course_factory_production,
@@ -47,6 +49,7 @@ from aivamax_services import (
     resolve_client_pack_report_file,
     resolve_dashboard_report_file,
     resolve_release_bundle_file,
+    resolve_release_record_file,
     upsert_course_factory_scenario,
 )
 
@@ -128,6 +131,7 @@ def console_html() -> str:
       <button class="primary" onclick="runAction('course-factory-run-all')">Run Course Factory</button>
       <button onclick="runAction('course-factory-release-status')">Release Status</button>
       <button class="primary" onclick="runAction('final-release-bundle')">Final Bundle</button>
+      <button onclick="runAction('release-signoff-record')">Release Record</button>
       <button class="primary" onclick="refreshAll()">刷新状态</button>
       <button onclick="runAction('refresh-audits')">刷新审计</button>
       <button onclick="runAction('refresh-platform-assets')">重建平台库</button>
@@ -677,6 +681,18 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                     content_type = "text/markdown; charset=utf-8"
                 binary_file_response(self, file_path, content_type, download=mode == "download")
                 return
+            if route == "/api/release-record/file":
+                query = parse_qs(parsed.query)
+                requested_path = (query.get("path") or [""])[0]
+                mode = (query.get("mode") or ["preview"])[0]
+                try:
+                    file_path = resolve_release_record_file(requested_path, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                except (PermissionError, FileNotFoundError) as exc:
+                    json_response(self, HTTPStatus.FORBIDDEN, {"ok": False, "error": "blocked_release_record_file", "message": str(exc)})
+                    return
+                content_type = "application/json; charset=utf-8" if file_path.suffix.lower() == ".json" else "text/markdown; charset=utf-8"
+                binary_file_response(self, file_path, content_type, download=mode == "download")
+                return
             if route == "/api/client-packs/file":
                 query = parse_qs(parsed.query)
                 requested_path = (query.get("path") or [""])[0]
@@ -758,6 +774,10 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
             if route == "/api/course-factory-release-status":
                 payload = course_factory_release_status(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK, payload)
+                return
+            if route == "/api/release-record/latest":
+                payload = latest_release_record(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.NOT_FOUND, payload)
                 return
             json_response(self, HTTPStatus.NOT_FOUND, {"ok": False, "error": "unknown_route", "route": route})
 
@@ -873,6 +893,17 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                     json_response(self, HTTPStatus.BAD_REQUEST, {"ok": False, "error": "invalid_json", "message": str(exc)})
                     return
                 payload = final_release_bundle(body, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.INTERNAL_SERVER_ERROR, payload)
+                return
+            if route == "/api/actions/release-signoff-record":
+                try:
+                    body = read_json_body(self)
+                except ValueError as exc:
+                    json_response(self, HTTPStatus.BAD_REQUEST, {"ok": False, "error": "invalid_json", "message": str(exc)})
+                    return
+                body.setdefault("decision", "pending_review")
+                body.setdefault("signer", OWNER_ADMIN)
+                payload = release_signoff_record(body, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.INTERNAL_SERVER_ERROR, payload)
                 return
             if route == "/api/actions/export-mcp-config":
