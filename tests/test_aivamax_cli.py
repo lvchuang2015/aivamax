@@ -154,7 +154,7 @@ class AIvaMaxCLITest(unittest.TestCase):
                     payload = json.loads(response.read().decode("utf-8"))
                 self.assertIsInstance(payload, dict)
                 self.assertTrue(payload["ok"])
-            for route in ["/api/release-gate", "/api/material-review", "/api/course-factory-release-status"]:
+            for route in ["/api/release-gate", "/api/material-review", "/api/course-factory-release-status", "/api/course-factory-prd-status"]:
                 with urllib.request.urlopen(base + route, timeout=15) as response:
                     payload = json.loads(response.read().decode("utf-8"))
                 self.assertIsInstance(payload, dict)
@@ -263,6 +263,8 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertEqual(release_history_args.role, "owner_admin")
         release_review_pack_args = parser.parse_args(["release-review-pack"])
         self.assertEqual(release_review_pack_args.role, "owner_admin")
+        prd_status_args = parser.parse_args(["course-factory-prd-status"])
+        self.assertEqual(prd_status_args.role, "owner_admin")
         release_distribution_args = parser.parse_args(["release-distribution-package"])
         self.assertEqual(release_distribution_args.role, "owner_admin")
         release_distribution_status_args = parser.parse_args(["release-distribution-status"])
@@ -371,6 +373,7 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("aivamax_student_coach_preview", tool_names)
         self.assertIn("aivamax_get_course_factory_status", tool_names)
         self.assertIn("aivamax_run_course_factory", tool_names)
+        self.assertIn("aivamax_course_factory_prd_status", tool_names)
         self.assertIn("aivamax_course_factory_release_status", tool_names)
         self.assertIn("aivamax_final_release_bundle", tool_names)
         self.assertIn("aivamax_release_signoff_record", tool_names)
@@ -471,6 +474,14 @@ class AIvaMaxCLITest(unittest.TestCase):
         )
         self.assertFalse(blocked_factory["ok"])
         self.assertEqual(blocked_factory["error"], "permission_denied")
+        blocked_prd_status = mcp.call_tool(
+            "aivamax_course_factory_prd_status",
+            {"role": "student_public"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_prd_status["ok"])
+        self.assertEqual(blocked_prd_status["error"], "permission_denied")
         blocked_pack = mcp.call_tool(
             "aivamax_generate_client_pack",
             {"role": "student_public", "client_code": "AI-SaaS-Pilot"},
@@ -783,6 +794,40 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertNotIn("raw_path", dumped)
         self.assert_public_clean(dumped)
 
+    def test_course_factory_prd_status_reports_acceptance_checks(self) -> None:
+        data_dir = self.make_console_fixture()
+        vendor_dir = data_dir / "vendor_sources"
+        vendor_dir.mkdir(parents=True)
+        (vendor_dir / "index.jsonl").write_text(json.dumps({"id": "vendor:test", "text": "AIvaMax source chunk"}) + "\n", encoding="utf-8")
+        (vendor_dir / "manifest.json").write_text(json.dumps({"source_doc_count": 1, "chunk_count": 1}), encoding="utf-8")
+        template_root = data_dir / "obsidian" / "AIvaMax_Matrix" / "90_Templates"
+        for folder, name in [("Master", "TPL-AIVAMAX-Master.md"), ("Prompt", "TPL-AIVAMAX-Prompt.md"), ("Tables", "TPL-AIVAMAX-Table.md")]:
+            path = template_root / folder / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("# AIvaMax Template\n", encoding="utf-8")
+
+        status = services.course_factory_prd_status(
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="owner_admin",
+        )
+        self.assertTrue(status["ok"], status)
+        result = status["result"]
+        check_rows = {item["id"]: item for item in result["checks"]}
+        self.assertEqual(check_rows["web_index_boundary"]["status"], "passed")
+        self.assertEqual(check_rows["vendor_source_index"]["status"], "passed")
+        self.assertEqual(check_rows["aivamax_templates"]["status"], "passed")
+        self.assertIn(result["acceptance_status"], {"review", "ready_for_owner_review", "accepted"})
+        report_path = core.resolve_reported_path(result["report"]["markdown"]["path"])
+        self.assertTrue(report_path and report_path.exists())
+        report_text = report_path.read_text(encoding="utf-8")
+        self.assertIn("Course Factory PRD Status", report_text)
+        dumped = json.dumps(result, ensure_ascii=False)
+        self.assertNotIn("source_root", dumped)
+        self.assertNotIn("source_path", dumped)
+        self.assertNotIn("raw_path", dumped)
+        self.assert_public_clean(dumped)
+
     def test_mcp_jsonrpc_stdio_protocol_shape(self) -> None:
         data_dir = self.make_console_fixture()
         init = mcp.handle_jsonrpc_message(
@@ -829,6 +874,8 @@ class AIvaMaxCLITest(unittest.TestCase):
         team_skill = services.render_skill("team_operator")
         self.assertIn("Final release decisions (`approved`/`rejected`) allowed: yes", owner_skill)
         self.assertIn("Final release decisions (`approved`/`rejected`) allowed: no", team_skill)
+        self.assertIn("aivamax_course_factory_prd_status", owner_skill)
+        self.assertIn("aivamax_course_factory_prd_status", team_skill)
         self.assertIn("aivamax_release_distribution_status", owner_skill)
         self.assertIn("aivamax_release_distribution_package", owner_skill)
         self.assertIn("aivamax_release_distribution_delivery_record", owner_skill)

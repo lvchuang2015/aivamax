@@ -7276,6 +7276,27 @@ def run_course_factory_release_status(args: argparse.Namespace) -> int:
     return 0 if result.get("ok") else 1
 
 
+def run_course_factory_prd_status(args: argparse.Namespace) -> int:
+    from aivamax_services import course_factory_prd_status
+
+    result = course_factory_prd_status(
+        data_dir=Path(args.data_dir),
+        brand_config_path=Path(args.brand_config),
+        role=args.role,
+    )
+    if args.json:
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+    else:
+        payload = result.get("result", {})
+        summary = payload.get("summary", {})
+        report = payload.get("report", {})
+        print(f"Course factory PRD status: {payload.get('acceptance_status')}")
+        print(f"Checks: passed={summary.get('passed')} pending_owner={summary.get('pending_owner')} review={summary.get('review')}/{summary.get('total')}")
+        if report.get("markdown"):
+            print(f"Report: {report['markdown'].get('path')}")
+    return 0 if result.get("ok") else 1
+
+
 def run_final_release_bundle(args: argparse.Namespace) -> int:
     from aivamax_services import final_release_bundle
 
@@ -7668,6 +7689,11 @@ def build_parser() -> argparse.ArgumentParser:
     course_factory_release_status_parser.add_argument("--role", default="owner_admin", choices=["owner_admin", "team_operator", "instructor_private", "student_public"])
     course_factory_release_status_parser.add_argument("--json", action="store_true")
     course_factory_release_status_parser.set_defaults(func=run_course_factory_release_status)
+
+    course_factory_prd_status_parser = sub.add_parser("course-factory-prd-status", help="Generate the AIvaMax course-factory PRD acceptance dashboard.")
+    course_factory_prd_status_parser.add_argument("--role", default="owner_admin", choices=["owner_admin", "team_operator", "instructor_private", "student_public"])
+    course_factory_prd_status_parser.add_argument("--json", action="store_true")
+    course_factory_prd_status_parser.set_defaults(func=run_course_factory_prd_status)
 
     final_release_bundle_parser = sub.add_parser("final-release-bundle", help="Assemble the final AIvaMax release bundle ZIP, manifest, and signoff checklist.")
     final_release_bundle_parser.add_argument("--course")

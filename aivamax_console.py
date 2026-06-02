@@ -14,6 +14,7 @@ from aivamax_services import (
     OWNER_RELEASE_CONFIRMATIONS,
     client_pack_batch_delivery_qa,
     course_factory_release_status,
+    course_factory_prd_status,
     course_factory_status,
     client_pack_delivery_qa,
     delete_course_factory_scenario,
@@ -138,6 +139,7 @@ def console_html() -> str:
       <button onclick="runAction('course-factory-init-scenarios')">Init Client Scenarios</button>
       <button class="primary" onclick="runAction('course-factory-run-all')">Run Course Factory</button>
       <button onclick="runAction('course-factory-release-status')">Release Status</button>
+      <button onclick="runAction('course-factory-prd-status')">PRD Status</button>
       <button class="primary" onclick="runAction('final-release-bundle')">Final Bundle</button>
       <button onclick="runAction('release-signoff-record')">Release Record</button>
       <button onclick="runAction('release-history')">Release History</button>
@@ -851,6 +853,10 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                 payload = course_factory_release_status(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK, payload)
                 return
+            if route == "/api/course-factory-prd-status":
+                payload = course_factory_prd_status(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK, payload)
+                return
             if route == "/api/release-record/latest":
                 payload = latest_release_record(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.NOT_FOUND, payload)
@@ -972,6 +978,10 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                 return
             if route == "/api/actions/course-factory-release-status":
                 payload = course_factory_release_status(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.INTERNAL_SERVER_ERROR, payload)
+                return
+            if route == "/api/actions/course-factory-prd-status":
+                payload = course_factory_prd_status(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.INTERNAL_SERVER_ERROR, payload)
                 return
             if route == "/api/actions/final-release-bundle":

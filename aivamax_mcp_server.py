@@ -13,6 +13,7 @@ from aivamax_services import (
     DEFAULT_DATA_DIR,
     client_pack_batch_delivery_qa,
     client_pack_delivery_qa,
+    course_factory_prd_status,
     course_factory_release_status,
     course_factory_status,
     export_course,
@@ -185,6 +186,16 @@ TOOL_DEFINITIONS = [
                 "course_dir": {"type": "string"},
                 "role": {"type": "string"},
             },
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "aivamax_course_factory_prd_status",
+        "description": "Generate the AIvaMax course-factory PRD acceptance dashboard with evidence checks and owner-pending gates.",
+        "allowed_roles": ["owner_admin", "team_operator"],
+        "inputSchema": {
+            "type": "object",
+            "properties": {"role": {"type": "string"}},
             "additionalProperties": False,
         },
     },
@@ -513,6 +524,8 @@ def call_tool(
             )
         if name == "aivamax_course_factory_release_status":
             return course_factory_release_status(arguments, **common)
+        if name == "aivamax_course_factory_prd_status":
+            return course_factory_prd_status(arguments, **common)
         if name == "aivamax_final_release_bundle":
             return final_release_bundle(arguments, **common)
         if name == "aivamax_release_signoff_record":

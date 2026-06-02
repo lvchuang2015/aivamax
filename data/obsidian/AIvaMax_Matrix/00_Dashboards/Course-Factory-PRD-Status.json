@@ -1,0 +1,115 @@
+{
+  "generated_at": "2026-06-02T08:11:11+00:00",
+  "public_brand": "AIvaMax",
+  "acceptance_status": "ready_for_owner_review",
+  "summary": {
+    "passed": 8,
+    "pending_owner": 3,
+    "review": 0,
+    "total": 11
+  },
+  "checks": [
+    {
+      "id": "web_index_boundary",
+      "title": "Web crawl index stays separate from vendor source documents",
+      "status": "passed",
+      "passed": true,
+      "evidence": "web_index_records=998, vendor_source_doc_in_web_index=False",
+      "required_action": ""
+    },
+    {
+      "id": "vendor_source_index",
+      "title": "Vendor Word/source docs have an independent internal index",
+      "status": "passed",
+      "passed": true,
+      "evidence": "vendor_chunks=85, source_docs=1",
+      "required_action": ""
+    },
+    {
+      "id": "aivamax_templates",
+      "title": "AIvaMax derived templates exist outside raw vendor docs",
+      "status": "passed",
+      "passed": true,
+      "evidence": "template_markdown_files=12",
+      "required_action": ""
+    },
+    {
+      "id": "course_factory_release_ready",
+      "title": "Course factory release gates are ready",
+      "status": "passed",
+      "passed": true,
+      "evidence": "readiness=ready, gates=7",
+      "required_action": ""
+    },
+    {
+      "id": "course_modules",
+      "title": "Main course has at least 12 course-factory modules",
+      "status": "passed",
+      "passed": true,
+      "evidence": "module_count=12",
+      "required_action": ""
+    },
+    {
+      "id": "client_pack_templates",
+      "title": "Client delivery pack templates and ZIPs are available",
+      "status": "passed",
+      "passed": true,
+      "evidence": "deliverable=7, zips=7",
+      "required_action": ""
+    },
+    {
+      "id": "release_review_pack",
+      "title": "Owner release review pack is generated with evidence links",
+      "status": "passed",
+      "passed": true,
+      "evidence": "review_status=awaiting_owner_approval, evidence_files=6",
+      "required_action": ""
+    },
+    {
+      "id": "owner_release_decision",
+      "title": "Final release decision is owner-controlled",
+      "status": "pending_owner",
+      "passed": false,
+      "evidence": "decision=pending_review, review_status=awaiting_owner_approval",
+      "required_action": "Owner must review the release pack and record approved or rejected signoff."
+    },
+    {
+      "id": "approved_distribution_package",
+      "title": "Approved distribution package is generated only after approval",
+      "status": "pending_owner",
+      "passed": false,
+      "evidence": "distribution_status=release_not_approved, has_distribution=False",
+      "required_action": ""
+    },
+    {
+      "id": "distribution_delivery_record",
+      "title": "Distribution delivery evidence is recorded after approved handoff",
+      "status": "pending_owner",
+      "passed": false,
+      "evidence": "has_distribution=False, has_delivery_record=False",
+      "required_action": ""
+    },
+    {
+      "id": "public_leak_scan",
+      "title": "Release/public outputs do not expose source terms or raw paths",
+      "status": "passed",
+      "passed": true,
+      "evidence": "leak_hits=0",
+      "required_action": ""
+    }
+  ],
+  "release": {
+    "release_id": "REL-20260602061539",
+    "decision": "pending_review",
+    "review_status": "awaiting_owner_approval",
+    "distribution_status": "release_not_approved"
+  },
+  "leak_hits": [],
+  "next_actions": [
+    {
+      "priority": 4,
+      "title": "Owner reviews release pack and records approval or rejection",
+      "command": "aivamax.ps1 release-review-pack"
+    }
+  ]
+}

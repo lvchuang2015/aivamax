@@ -125,6 +125,7 @@ The safe action buttons are allowlisted only:
 - `Init Client Scenarios`: create or refresh the internal course-factory client scenario JSON under `AIvaMax_Matrix/90_Templates/Tables`.
 - `Run Course Factory`: run the full course-factory production pipeline: audit, public export, sales preview, sample client packs, and production report.
 - `Release Status`: generate the course-factory release readiness dashboard across course structure, exports, client packs, ZIPs, repair status, and release gate.
+- `PRD Status`: generate the course-factory PRD acceptance dashboard across source indexes, AIvaMax templates, course modules, client packs, release review, distribution gates, delivery evidence, and source-leak checks.
 - `Final Bundle`: assemble the final release ZIP, manifest, and human signoff checklist from public-safe exports and reports.
 - `Release Record`: write a release signoff record with bundle hash, signer, version, and gate status; `approved` and `rejected` decisions require `owner_admin`, and Console final decisions require an explicit owner confirmation phrase.
 - `Release History`: generate the internal release-history dashboard across all signoff records.
@@ -153,6 +154,7 @@ Course factory production is also exposed through:
 - `POST /api/actions/client-pack-export-zip`
 - `POST /api/actions/course-factory-run-all`
 - `POST /api/actions/course-factory-release-status`
+- `POST /api/actions/course-factory-prd-status`
 - `POST /api/actions/final-release-bundle`
 - `POST /api/actions/release-signoff-record`
 - `POST /api/actions/release-history`
@@ -162,6 +164,7 @@ Course factory production is also exposed through:
 - `GET /api/client-packs`
 - `GET /api/dashboard/report?path=<encoded-path>&mode=preview|download`
 - `GET /api/release-bundle/file?path=<encoded-path>&mode=preview|download`
+- `GET /api/course-factory-prd-status`
 - `GET /api/release-record/latest`
 - `GET /api/release-history`
 - `GET /api/release-review-pack`
@@ -228,6 +231,7 @@ aivamax_export_mcp_config
 aivamax_student_coach_preview
 aivamax_get_course_factory_status
 aivamax_run_course_factory
+aivamax_course_factory_prd_status
 aivamax_course_factory_release_status
 aivamax_final_release_bundle
 aivamax_release_signoff_record

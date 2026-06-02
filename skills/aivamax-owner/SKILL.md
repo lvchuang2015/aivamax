@@ -64,6 +64,7 @@ Owner admins make the final release decision after reviewing the release review 
 - `aivamax_export_mcp_config`
 - `aivamax_get_course_factory_status`
 - `aivamax_run_course_factory`
+- `aivamax_course_factory_prd_status`
 - `aivamax_course_factory_release_status`
 - `aivamax_final_release_bundle`
 - `aivamax_release_signoff_record`

@@ -154,6 +154,7 @@ MCP_TOOL_ROLE_ALLOWLIST: dict[str, set[str]] = {
     "aivamax_student_coach_preview": ROLES,
     "aivamax_get_course_factory_status": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_run_course_factory": {OWNER_ADMIN, TEAM_OPERATOR},
+    "aivamax_course_factory_prd_status": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_course_factory_release_status": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_final_release_bundle": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_signoff_record": {OWNER_ADMIN, TEAM_OPERATOR},
@@ -194,6 +195,7 @@ HOST_TARGETS = {"claude-code", "work-buddy", "codex", "generic-agent"}
 DEFAULT_COURSE_FACTORY_COURSE = "AIvaMax社媒自动化增长系统课"
 COURSE_FACTORY_SCENARIO_CONFIG = "90_Templates/Tables/course_factory_client_scenarios.json"
 COURSE_FACTORY_RELEASE_STATUS_BASENAME = "Course-Factory-Release-Status"
+COURSE_FACTORY_PRD_STATUS_BASENAME = "Course-Factory-PRD-Status"
 FINAL_RELEASE_BUNDLE_BASENAME = "AIvaMax-Course-Factory-Final-Release"
 
 
@@ -758,6 +760,14 @@ def course_factory_release_status_report_paths(ctx: ServiceContext) -> tuple[Pat
     )
 
 
+def course_factory_prd_status_report_paths(ctx: ServiceContext) -> tuple[Path, Path]:
+    dashboard = ctx.matrix_root / "00_Dashboards"
+    return (
+        dashboard / f"{COURSE_FACTORY_PRD_STATUS_BASENAME}.json",
+        dashboard / f"{COURSE_FACTORY_PRD_STATUS_BASENAME}.md",
+    )
+
+
 def final_release_bundle_root(ctx: ServiceContext) -> Path:
     return ctx.matrix_root / "public_export" / "release_bundle"
 
@@ -873,8 +883,9 @@ def resolve_dashboard_report_file(
 ) -> Path:
     require_permission(role, "course_factory")
     ctx = make_context(data_dir, brand_config_path)
-    json_path, md_path = course_factory_release_status_report_paths(ctx)
-    allowed = {json_path.resolve(), md_path.resolve()}
+    release_json_path, release_md_path = course_factory_release_status_report_paths(ctx)
+    prd_json_path, prd_md_path = course_factory_prd_status_report_paths(ctx)
+    allowed = {release_json_path.resolve(), release_md_path.resolve(), prd_json_path.resolve(), prd_md_path.resolve()}
     candidate = core.resolve_reported_path(requested_path)
     if not candidate or candidate.resolve() not in allowed:
         raise PermissionError("Dashboard report is not allowlisted.")
@@ -2489,6 +2500,305 @@ def course_factory_release_status(
         result=report,
         public_paths=[report["report"]["markdown"]["path"], report["report"]["json"]["path"]],
         audit={"passed": ready_to_release, "readiness": report["readiness"]},
+    )
+
+
+def count_jsonl_records(path: Path) -> int:
+    if not path.exists():
+        return 0
+    count = 0
+    with path.open("r", encoding="utf-8", errors="ignore") as handle:
+        for line in handle:
+            if line.strip():
+                count += 1
+    return count
+
+
+def jsonl_contains(path: Path, pattern: str) -> bool:
+    if not path.exists():
+        return False
+    needle = pattern.lower()
+    with path.open("r", encoding="utf-8", errors="ignore") as handle:
+        for line in handle:
+            if needle in line.lower():
+                return True
+    return False
+
+
+def read_json_file(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def prd_check(
+    check_id: str,
+    title: str,
+    status: str,
+    evidence: str,
+    *,
+    required_action: str = "",
+) -> dict[str, Any]:
+    return {
+        "id": check_id,
+        "title": title,
+        "status": status,
+        "passed": status == "passed",
+        "evidence": evidence,
+        "required_action": required_action,
+    }
+
+
+def scan_prd_public_leaks(ctx: ServiceContext) -> list[dict[str, Any]]:
+    roots = [
+        release_record_root(ctx),
+        final_release_bundle_root(ctx),
+        ctx.matrix_root / "public_export",
+    ]
+    terms = ["JarveePro", "jarveepro.com", "source_path", "raw_path", "note_path", "source_url"]
+    hits: list[dict[str, Any]] = []
+    seen: set[Path] = set()
+    for root in roots:
+        if not root.exists():
+            continue
+        for path in root.rglob("*"):
+            if path in seen or not path.is_file() or path.suffix.lower() not in {".md", ".json", ".html", ".txt"}:
+                continue
+            seen.add(path)
+            try:
+                text = path.read_text(encoding="utf-8", errors="ignore")
+            except OSError:
+                continue
+            found = [term for term in terms if term.lower() in text.lower()]
+            if found:
+                hits.append({"path": relpath(path), "terms": found})
+                if len(hits) >= 20:
+                    return hits
+    return hits
+
+
+def render_course_factory_prd_status_markdown(report: dict[str, Any], brand_config: dict[str, Any]) -> str:
+    brand = brand_config.get("public_brand", "AIvaMax")
+    check_rows = "\n".join(
+        f"| {item.get('id')} | {item.get('status')} | {item.get('evidence')} | {item.get('required_action') or '-'} |"
+        for item in report.get("checks", [])
+    ) or "| - | - | - | - |"
+    action_rows = "\n".join(
+        f"| {item.get('priority')} | {item.get('title')} | {item.get('command')} |"
+        for item in report.get("next_actions", [])
+    ) or "| - | - | - |"
+    return scrub_text(f"""---
+type: course_factory_prd_status
+public_brand: {brand}
+visibility: internal_dashboard
+status: {report.get("acceptance_status")}
+---
+
+# {brand} Course Factory PRD Status
+
+| Field | Value |
+| --- | --- |
+| Generated at | {report.get("generated_at")} |
+| Acceptance status | {report.get("acceptance_status")} |
+| Passed checks | {report.get("summary", {}).get("passed")} |
+| Pending owner checks | {report.get("summary", {}).get("pending_owner")} |
+| Review checks | {report.get("summary", {}).get("review")} |
+| Release ID | {report.get("release", {}).get("release_id")} |
+| Release decision | {report.get("release", {}).get("decision")} |
+
+## Checks
+
+| Check | Status | Evidence | Required Action |
+| --- | --- | --- | --- |
+{check_rows}
+
+## Next Actions
+
+| Priority | Action | Command |
+| --- | --- | --- |
+{action_rows}
+
+## Boundary
+
+This dashboard tracks PRD acceptance evidence for the AIvaMax course factory. It does not approve, reject, publish, distribute, or expose vendor source material.
+""", brand_config)
+
+
+def persist_course_factory_prd_status_report(report: dict[str, Any], ctx: ServiceContext) -> dict[str, Any]:
+    json_path, md_path = course_factory_prd_status_report_paths(ctx)
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    md_path.write_text(render_course_factory_prd_status_markdown(report, ctx.brand_config), encoding="utf-8")
+    return {
+        "json": dashboard_report_record(json_path),
+        "markdown": dashboard_report_record(md_path),
+    }
+
+
+def course_factory_prd_status_next_actions(checks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    actions: list[dict[str, Any]] = []
+    status_by_id = {item["id"]: item for item in checks}
+    if status_by_id.get("vendor_source_index", {}).get("status") != "passed":
+        actions.append({"priority": 1, "title": "Refresh vendor source index", "command": "aivamax.ps1 index-vendor-source"})
+    if status_by_id.get("course_factory_release_ready", {}).get("status") != "passed":
+        actions.append({"priority": 2, "title": "Refresh course factory release readiness", "command": "aivamax.ps1 course-factory-release-status"})
+    if status_by_id.get("release_review_pack", {}).get("status") in {"review", "missing"}:
+        actions.append({"priority": 3, "title": "Generate owner release review pack", "command": "aivamax.ps1 release-review-pack"})
+    if status_by_id.get("owner_release_decision", {}).get("status") == "pending_owner":
+        actions.append({"priority": 4, "title": "Owner reviews release pack and records approval or rejection", "command": "aivamax.ps1 release-review-pack"})
+        return actions
+    if status_by_id.get("approved_distribution_package", {}).get("status") == "review":
+        actions.append({"priority": 5, "title": "Generate approved distribution package", "command": "aivamax.ps1 release-distribution-package"})
+    if status_by_id.get("approved_distribution_package", {}).get("status") == "passed" and status_by_id.get("distribution_delivery_record", {}).get("status") == "pending_owner":
+        actions.append({"priority": 6, "title": "Record owner delivery evidence after handoff", "command": "aivamax.ps1 release-distribution-delivery-record"})
+    if not actions:
+        actions.append({"priority": 1, "title": "Review PRD status and retain release evidence", "command": "aivamax.ps1 course-factory-prd-status"})
+    return actions
+
+
+def course_factory_prd_status(
+    request: dict[str, Any] | None = None,
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    request = request or {}
+    web_index = ctx.data_dir / "index.jsonl"
+    vendor_index = ctx.data_dir / "vendor_sources" / "index.jsonl"
+    vendor_manifest = read_json_file(ctx.data_dir / "vendor_sources" / "manifest.json")
+    web_count = count_jsonl_records(web_index)
+    vendor_count = count_jsonl_records(vendor_index)
+    vendor_in_web = jsonl_contains(web_index, "vendor_source_doc")
+    template_root = ctx.matrix_root / "90_Templates"
+    template_files = list(template_root.rglob("*.md")) if template_root.exists() else []
+    release_status_payload = course_factory_release_status(request, data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+    release_status = release_status_payload.get("result", {}) if release_status_payload.get("ok") else {}
+    review_payload = release_review_pack(request, data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+    review = review_payload.get("result", {}) if review_payload.get("ok") else {}
+    distribution_payload = release_distribution_status(request, data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+    distribution = distribution_payload.get("result", {}) if distribution_payload.get("ok") else {}
+    release_decision = str(distribution.get("decision") or review.get("latest_decision") or "unknown")
+    leak_hits = scan_prd_public_leaks(ctx)
+    checks = [
+        prd_check(
+            "web_index_boundary",
+            "Web crawl index stays separate from vendor source documents",
+            "passed" if web_count > 0 and not vendor_in_web else "review",
+            f"web_index_records={web_count}, vendor_source_doc_in_web_index={vendor_in_web}",
+            required_action="Keep vendor documents in data/vendor_sources and rerun source indexing." if vendor_in_web or web_count == 0 else "",
+        ),
+        prd_check(
+            "vendor_source_index",
+            "Vendor Word/source docs have an independent internal index",
+            "passed" if vendor_count > 0 and int(vendor_manifest.get("source_doc_count") or 0) > 0 else "review",
+            f"vendor_chunks={vendor_count}, source_docs={vendor_manifest.get('source_doc_count', 0)}",
+            required_action="Run aivamax.ps1 index-vendor-source." if vendor_count == 0 else "",
+        ),
+        prd_check(
+            "aivamax_templates",
+            "AIvaMax derived templates exist outside raw vendor docs",
+            "passed" if len(template_files) >= 3 else "review",
+            f"template_markdown_files={len(template_files)}",
+            required_action="Generate or repair AIvaMax templates under 90_Templates." if len(template_files) < 3 else "",
+        ),
+        prd_check(
+            "course_factory_release_ready",
+            "Course factory release gates are ready",
+            "passed" if release_status.get("ready_to_release") else "review",
+            f"readiness={release_status.get('readiness')}, gates={len(release_status.get('gates') or {})}",
+            required_action="Run course-factory-release-status and repair failed gates." if not release_status.get("ready_to_release") else "",
+        ),
+        prd_check(
+            "course_modules",
+            "Main course has at least 12 course-factory modules",
+            "passed" if int((release_status.get("course") or {}).get("module_count") or 0) >= 12 else "review",
+            f"module_count={(release_status.get('course') or {}).get('module_count', 0)}",
+            required_action="Rebuild the AIvaMax course factory modules." if int((release_status.get("course") or {}).get("module_count") or 0) < 12 else "",
+        ),
+        prd_check(
+            "client_pack_templates",
+            "Client delivery pack templates and ZIPs are available",
+            "passed" if int((release_status.get("client_packs") or {}).get("deliverable_count") or 0) >= 3 and int((release_status.get("client_packs") or {}).get("zip_count") or 0) >= 3 else "review",
+            f"deliverable={((release_status.get('client_packs') or {}).get('deliverable_count'))}, zips={((release_status.get('client_packs') or {}).get('zip_count'))}",
+            required_action="Run batch Delivery QA plus ZIP export." if int((release_status.get("client_packs") or {}).get("zip_count") or 0) < 3 else "",
+        ),
+        prd_check(
+            "release_review_pack",
+            "Owner release review pack is generated with evidence links",
+            "passed" if review.get("review_status") in {"awaiting_owner_approval", "approved_recorded"} and len(review.get("evidence_files") or []) >= 3 else "review",
+            f"review_status={review.get('review_status')}, evidence_files={len(review.get('evidence_files') or [])}",
+            required_action="Run aivamax.ps1 release-review-pack." if not review else "",
+        ),
+        prd_check(
+            "owner_release_decision",
+            "Final release decision is owner-controlled",
+            "pending_owner" if release_decision == "pending_review" else ("passed" if release_decision == "approved" else "review"),
+            f"decision={release_decision}, review_status={review.get('review_status')}",
+            required_action="Owner must review the release pack and record approved or rejected signoff." if release_decision == "pending_review" else "",
+        ),
+        prd_check(
+            "approved_distribution_package",
+            "Approved distribution package is generated only after approval",
+            "pending_owner" if release_decision == "pending_review" else ("passed" if distribution.get("has_existing_distribution") else "review"),
+            f"distribution_status={distribution.get('distribution_status')}, has_distribution={distribution.get('has_existing_distribution')}",
+            required_action="Run release-distribution-package after owner approval." if release_decision == "approved" and not distribution.get("has_existing_distribution") else "",
+        ),
+        prd_check(
+            "distribution_delivery_record",
+            "Distribution delivery evidence is recorded after approved handoff",
+            "pending_owner" if not distribution.get("has_existing_distribution") else ("passed" if distribution.get("has_delivery_record") else "pending_owner"),
+            f"has_distribution={distribution.get('has_existing_distribution')}, has_delivery_record={distribution.get('has_delivery_record')}",
+            required_action="Record delivery evidence after the approved package is handed off." if distribution.get("has_existing_distribution") and not distribution.get("has_delivery_record") else "",
+        ),
+        prd_check(
+            "public_leak_scan",
+            "Release/public outputs do not expose source terms or raw paths",
+            "passed" if not leak_hits else "review",
+            f"leak_hits={len(leak_hits)}",
+            required_action="Inspect leak_hits and rerun public-safety audits." if leak_hits else "",
+        ),
+    ]
+    summary = {
+        "passed": sum(1 for item in checks if item["status"] == "passed"),
+        "pending_owner": sum(1 for item in checks if item["status"] == "pending_owner"),
+        "review": sum(1 for item in checks if item["status"] not in {"passed", "pending_owner"}),
+        "total": len(checks),
+    }
+    if summary["review"] == 0 and summary["pending_owner"] == 0:
+        acceptance_status = "accepted"
+    elif summary["review"] == 0:
+        acceptance_status = "ready_for_owner_review"
+    else:
+        acceptance_status = "review"
+    report = {
+        "generated_at": cli.now_iso(),
+        "public_brand": ctx.brand_config.get("public_brand", "AIvaMax"),
+        "acceptance_status": acceptance_status,
+        "summary": summary,
+        "checks": checks,
+        "release": {
+            "release_id": distribution.get("release_id") or review.get("release_id"),
+            "decision": release_decision,
+            "review_status": review.get("review_status"),
+            "distribution_status": distribution.get("distribution_status"),
+        },
+        "leak_hits": leak_hits,
+    }
+    report["next_actions"] = course_factory_prd_status_next_actions(checks)
+    report["report"] = persist_course_factory_prd_status_report(report, ctx)
+    return service_response(
+        action="aivamax_course_factory_prd_status",
+        role=caller_role,
+        result=report,
+        public_paths=[report["report"]["json"]["path"], report["report"]["markdown"]["path"]],
+        audit={"passed": acceptance_status in {"accepted", "ready_for_owner_review"}, "acceptance_status": acceptance_status},
     )
 
 
@@ -4648,6 +4958,7 @@ def render_skill(role: str) -> str:
             "aivamax_export_mcp_config",
             "aivamax_get_course_factory_status",
             "aivamax_run_course_factory",
+            "aivamax_course_factory_prd_status",
             "aivamax_course_factory_release_status",
             "aivamax_final_release_bundle",
             "aivamax_release_signoff_record",
