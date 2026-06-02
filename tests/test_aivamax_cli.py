@@ -147,6 +147,7 @@ class AIvaMaxCLITest(unittest.TestCase):
                 "/api/student-coach-preview",
                 "/api/mcp/tools",
                 "/api/client-packs",
+                "/api/release-history",
             ]:
                 with urllib.request.urlopen(base + route, timeout=15) as response:
                     payload = json.loads(response.read().decode("utf-8"))
@@ -175,6 +176,7 @@ class AIvaMaxCLITest(unittest.TestCase):
             self.assertIn("Release Status", html)
             self.assertIn("Final Bundle", html)
             self.assertIn("Release Record", html)
+            self.assertIn("Release History", html)
             self.assertIn("Course Factory Release Status", html)
             self.assertIn("Client Scenario Editor", html)
             self.assertIn("Generate Pack", html)
@@ -252,6 +254,8 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertEqual(smoke_args.host, "stdio")
         host_status_args = parser.parse_args(["host-integration-status"])
         self.assertEqual(host_status_args.role, "owner_admin")
+        release_history_args = parser.parse_args(["release-history"])
+        self.assertEqual(release_history_args.role, "owner_admin")
         coach_args = parser.parse_args(["student-coach-preview", "--question", "账号安全怎么检查？"])
         self.assertEqual(coach_args.role, "student_public")
 
@@ -301,6 +305,7 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("aivamax_course_factory_release_status", tool_names)
         self.assertIn("aivamax_final_release_bundle", tool_names)
         self.assertIn("aivamax_release_signoff_record", tool_names)
+        self.assertIn("aivamax_release_history", tool_names)
         self.assertIn("aivamax_generate_client_pack", tool_names)
         self.assertIn("aivamax_client_pack_delivery_qa", tool_names)
         self.assertIn("aivamax_client_pack_batch_delivery_qa", tool_names)
@@ -426,6 +431,14 @@ class AIvaMaxCLITest(unittest.TestCase):
         )
         self.assertFalse(blocked_signoff["ok"])
         self.assertEqual(blocked_signoff["error"], "permission_denied")
+        blocked_history = mcp.call_tool(
+            "aivamax_release_history",
+            {"role": "student_public"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_history["ok"])
+        self.assertEqual(blocked_history["error"], "permission_denied")
         blocked_zip = mcp.call_tool(
             "aivamax_export_client_pack_zip",
             {"role": "student_public", "pack_id": "AI-SaaS-Pilot"},
@@ -2043,6 +2056,29 @@ Module {number} production output
                 latest_signoff_payload = json.loads(response.read().decode("utf-8"))
             self.assertTrue(latest_signoff_payload["ok"], latest_signoff_payload)
             self.assertEqual(latest_signoff_payload["result"]["release_id"], signoff["release_id"])
+
+            request = urllib.request.Request(base + "/api/actions/release-history", method="POST")
+            with urllib.request.urlopen(request, timeout=60) as response:
+                history_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(history_payload["ok"], history_payload)
+            history = history_payload["result"]
+            self.assertGreaterEqual(history["record_count"], 1)
+            self.assertEqual(history["latest_release_id"], signoff["release_id"])
+            self.assertIn("pending_review", history["decision_counts"])
+            history_path = core.resolve_reported_path(history["dashboard"]["json"]["path"])
+            self.assertTrue(history_path and history_path.exists())
+            history_data = json.loads(history_path.read_text(encoding="utf-8"))
+            self.assertNotIn("source_path", json.dumps(history_data, ensure_ascii=False))
+            self.assertNotIn("raw_path", json.dumps(history_data, ensure_ascii=False))
+            with urllib.request.urlopen(base + history["dashboard"]["markdown"]["preview_url"], timeout=20) as response:
+                history_markdown = response.read().decode("utf-8")
+            self.assertIn("Release History Dashboard", history_markdown)
+            self.assert_public_clean(history_markdown)
+
+            with urllib.request.urlopen(base + "/api/release-history", timeout=20) as response:
+                get_history_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(get_history_payload["ok"], get_history_payload)
+            self.assertEqual(get_history_payload["result"]["latest_release_id"], signoff["release_id"])
 
             with urllib.request.urlopen(base + "/api/course-factory", timeout=20) as response:
                 factory_payload = json.loads(response.read().decode("utf-8"))

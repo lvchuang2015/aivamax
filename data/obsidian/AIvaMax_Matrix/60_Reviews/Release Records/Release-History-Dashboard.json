@@ -1,0 +1,50 @@
+{
+  "generated_at": "2026-06-02T06:26:31+00:00",
+  "public_brand": "AIvaMax",
+  "record_count": 1,
+  "decision_counts": {
+    "approved": 0,
+    "pending_review": 1,
+    "rejected": 0
+  },
+  "latest_release_id": "REL-20260602061539",
+  "latest_decision": "pending_review",
+  "latest_ready_to_release": true,
+  "records": [
+    {
+      "release_id": "REL-20260602061539",
+      "generated_at": "2026-06-02T06:15:39+00:00",
+      "decision": "pending_review",
+      "signer": "owner_admin",
+      "version": "course-factory-v1",
+      "course": "AIvaMax社媒自动化增长系统课",
+      "ready_to_release": true,
+      "bundle_sha256": "b226e8ac0db5769328c7754ab034c184212000950414ca4fc6ef2b992d324e26",
+      "bundle_archive": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release.zip",
+      "included_file_count": 51,
+      "client_pack_count": 7,
+      "deliverable_count": 7,
+      "zip_count": 7,
+      "gate_passed_count": 7,
+      "gate_count": 7,
+      "record": {
+        "json": {
+          "name": "AIvaMax-Release-Record-REL-20260602061539.json",
+          "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/AIvaMax-Release-Record-REL-20260602061539.json",
+          "size": 2040,
+          "visibility": "release_record",
+          "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FAIvaMax-Release-Record-REL-20260602061539.json&mode=preview",
+          "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FAIvaMax-Release-Record-REL-20260602061539.json&mode=download"
+        },
+        "markdown": {
+          "name": "AIvaMax-Release-Record-REL-20260602061539.md",
+          "path": "data/obsidian/AIvaMax_Matrix/60_Reviews/Release Records/AIvaMax-Release-Record-REL-20260602061539.md",
+          "size": 1874,
+          "visibility": "release_record",
+          "preview_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FAIvaMax-Release-Record-REL-20260602061539.md&mode=preview",
+          "download_url": "/api/release-record/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2F60_Reviews%2FRelease%20Records%2FAIvaMax-Release-Record-REL-20260602061539.md&mode=download"
+        }
+      }
+    }
+  ]
+}

@@ -308,6 +308,7 @@ def get_status(
             "aivamax_course_factory_release_status",
             "aivamax_final_release_bundle",
             "aivamax_release_signoff_record",
+            "aivamax_release_history",
             "aivamax_generate_client_pack",
             "aivamax_client_pack_delivery_qa",
             "aivamax_client_pack_batch_delivery_qa",
@@ -558,7 +559,11 @@ def resolve_release_record_file(
         resolved.relative_to(root)
     except ValueError as exc:
         raise PermissionError("Release record must be under AIvaMax_Matrix/60_Reviews/Release Records.") from exc
-    allowed_name = candidate.name.startswith("AIvaMax-Release-Record-") or candidate.name.startswith("Latest-Release-Record")
+    allowed_name = (
+        candidate.name.startswith("AIvaMax-Release-Record-")
+        or candidate.name.startswith("Latest-Release-Record")
+        or candidate.name.startswith("Release-History-Dashboard")
+    )
     if candidate.suffix.lower() not in {".json", ".md"} or not allowed_name:
         raise PermissionError("Release record file is not allowlisted.")
     if not candidate.exists():
@@ -2587,6 +2592,128 @@ def latest_release_record(
     )
 
 
+def release_record_history_items(ctx: ServiceContext) -> list[dict[str, Any]]:
+    root = release_record_root(ctx)
+    if not root.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for path in sorted(root.glob("AIvaMax-Release-Record-*.json"), key=lambda item: item.stat().st_mtime, reverse=True):
+        try:
+            record = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        md_path = path.with_suffix(".md")
+        gates = record.get("gates", {}) if isinstance(record.get("gates"), dict) else {}
+        client_packs = record.get("client_packs", {}) if isinstance(record.get("client_packs"), dict) else {}
+        bundle = record.get("bundle", {}) if isinstance(record.get("bundle"), dict) else {}
+        items.append({
+            "release_id": record.get("release_id"),
+            "generated_at": record.get("generated_at"),
+            "decision": record.get("decision"),
+            "signer": record.get("signer"),
+            "version": record.get("version"),
+            "course": (record.get("course") or {}).get("name") if isinstance(record.get("course"), dict) else None,
+            "ready_to_release": bool(record.get("ready_to_release")),
+            "bundle_sha256": bundle.get("sha256"),
+            "bundle_archive": bundle.get("archive_path"),
+            "included_file_count": bundle.get("included_file_count"),
+            "client_pack_count": client_packs.get("pack_count"),
+            "deliverable_count": client_packs.get("deliverable_count"),
+            "zip_count": client_packs.get("zip_count"),
+            "gate_passed_count": sum(1 for item in gates.values() if isinstance(item, dict) and item.get("status") == "passed"),
+            "gate_count": len(gates),
+            "record": {
+                "json": release_record_file_record(path),
+                "markdown": release_record_file_record(md_path) if md_path.exists() else None,
+            },
+        })
+    return items
+
+
+def render_release_history_markdown(history: dict[str, Any], brand_config: dict[str, Any]) -> str:
+    brand = brand_config.get("public_brand", "AIvaMax")
+    rows = "\n".join(
+        f"| {item.get('release_id')} | {item.get('decision')} | {item.get('version')} | {item.get('ready_to_release')} | {item.get('client_pack_count')} | {str(item.get('bundle_sha256') or '')[:12]} |"
+        for item in history.get("records", [])
+    ) or "| - | - | - | - | - | - |"
+    return scrub_text(f"""---
+type: release_history_dashboard
+public_brand: {brand}
+visibility: internal_release_record
+status: {history.get("latest_decision") or "empty"}
+---
+
+# {brand} Release History Dashboard
+
+| Field | Value |
+| --- | --- |
+| Generated at | {history.get("generated_at")} |
+| Record count | {history.get("record_count")} |
+| Approved | {history.get("decision_counts", {}).get("approved", 0)} |
+| Pending review | {history.get("decision_counts", {}).get("pending_review", 0)} |
+| Rejected | {history.get("decision_counts", {}).get("rejected", 0)} |
+| Latest release | {history.get("latest_release_id") or "-"} |
+| Latest decision | {history.get("latest_decision") or "-"} |
+
+## Records
+
+| Release ID | Decision | Version | Ready | Client Packs | SHA256 Prefix |
+| --- | --- | --- | --- | --- | --- |
+{rows}
+
+## Boundary
+
+This dashboard summarizes AIvaMax release records only. It does not include vendor documents, raw crawl storage, or private execution material.
+""", brand_config)
+
+
+def persist_release_history_dashboard(history: dict[str, Any], ctx: ServiceContext) -> dict[str, Any]:
+    root = release_record_root(ctx)
+    root.mkdir(parents=True, exist_ok=True)
+    json_path = root / "Release-History-Dashboard.json"
+    md_path = root / "Release-History-Dashboard.md"
+    json_path.write_text(json.dumps(history, ensure_ascii=False, indent=2), encoding="utf-8")
+    md_path.write_text(render_release_history_markdown(history, ctx.brand_config), encoding="utf-8")
+    return {
+        "json": release_record_file_record(json_path),
+        "markdown": release_record_file_record(md_path),
+    }
+
+
+def release_history(
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    records = release_record_history_items(ctx)
+    decision_counts = {"approved": 0, "pending_review": 0, "rejected": 0}
+    for item in records:
+        decision = str(item.get("decision") or "pending_review")
+        decision_counts[decision] = decision_counts.get(decision, 0) + 1
+    latest = records[0] if records else {}
+    history = {
+        "generated_at": cli.now_iso(),
+        "public_brand": ctx.brand_config.get("public_brand", "AIvaMax"),
+        "record_count": len(records),
+        "decision_counts": decision_counts,
+        "latest_release_id": latest.get("release_id"),
+        "latest_decision": latest.get("decision"),
+        "latest_ready_to_release": latest.get("ready_to_release"),
+        "records": records,
+    }
+    history["dashboard"] = persist_release_history_dashboard(history, ctx)
+    return service_response(
+        action="aivamax_release_history",
+        role=caller_role,
+        result=history,
+        public_paths=[history["dashboard"]["json"]["path"], history["dashboard"]["markdown"]["path"]],
+        audit={"passed": len(records) > 0, "record_count": len(records), "latest_decision": latest.get("decision")},
+    )
+
+
 def release_signoff_record(
     request: dict[str, Any] | None = None,
     *,
@@ -3505,6 +3632,7 @@ def render_skill(role: str) -> str:
             "aivamax_course_factory_release_status",
             "aivamax_final_release_bundle",
             "aivamax_release_signoff_record",
+            "aivamax_release_history",
             "aivamax_generate_client_pack",
             "aivamax_client_pack_delivery_qa",
             "aivamax_client_pack_batch_delivery_qa",

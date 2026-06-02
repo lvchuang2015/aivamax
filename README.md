@@ -127,6 +127,7 @@ The safe action buttons are allowlisted only:
 - `Release Status`: generate the course-factory release readiness dashboard across course structure, exports, client packs, ZIPs, repair status, and release gate.
 - `Final Bundle`: assemble the final release ZIP, manifest, and human signoff checklist from public-safe exports and reports.
 - `Release Record`: write a pending, approved, or rejected release signoff record with bundle hash, signer, version, and gate status.
+- `Release History`: generate the internal release-history dashboard across all signoff records.
 - `Export MCP config`: generate stdio config templates for Claude Code, Codex, Work Buddy style hosts, and generic agent hosts.
 - `Host smoke test`: run a local stdio JSON-RPC smoke test against the AIvaMax MCP tool bridge.
 - `Release gate`: run the public release gate across brand, artifact, quality, media, and case checks.
@@ -152,17 +153,19 @@ Course factory production is also exposed through:
 - `POST /api/actions/course-factory-release-status`
 - `POST /api/actions/final-release-bundle`
 - `POST /api/actions/release-signoff-record`
+- `POST /api/actions/release-history`
 - `GET /api/client-packs`
 - `GET /api/dashboard/report?path=<encoded-path>&mode=preview|download`
 - `GET /api/release-bundle/file?path=<encoded-path>&mode=preview|download`
 - `GET /api/release-record/latest`
+- `GET /api/release-history`
 - `GET /api/release-record/file?path=<encoded-path>&mode=preview|download`
 - `GET /api/client-packs/file?path=<encoded-path>&mode=preview|download`
 - `GET /api/client-packs/archive?path=<encoded-path>&mode=download`
 - `GET /api/client-packs/report?path=<encoded-path>&mode=preview|download`
 
 The scenario file is internal production configuration. The Console editor can add, replace, delete, and reset scenarios by `client_code`; public exports and sales previews are generated separately under `AIvaMax_Matrix/public_export`.
-Client-pack file links are restricted to the fixed client-facing `00-07_*.md` whitelist under `AIvaMax_Matrix/50_Projects/Samples/<pack>`. Delivery QA writes `Delivery-QA-Report.json` and `Delivery-QA-Report.md` under `AIvaMax_Matrix/public_export/client_packs/<pack>`. Batch Delivery QA refreshes every pack report and writes `Delivery-QA-Summary.json` and `Delivery-QA-Summary.md` under `AIvaMax_Matrix/public_export/client_packs/`; when requested, it exports ZIPs only for packs that pass the gate. Repair actions fill missing, invalid, or thin client-pack draft files from the AIvaMax client-pack template and write `Delivery-Repair-Report.*` or `Delivery-Repair-Summary.*` reports. Course-factory release status writes `Course-Factory-Release-Status.json` and `.md` under `AIvaMax_Matrix/00_Dashboards/` and exposes only that allowlisted dashboard report. Final release bundle writes `AIvaMax-Course-Factory-Final-Release.zip`, `*-Manifest.json`, and `*-Signoff-Checklist.md` under `AIvaMax_Matrix/public_export/release_bundle/` and exposes only those allowlisted files. Release signoff records live under `AIvaMax_Matrix/60_Reviews/Release Records/`, include the final bundle SHA256, and default to `pending_review` unless an explicit approval or rejection is provided. ZIP exports live in the same folder and contain only the eight client files; internal README and manifest files are not exposed through preview, download, report, or ZIP routes. ZIP export is gated by Delivery QA: goal, duration, platform weights, content calendar, account matrix, review forecast, risk boundary, brand boundary, and client-readability checks must pass.
+Client-pack file links are restricted to the fixed client-facing `00-07_*.md` whitelist under `AIvaMax_Matrix/50_Projects/Samples/<pack>`. Delivery QA writes `Delivery-QA-Report.json` and `Delivery-QA-Report.md` under `AIvaMax_Matrix/public_export/client_packs/<pack>`. Batch Delivery QA refreshes every pack report and writes `Delivery-QA-Summary.json` and `Delivery-QA-Summary.md` under `AIvaMax_Matrix/public_export/client_packs/`; when requested, it exports ZIPs only for packs that pass the gate. Repair actions fill missing, invalid, or thin client-pack draft files from the AIvaMax client-pack template and write `Delivery-Repair-Report.*` or `Delivery-Repair-Summary.*` reports. Course-factory release status writes `Course-Factory-Release-Status.json` and `.md` under `AIvaMax_Matrix/00_Dashboards/` and exposes only that allowlisted dashboard report. Final release bundle writes `AIvaMax-Course-Factory-Final-Release.zip`, `*-Manifest.json`, and `*-Signoff-Checklist.md` under `AIvaMax_Matrix/public_export/release_bundle/` and exposes only those allowlisted files. Release signoff records and the generated `Release-History-Dashboard.json` / `.md` live under `AIvaMax_Matrix/60_Reviews/Release Records/`; signoff records include the final bundle SHA256 and default to `pending_review` unless an explicit approval or rejection is provided. ZIP exports live in the same folder and contain only the eight client files; internal README and manifest files are not exposed through preview, download, report, or ZIP routes. ZIP export is gated by Delivery QA: goal, duration, platform weights, content calendar, account matrix, review forecast, risk boundary, brand boundary, and client-readability checks must pass.
 
 ## MCP and Skill Layer
 
@@ -220,6 +223,7 @@ aivamax_run_course_factory
 aivamax_course_factory_release_status
 aivamax_final_release_bundle
 aivamax_release_signoff_record
+aivamax_release_history
 aivamax_generate_client_pack
 aivamax_client_pack_delivery_qa
 aivamax_client_pack_batch_delivery_qa

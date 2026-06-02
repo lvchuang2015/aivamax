@@ -28,6 +28,7 @@ from aivamax_services import (
     mcp_config_export,
     repair_client_pack,
     repair_client_pack_batch,
+    release_history,
     release_signoff_record,
     runtime_status,
     run_audit,
@@ -211,6 +212,16 @@ TOOL_DEFINITIONS = [
                 "require_ready": {"type": "boolean", "default": True},
                 "role": {"type": "string"},
             },
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "aivamax_release_history",
+        "description": "Generate and return the AIvaMax release history dashboard across release signoff records.",
+        "allowed_roles": ["owner_admin", "team_operator"],
+        "inputSchema": {
+            "type": "object",
+            "properties": {"role": {"type": "string"}},
             "additionalProperties": False,
         },
     },
@@ -445,6 +456,8 @@ def call_tool(
             return final_release_bundle(arguments, **common)
         if name == "aivamax_release_signoff_record":
             return release_signoff_record(arguments, **common)
+        if name == "aivamax_release_history":
+            return release_history(**common)
         if name == "aivamax_generate_client_pack":
             return generate_client_pack_from_scenario(arguments, **common)
         if name == "aivamax_export_client_pack_zip":

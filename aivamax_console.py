@@ -33,6 +33,7 @@ from aivamax_services import (
     material_review,
     mcp_config_export,
     release_gate,
+    release_history,
     release_signoff_record,
     role_inventory,
     run_audit,
@@ -132,6 +133,7 @@ def console_html() -> str:
       <button onclick="runAction('course-factory-release-status')">Release Status</button>
       <button class="primary" onclick="runAction('final-release-bundle')">Final Bundle</button>
       <button onclick="runAction('release-signoff-record')">Release Record</button>
+      <button onclick="runAction('release-history')">Release History</button>
       <button class="primary" onclick="refreshAll()">刷新状态</button>
       <button onclick="runAction('refresh-audits')">刷新审计</button>
       <button onclick="runAction('refresh-platform-assets')">重建平台库</button>
@@ -779,6 +781,10 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                 payload = latest_release_record(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.NOT_FOUND, payload)
                 return
+            if route == "/api/release-history":
+                payload = release_history(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.NOT_FOUND, payload)
+                return
             json_response(self, HTTPStatus.NOT_FOUND, {"ok": False, "error": "unknown_route", "route": route})
 
         def do_POST(self) -> None:  # noqa: N802
@@ -904,6 +910,10 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                 body.setdefault("decision", "pending_review")
                 body.setdefault("signer", OWNER_ADMIN)
                 payload = release_signoff_record(body, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.INTERNAL_SERVER_ERROR, payload)
+                return
+            if route == "/api/actions/release-history":
+                payload = release_history(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.INTERNAL_SERVER_ERROR, payload)
                 return
             if route == "/api/actions/export-mcp-config":
