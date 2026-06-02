@@ -7373,6 +7373,26 @@ def run_release_review_pack(args: argparse.Namespace) -> int:
     return 0 if result.get("ok") else 1
 
 
+def run_release_distribution_package(args: argparse.Namespace) -> int:
+    from aivamax_services import release_distribution_package
+
+    result = release_distribution_package(
+        data_dir=Path(args.data_dir),
+        brand_config_path=Path(args.brand_config),
+        role=args.role,
+    )
+    if args.json:
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+    else:
+        payload = result.get("result", {})
+        files = payload.get("files", {})
+        print(f"Release distribution package: {'approved' if result.get('ok') else result.get('error')}")
+        print(f"Release ID: {payload.get('release_id')} | status={payload.get('distribution_status') or payload.get('review_status')}")
+        if files.get("archive"):
+            print(f"Distribution archive: {files['archive'].get('path')}")
+    return 0 if result.get("ok") else 1
+
+
 def run_material_review(args: argparse.Namespace) -> int:
     from aivamax_services import material_review
 
@@ -7629,6 +7649,11 @@ def build_parser() -> argparse.ArgumentParser:
     release_review_pack_parser.add_argument("--role", default="owner_admin", choices=["owner_admin", "team_operator", "instructor_private", "student_public"])
     release_review_pack_parser.add_argument("--json", action="store_true")
     release_review_pack_parser.set_defaults(func=run_release_review_pack)
+
+    release_distribution_package_parser = sub.add_parser("release-distribution-package", help="Generate the approved AIvaMax distribution package after approved signoff.")
+    release_distribution_package_parser.add_argument("--role", default="owner_admin", choices=["owner_admin", "team_operator", "instructor_private", "student_public"])
+    release_distribution_package_parser.add_argument("--json", action="store_true")
+    release_distribution_package_parser.set_defaults(func=run_release_distribution_package)
 
     material_review = sub.add_parser("material-review", help="Review AIvaMax media and case material readiness.")
     material_review.add_argument("--path")

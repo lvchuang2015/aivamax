@@ -364,6 +364,7 @@ def get_status(
             "aivamax_release_signoff_record",
             "aivamax_release_history",
             "aivamax_release_review_pack",
+            "aivamax_release_distribution_package",
             "aivamax_generate_client_pack",
             "aivamax_client_pack_delivery_qa",
             "aivamax_client_pack_batch_delivery_qa",
@@ -557,6 +558,20 @@ def release_bundle_file_record(path: Path) -> dict[str, Any]:
     }
 
 
+def distribution_file_record(path: Path) -> dict[str, Any]:
+    relative = relpath(path)
+    quoted = quote(relative, safe="")
+    is_archive = path.suffix.lower() == ".zip"
+    return {
+        "name": path.name,
+        "path": relative,
+        "size": path.stat().st_size,
+        "visibility": "approved_distribution",
+        "preview_url": None if is_archive else f"/api/distribution/file?path={quoted}&mode=preview",
+        "download_url": f"/api/distribution/file?path={quoted}&mode=download",
+    }
+
+
 def release_record_file_record(path: Path) -> dict[str, Any]:
     relative = relpath(path)
     quoted = quote(relative, safe="")
@@ -589,6 +604,23 @@ def final_release_bundle_paths(ctx: ServiceContext) -> dict[str, Path]:
         "manifest": root / f"{FINAL_RELEASE_BUNDLE_BASENAME}-Manifest.json",
         "checklist": root / f"{FINAL_RELEASE_BUNDLE_BASENAME}-Signoff-Checklist.md",
         "archive": root / f"{FINAL_RELEASE_BUNDLE_BASENAME}.zip",
+    }
+
+
+APPROVED_DISTRIBUTION_BASENAME = "AIvaMax-Approved-Distribution"
+
+
+def approved_distribution_root(ctx: ServiceContext) -> Path:
+    return ctx.matrix_root / "public_export" / "approved_distribution"
+
+
+def approved_distribution_paths(ctx: ServiceContext) -> dict[str, Path]:
+    root = approved_distribution_root(ctx)
+    return {
+        "root": root,
+        "manifest": root / f"{APPROVED_DISTRIBUTION_BASENAME}-Manifest.json",
+        "checklist": root / f"{APPROVED_DISTRIBUTION_BASENAME}-Checklist.md",
+        "archive": root / f"{APPROVED_DISTRIBUTION_BASENAME}.zip",
     }
 
 
@@ -641,6 +673,25 @@ def resolve_release_bundle_file(
     candidate = core.resolve_reported_path(requested_path)
     if not candidate or candidate.resolve() not in allowed:
         raise PermissionError("Final release bundle file is not allowlisted.")
+    if not candidate.exists():
+        raise FileNotFoundError(str(candidate))
+    return candidate
+
+
+def resolve_distribution_file(
+    requested_path: str,
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> Path:
+    require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    paths = approved_distribution_paths(ctx)
+    allowed = {paths["manifest"].resolve(), paths["checklist"].resolve(), paths["archive"].resolve()}
+    candidate = core.resolve_reported_path(requested_path)
+    if not candidate or candidate.resolve() not in allowed:
+        raise PermissionError("Approved distribution file is not allowlisted.")
     if not candidate.exists():
         raise FileNotFoundError(str(candidate))
     return candidate
@@ -2931,6 +2982,178 @@ def release_review_pack(
     )
 
 
+def render_distribution_checklist_markdown(manifest: dict[str, Any], brand_config: dict[str, Any]) -> str:
+    brand = brand_config.get("public_brand", "AIvaMax")
+    gate_rows = "\n".join(
+        f"| {name} | {item.get('status')} | {item.get('detail')} |"
+        for name, item in manifest.get("gates", {}).items()
+    ) or "| - | - | - |"
+    return scrub_text(f"""---
+type: approved_distribution_checklist
+public_brand: {brand}
+visibility: approved_distribution
+status: {manifest.get("distribution_status")}
+---
+
+# {brand} Approved Distribution Checklist
+
+| Field | Value |
+| --- | --- |
+| Generated at | {manifest.get("generated_at")} |
+| Distribution status | {manifest.get("distribution_status")} |
+| Release ID | {manifest.get("release_id")} |
+| Approved signer | {manifest.get("approved_signer")} |
+| Version | {manifest.get("version")} |
+| Bundle SHA256 | {manifest.get("bundle", {}).get("sha256")} |
+| Bundle files | {manifest.get("bundle", {}).get("included_file_count")} |
+
+## Distribution Rules
+
+- [x] Latest signoff decision is approved.
+- [x] Release record is ready to release.
+- [x] Final bundle hash matches the approved signoff record.
+- [ ] Distribution owner has opened and sampled the included release bundle.
+- [ ] Distribution owner has recorded where the package was sent.
+
+## Gates
+
+| Gate | Status | Detail |
+| --- | --- | --- |
+{gate_rows}
+
+## Boundary
+
+This package is the formal approved distribution wrapper. It is generated only after an approved AIvaMax signoff record and contains the already assembled final release bundle plus this approval evidence.
+""", brand_config)
+
+
+def persist_distribution_package(manifest: dict[str, Any], release_archive: Path, ctx: ServiceContext) -> dict[str, Any]:
+    paths = approved_distribution_paths(ctx)
+    root = paths["root"]
+    root.mkdir(parents=True, exist_ok=True)
+
+    manifest["files"] = {
+        "root": relpath(root),
+        "manifest": {
+            "name": paths["manifest"].name,
+            "path": relpath(paths["manifest"]),
+            "visibility": "approved_distribution",
+        },
+        "checklist": {
+            "name": paths["checklist"].name,
+            "path": relpath(paths["checklist"]),
+            "visibility": "approved_distribution",
+        },
+        "archive": {
+            "name": paths["archive"].name,
+            "path": relpath(paths["archive"]),
+            "visibility": "approved_distribution",
+        },
+    }
+    paths["manifest"].write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    paths["checklist"].write_text(render_distribution_checklist_markdown(manifest, ctx.brand_config), encoding="utf-8")
+    with zipfile.ZipFile(paths["archive"], "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        archive.write(paths["manifest"], arcname=paths["manifest"].name)
+        archive.write(paths["checklist"], arcname=paths["checklist"].name)
+        archive.write(release_archive, arcname=f"release_bundle/{release_archive.name}")
+    return {
+        "root": relpath(root),
+        "manifest": distribution_file_record(paths["manifest"]),
+        "checklist": distribution_file_record(paths["checklist"]),
+        "archive": distribution_file_record(paths["archive"]),
+    }
+
+
+def release_distribution_package(
+    request: dict[str, Any] | None = None,
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    latest_payload = latest_release_record(data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+    if not latest_payload.get("ok"):
+        return service_response(
+            action="aivamax_release_distribution_package",
+            role=caller_role,
+            ok=False,
+            error=latest_payload.get("error", "no_release_record"),
+            warnings=latest_payload.get("warnings", []),
+        )
+    record = latest_payload.get("result", {})
+    if record.get("decision") != "approved":
+        return service_response(
+            action="aivamax_release_distribution_package",
+            role=caller_role,
+            ok=False,
+            error="release_not_approved",
+            result={
+                "release_id": record.get("release_id"),
+                "decision": record.get("decision"),
+                "review_status": release_review_status(record),
+                "required_action": "Run release-review-pack and record an approved signoff before distribution.",
+            },
+            audit={"passed": False, "decision": record.get("decision")},
+        )
+    if not record.get("ready_to_release"):
+        return service_response(
+            action="aivamax_release_distribution_package",
+            role=caller_role,
+            ok=False,
+            error="approved_release_not_ready",
+            result={"release_id": record.get("release_id"), "decision": record.get("decision"), "ready_to_release": False},
+            audit={"passed": False, "decision": record.get("decision"), "ready_to_release": False},
+        )
+    archive_record = record.get("bundle", {}).get("archive_path")
+    archive_path = core.resolve_reported_path(archive_record)
+    if not archive_path or not archive_path.exists():
+        return service_response(action="aivamax_release_distribution_package", role=caller_role, ok=False, error="missing_release_archive")
+    try:
+        archive_path = resolve_release_bundle_file(relpath(archive_path), data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+    except (PermissionError, FileNotFoundError) as exc:
+        return service_response(action="aivamax_release_distribution_package", role=caller_role, ok=False, error="blocked_release_archive", warnings=[str(exc)])
+    expected_sha = record.get("bundle", {}).get("sha256")
+    actual_sha = sha256_file(archive_path)
+    if expected_sha != actual_sha:
+        return service_response(
+            action="aivamax_release_distribution_package",
+            role=caller_role,
+            ok=False,
+            error="bundle_hash_mismatch",
+            result={"release_id": record.get("release_id"), "expected_sha256": expected_sha, "actual_sha256": actual_sha},
+            audit={"passed": False, "release_id": record.get("release_id")},
+        )
+    manifest = {
+        "generated_at": cli.now_iso(),
+        "public_brand": ctx.brand_config.get("public_brand", "AIvaMax"),
+        "distribution_status": "approved_for_distribution",
+        "release_id": record.get("release_id"),
+        "approved_at": record.get("generated_at"),
+        "approved_signer": record.get("signer"),
+        "version": record.get("version"),
+        "course": record.get("course", {}),
+        "bundle": {
+            "archive_path": relpath(archive_path),
+            "archive_size": archive_path.stat().st_size,
+            "sha256": actual_sha,
+            "included_file_count": record.get("bundle", {}).get("included_file_count"),
+        },
+        "client_packs": record.get("client_packs", {}),
+        "gates": record.get("gates", {}),
+        "release_record": record.get("record", {}),
+    }
+    manifest["files"] = persist_distribution_package(manifest, archive_path, ctx)
+    return service_response(
+        action="aivamax_release_distribution_package",
+        role=caller_role,
+        result=manifest,
+        public_paths=[manifest["files"]["manifest"]["path"], manifest["files"]["checklist"]["path"], manifest["files"]["archive"]["path"]],
+        audit={"passed": True, "release_id": record.get("release_id"), "sha256": actual_sha},
+    )
+
+
 def release_signoff_record(
     request: dict[str, Any] | None = None,
     *,
@@ -3851,6 +4074,7 @@ def render_skill(role: str) -> str:
             "aivamax_release_signoff_record",
             "aivamax_release_history",
             "aivamax_release_review_pack",
+            "aivamax_release_distribution_package",
             "aivamax_generate_client_pack",
             "aivamax_client_pack_delivery_qa",
             "aivamax_client_pack_batch_delivery_qa",

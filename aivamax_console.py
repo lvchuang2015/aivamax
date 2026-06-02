@@ -34,6 +34,7 @@ from aivamax_services import (
     mcp_config_export,
     release_gate,
     release_history,
+    release_distribution_package,
     release_review_pack,
     release_signoff_record,
     role_inventory,
@@ -50,6 +51,7 @@ from aivamax_services import (
     resolve_client_pack_file,
     resolve_client_pack_report_file,
     resolve_dashboard_report_file,
+    resolve_distribution_file,
     resolve_release_bundle_file,
     resolve_release_record_file,
     upsert_course_factory_scenario,
@@ -136,6 +138,7 @@ def console_html() -> str:
       <button onclick="runAction('release-signoff-record')">Release Record</button>
       <button onclick="runAction('release-history')">Release History</button>
       <button onclick="runAction('release-review-pack')">Review Pack</button>
+      <button onclick="runAction('release-distribution-package')">Distribution Package</button>
       <button class="primary" onclick="refreshAll()">刷新状态</button>
       <button onclick="runAction('refresh-audits')">刷新审计</button>
       <button onclick="runAction('refresh-platform-assets')">重建平台库</button>
@@ -685,6 +688,23 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                     content_type = "text/markdown; charset=utf-8"
                 binary_file_response(self, file_path, content_type, download=mode == "download")
                 return
+            if route == "/api/distribution/file":
+                query = parse_qs(parsed.query)
+                requested_path = (query.get("path") or [""])[0]
+                mode = (query.get("mode") or ["download"])[0]
+                try:
+                    file_path = resolve_distribution_file(requested_path, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                except (PermissionError, FileNotFoundError) as exc:
+                    json_response(self, HTTPStatus.FORBIDDEN, {"ok": False, "error": "blocked_distribution_file", "message": str(exc)})
+                    return
+                if file_path.suffix.lower() == ".zip":
+                    content_type = "application/zip"
+                elif file_path.suffix.lower() == ".json":
+                    content_type = "application/json; charset=utf-8"
+                else:
+                    content_type = "text/markdown; charset=utf-8"
+                binary_file_response(self, file_path, content_type, download=mode == "download")
+                return
             if route == "/api/release-record/file":
                 query = parse_qs(parsed.query)
                 requested_path = (query.get("path") or [""])[0]
@@ -790,6 +810,10 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
             if route == "/api/release-review-pack":
                 payload = release_review_pack(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.NOT_FOUND, payload)
+                return
+            if route == "/api/release-distribution-package":
+                payload = release_distribution_package(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.CONFLICT, payload)
                 return
             json_response(self, HTTPStatus.NOT_FOUND, {"ok": False, "error": "unknown_route", "route": route})
 
@@ -925,6 +949,10 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
             if route == "/api/actions/release-review-pack":
                 payload = release_review_pack(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.INTERNAL_SERVER_ERROR, payload)
+                return
+            if route == "/api/actions/release-distribution-package":
+                payload = release_distribution_package(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.CONFLICT, payload)
                 return
             if route == "/api/actions/export-mcp-config":
                 payload = mcp_config_export(host="all", data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)

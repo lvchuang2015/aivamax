@@ -178,6 +178,7 @@ class AIvaMaxCLITest(unittest.TestCase):
             self.assertIn("Release Record", html)
             self.assertIn("Release History", html)
             self.assertIn("Review Pack", html)
+            self.assertIn("Distribution Package", html)
             self.assertIn("Course Factory Release Status", html)
             self.assertIn("Client Scenario Editor", html)
             self.assertIn("Generate Pack", html)
@@ -259,6 +260,8 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertEqual(release_history_args.role, "owner_admin")
         release_review_pack_args = parser.parse_args(["release-review-pack"])
         self.assertEqual(release_review_pack_args.role, "owner_admin")
+        release_distribution_args = parser.parse_args(["release-distribution-package"])
+        self.assertEqual(release_distribution_args.role, "owner_admin")
         coach_args = parser.parse_args(["student-coach-preview", "--question", "账号安全怎么检查？"])
         self.assertEqual(coach_args.role, "student_public")
 
@@ -310,6 +313,7 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("aivamax_release_signoff_record", tool_names)
         self.assertIn("aivamax_release_history", tool_names)
         self.assertIn("aivamax_release_review_pack", tool_names)
+        self.assertIn("aivamax_release_distribution_package", tool_names)
         self.assertIn("aivamax_generate_client_pack", tool_names)
         self.assertIn("aivamax_client_pack_delivery_qa", tool_names)
         self.assertIn("aivamax_client_pack_batch_delivery_qa", tool_names)
@@ -451,6 +455,14 @@ class AIvaMaxCLITest(unittest.TestCase):
         )
         self.assertFalse(blocked_review_pack["ok"])
         self.assertEqual(blocked_review_pack["error"], "permission_denied")
+        blocked_distribution = mcp.call_tool(
+            "aivamax_release_distribution_package",
+            {"role": "student_public"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_distribution["ok"])
+        self.assertEqual(blocked_distribution["error"], "permission_denied")
         blocked_zip = mcp.call_tool(
             "aivamax_export_client_pack_zip",
             {"role": "student_public", "pack_id": "AI-SaaS-Pilot"},
@@ -459,6 +471,77 @@ class AIvaMaxCLITest(unittest.TestCase):
         )
         self.assertFalse(blocked_zip["ok"])
         self.assertEqual(blocked_zip["error"], "permission_denied")
+
+    def test_release_distribution_package_requires_approved_signoff(self) -> None:
+        root = self.make_test_dir("distribution_guard")
+        data_dir = root / "data"
+        matrix_root = data_dir / "obsidian" / "AIvaMax_Matrix"
+        bundle_root = matrix_root / "public_export" / "release_bundle"
+        bundle_root.mkdir(parents=True)
+        archive_path = bundle_root / "AIvaMax-Course-Factory-Final-Release.zip"
+        with zipfile.ZipFile(archive_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+            archive.writestr("course/full_export/README.md", "# AIvaMax Approved Course\n")
+        bundle_sha = services.sha256_file(archive_path)
+        release_root = matrix_root / "60_Reviews" / "Release Records"
+        release_root.mkdir(parents=True)
+        record = {
+            "release_id": "REL-TEST-APPROVED",
+            "generated_at": "2026-06-02T00:00:00+00:00",
+            "public_brand": "AIvaMax",
+            "decision": "pending_review",
+            "signer": "owner_admin",
+            "version": "test-v1",
+            "course": {"name": "AIvaMax Course Factory"},
+            "bundle": {
+                "archive_path": core.relpath(archive_path),
+                "archive_size": archive_path.stat().st_size,
+                "sha256": bundle_sha,
+                "included_file_count": 3,
+            },
+            "client_packs": {"pack_count": 1, "deliverable_count": 1, "zip_count": 1},
+            "gates": {"release_gate": {"status": "passed", "detail": "test gate"}},
+            "ready_to_release": True,
+            "warnings": [],
+        }
+        latest_path = release_root / "Latest-Release-Record.json"
+        latest_path.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
+
+        blocked = services.release_distribution_package(
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="owner_admin",
+        )
+        self.assertFalse(blocked["ok"])
+        self.assertEqual(blocked["error"], "release_not_approved")
+        self.assertFalse((matrix_root / "public_export" / "approved_distribution" / "AIvaMax-Approved-Distribution.zip").exists())
+
+        record["decision"] = "approved"
+        latest_path.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
+        approved = services.release_distribution_package(
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="owner_admin",
+        )
+        self.assertTrue(approved["ok"], approved)
+        result = approved["result"]
+        self.assertEqual(result["distribution_status"], "approved_for_distribution")
+        self.assertEqual(result["release_id"], "REL-TEST-APPROVED")
+        self.assertEqual(result["bundle"]["sha256"], bundle_sha)
+        distribution_archive = core.resolve_reported_path(result["files"]["archive"]["path"])
+        checklist_path = core.resolve_reported_path(result["files"]["checklist"]["path"])
+        self.assertTrue(distribution_archive and distribution_archive.exists())
+        self.assertTrue(checklist_path and checklist_path.exists())
+        self.assertIn("/api/distribution/file", result["files"]["checklist"]["preview_url"])
+        with zipfile.ZipFile(distribution_archive) as archive:
+            names = archive.namelist()
+        self.assertIn("release_bundle/AIvaMax-Course-Factory-Final-Release.zip", names)
+        checklist = checklist_path.read_text(encoding="utf-8")
+        self.assertIn("Approved Distribution Checklist", checklist)
+        self.assert_public_clean(checklist)
+        dumped = json.dumps(result, ensure_ascii=False)
+        self.assertNotIn("source_path", dumped)
+        self.assertNotIn("raw_path", dumped)
+        self.assert_public_clean(dumped)
 
     def test_mcp_jsonrpc_stdio_protocol_shape(self) -> None:
         data_dir = self.make_console_fixture()
@@ -2132,6 +2215,14 @@ Module {number} production output
                 get_review_pack_payload = json.loads(response.read().decode("utf-8"))
             self.assertTrue(get_review_pack_payload["ok"], get_review_pack_payload)
             self.assertEqual(get_review_pack_payload["result"]["release_id"], signoff["release_id"])
+
+            blocked_distribution = services.release_distribution_package(
+                data_dir=data_dir,
+                brand_config_path=ROOT / "config" / "brand_config.json",
+                role="owner_admin",
+            )
+            self.assertFalse(blocked_distribution["ok"])
+            self.assertEqual(blocked_distribution["error"], "release_not_approved")
 
             with urllib.request.urlopen(base + "/api/course-factory", timeout=20) as response:
                 factory_payload = json.loads(response.read().decode("utf-8"))
