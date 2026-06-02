@@ -132,6 +132,7 @@ The safe action buttons are allowlisted only:
 - `Review Pack`: generate an owner review pack for human approval or rejection without changing release decision state; it includes evidence file links, Console confirmation phrases, decision commands, and the post-approval distribution/delivery-record workflow.
 - `Owner Handoff`: generate an owner release handoff report that bundles the PRD status, review pack, evidence links, confirmation phrases, and current next action without approving or distributing.
 - `Decision Dry Run`: preview an owner approval/rejection path, confirmation phrase status, blockers, and post-decision steps without writing a signoff record or distributing.
+- `Evidence Snapshot`: generate a hashed owner-review evidence snapshot across PRD status, review pack, handoff, dry-run, latest release record, and final bundle files without approving or distributing.
 - `Distribution Package`: generate the formal approved distribution wrapper only after an approved signoff record.
 - `Export MCP config`: generate stdio config templates for Claude Code, Codex, Work Buddy style hosts, and generic agent hosts.
 - `Host smoke test`: run a local stdio JSON-RPC smoke test against the AIvaMax MCP tool bridge.
@@ -163,6 +164,7 @@ Course factory production is also exposed through:
 - `POST /api/actions/release-review-pack`
 - `POST /api/actions/release-owner-handoff`
 - `POST /api/actions/release-decision-dry-run`
+- `POST /api/actions/release-evidence-snapshot`
 - `POST /api/actions/release-distribution-package`
 - `POST /api/actions/release-distribution-delivery-record`
 - `GET /api/client-packs`
@@ -174,6 +176,7 @@ Course factory production is also exposed through:
 - `GET /api/release-review-pack`
 - `GET /api/release-owner-handoff`
 - `GET /api/release-decision-dry-run`
+- `GET /api/release-evidence-snapshot`
 - `GET /api/release-distribution-package` (read-only distribution readiness status)
 - `GET /api/release-record/file?path=<encoded-path>&mode=preview|download`
 - `GET /api/distribution/file?path=<encoded-path>&mode=preview|download`
@@ -182,7 +185,7 @@ Course factory production is also exposed through:
 - `GET /api/client-packs/report?path=<encoded-path>&mode=preview|download`
 
 The scenario file is internal production configuration. The Console editor can add, replace, delete, and reset scenarios by `client_code`; public exports and sales previews are generated separately under `AIvaMax_Matrix/public_export`.
-Client-pack file links are restricted to the fixed client-facing `00-07_*.md` whitelist under `AIvaMax_Matrix/50_Projects/Samples/<pack>`. Delivery QA writes `Delivery-QA-Report.json` and `Delivery-QA-Report.md` under `AIvaMax_Matrix/public_export/client_packs/<pack>`. Batch Delivery QA refreshes every pack report and writes `Delivery-QA-Summary.json` and `Delivery-QA-Summary.md` under `AIvaMax_Matrix/public_export/client_packs/`; when requested, it exports ZIPs only for packs that pass the gate. Repair actions fill missing, invalid, or thin client-pack draft files from the AIvaMax client-pack template and write `Delivery-Repair-Report.*` or `Delivery-Repair-Summary.*` reports. Course-factory release status writes `Course-Factory-Release-Status.json` and `.md` under `AIvaMax_Matrix/00_Dashboards/` and exposes only that allowlisted dashboard report. Final release bundle writes `AIvaMax-Course-Factory-Final-Release.zip`, `*-Manifest.json`, and `*-Signoff-Checklist.md` under `AIvaMax_Matrix/public_export/release_bundle/` and exposes only those allowlisted files. Release signoff records plus generated `Release-History-Dashboard.*`, `Release-Review-Pack.*`, `Owner-Release-Handoff.*`, and `Release-Decision-Dry-Run.*` files live under `AIvaMax_Matrix/60_Reviews/Release Records/`; signoff records include the final bundle SHA256 and default to `pending_review`, while `approved` and `rejected` final decisions are owner-only. The formal approved distribution wrapper writes `AIvaMax-Approved-Distribution.*` under `AIvaMax_Matrix/public_export/approved_distribution/` and is blocked until the latest signoff is `approved`, ready, and hash-matched to the final bundle. Owner-only distribution delivery records write `Distribution-Delivery-Record-*` and `Latest-Distribution-Delivery-Record.*` under `AIvaMax_Matrix/60_Reviews/Release Records/` after the approved package is handed off, and only match the current release when release ID and SHA256 match. Generic public export listing excludes the governed `client_packs`, `release_bundle`, and `approved_distribution` folders and reports them only as governed summaries; use their dedicated APIs for preview or download. ZIP exports live in the same folder and contain only the eight client files; internal README and manifest files are not exposed through preview, download, report, or ZIP routes. ZIP export is gated by Delivery QA: goal, duration, platform weights, content calendar, account matrix, review forecast, risk boundary, brand boundary, and client-readability checks must pass.
+Client-pack file links are restricted to the fixed client-facing `00-07_*.md` whitelist under `AIvaMax_Matrix/50_Projects/Samples/<pack>`. Delivery QA writes `Delivery-QA-Report.json` and `Delivery-QA-Report.md` under `AIvaMax_Matrix/public_export/client_packs/<pack>`. Batch Delivery QA refreshes every pack report and writes `Delivery-QA-Summary.json` and `Delivery-QA-Summary.md` under `AIvaMax_Matrix/public_export/client_packs/`; when requested, it exports ZIPs only for packs that pass the gate. Repair actions fill missing, invalid, or thin client-pack draft files from the AIvaMax client-pack template and write `Delivery-Repair-Report.*` or `Delivery-Repair-Summary.*` reports. Course-factory release status writes `Course-Factory-Release-Status.json` and `.md` under `AIvaMax_Matrix/00_Dashboards/` and exposes only that allowlisted dashboard report. Final release bundle writes `AIvaMax-Course-Factory-Final-Release.zip`, `*-Manifest.json`, and `*-Signoff-Checklist.md` under `AIvaMax_Matrix/public_export/release_bundle/` and exposes only those allowlisted files. Release signoff records plus generated `Release-History-Dashboard.*`, `Release-Review-Pack.*`, `Owner-Release-Handoff.*`, `Release-Decision-Dry-Run.*`, and `Release-Evidence-Snapshot.*` files live under `AIvaMax_Matrix/60_Reviews/Release Records/`; signoff records include the final bundle SHA256 and default to `pending_review`, while `approved` and `rejected` final decisions are owner-only. The formal approved distribution wrapper writes `AIvaMax-Approved-Distribution.*` under `AIvaMax_Matrix/public_export/approved_distribution/` and is blocked until the latest signoff is `approved`, ready, and hash-matched to the final bundle. Owner-only distribution delivery records write `Distribution-Delivery-Record-*` and `Latest-Distribution-Delivery-Record.*` under `AIvaMax_Matrix/60_Reviews/Release Records/` after the approved package is handed off, and only match the current release when release ID and SHA256 match. Generic public export listing excludes the governed `client_packs`, `release_bundle`, and `approved_distribution` folders and reports them only as governed summaries; use their dedicated APIs for preview or download. ZIP exports live in the same folder and contain only the eight client files; internal README and manifest files are not exposed through preview, download, report, or ZIP routes. ZIP export is gated by Delivery QA: goal, duration, platform weights, content calendar, account matrix, review forecast, risk boundary, brand boundary, and client-readability checks must pass.
 
 ## MCP and Skill Layer
 
@@ -245,6 +248,7 @@ aivamax_release_history
 aivamax_release_review_pack
 aivamax_release_owner_handoff
 aivamax_release_decision_dry_run
+aivamax_release_evidence_snapshot
 aivamax_release_distribution_status
 aivamax_release_distribution_package
 aivamax_release_distribution_delivery_record

@@ -162,6 +162,7 @@ MCP_TOOL_ROLE_ALLOWLIST: dict[str, set[str]] = {
     "aivamax_release_review_pack": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_owner_handoff": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_decision_dry_run": {OWNER_ADMIN, TEAM_OPERATOR},
+    "aivamax_release_evidence_snapshot": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_distribution_status": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_distribution_package": {OWNER_ADMIN, TEAM_OPERATOR},
     "aivamax_release_distribution_delivery_record": {OWNER_ADMIN},
@@ -832,6 +833,7 @@ def resolve_release_record_file(
         or candidate.name.startswith("Release-Review-Pack")
         or candidate.name.startswith("Owner-Release-Handoff")
         or candidate.name.startswith("Release-Decision-Dry-Run")
+        or candidate.name.startswith("Release-Evidence-Snapshot")
     )
     if candidate.suffix.lower() not in {".json", ".md"} or not allowed_name:
         raise PermissionError("Release record file is not allowlisted.")
@@ -4015,6 +4017,243 @@ def release_decision_dry_run(
     )
 
 
+def render_release_evidence_snapshot_markdown(snapshot: dict[str, Any], brand_config: dict[str, Any]) -> str:
+    brand = brand_config.get("public_brand", "AIvaMax")
+    evidence_rows = "\n".join(
+        f"| {item.get('group')} | {item.get('label')} | {item.get('path')} | {item.get('size')} | {str(item.get('sha256') or '')[:16]} |"
+        for item in snapshot.get("evidence_files", [])
+    ) or "| - | - | - | - | - |"
+    next_rows = "\n".join(
+        f"| {item.get('stage') or item.get('priority') or '-'} | {item.get('label') or item.get('title')} | {item.get('cli_command') or item.get('command')} |"
+        for item in snapshot.get("next_steps", [])
+    ) or "| - | - | - |"
+    return scrub_text(f"""---
+type: release_evidence_snapshot
+public_brand: {brand}
+visibility: internal_release_record
+status: {snapshot.get("snapshot_status")}
+---
+
+# {brand} Release Evidence Snapshot
+
+| Field | Value |
+| --- | --- |
+| Generated at | {snapshot.get("generated_at")} |
+| Snapshot status | {snapshot.get("snapshot_status")} |
+| Release ID | {snapshot.get("release", {}).get("release_id")} |
+| Release decision | {snapshot.get("release", {}).get("decision")} |
+| Review status | {snapshot.get("release", {}).get("review_status")} |
+| Distribution status | {snapshot.get("release", {}).get("distribution_status")} |
+| PRD acceptance | {snapshot.get("prd", {}).get("acceptance_status")} |
+| Decision dry-run | {snapshot.get("decision_dry_run", {}).get("dry_run_status")} |
+| Evidence files | {snapshot.get("evidence_file_count")} |
+| Missing files | {snapshot.get("missing_file_count")} |
+
+## Evidence Files
+
+| Group | Evidence | Path | Bytes | SHA256 Prefix |
+| --- | --- | --- | --- | --- |
+{evidence_rows}
+
+## Next Steps
+
+| Stage | Action | Command |
+| --- | --- | --- |
+{next_rows}
+
+## Boundary
+
+This snapshot freezes release evidence for owner review. It does not approve, reject, publish, distribute, or record delivery evidence.
+""", brand_config)
+
+
+def release_snapshot_file_item(label: str, group: str, value: Any, ctx: ServiceContext) -> dict[str, Any]:
+    path_value = value.get("path") if isinstance(value, dict) else value
+    path = resolve_release_asset_path(ctx, str(path_value) if path_value else None)
+    exists = bool(path and path.exists() and path.is_file() and not is_blocked_path(path))
+    item: dict[str, Any] = {
+        "label": label,
+        "group": group,
+        "path": relpath(path) if exists and path else str(path_value or ""),
+        "exists": exists,
+        "size": path.stat().st_size if exists and path else 0,
+        "sha256": sha256_file(path) if exists and path else None,
+        "visibility": value.get("visibility") if isinstance(value, dict) else group,
+    }
+    if isinstance(value, dict):
+        item["preview_url"] = value.get("preview_url")
+        item["download_url"] = value.get("download_url")
+    return item
+
+
+def release_snapshot_add_file(
+    items: list[dict[str, Any]],
+    seen: set[str],
+    label: str,
+    group: str,
+    value: Any,
+    ctx: ServiceContext,
+) -> None:
+    item = release_snapshot_file_item(label, group, value, ctx)
+    key = item.get("path") or f"{group}:{label}"
+    if not key or key in seen:
+        return
+    seen.add(str(key))
+    items.append(item)
+
+
+def persist_release_evidence_snapshot(snapshot: dict[str, Any], ctx: ServiceContext) -> dict[str, Any]:
+    root = release_record_root(ctx)
+    root.mkdir(parents=True, exist_ok=True)
+    json_path = root / "Release-Evidence-Snapshot.json"
+    md_path = root / "Release-Evidence-Snapshot.md"
+    json_path.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
+    md_path.write_text(render_release_evidence_snapshot_markdown(snapshot, ctx.brand_config), encoding="utf-8")
+    return {
+        "json": release_record_file_record(json_path),
+        "markdown": release_record_file_record(md_path),
+    }
+
+
+def release_evidence_snapshot(
+    request: dict[str, Any] | None = None,
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    request = request or {}
+    decision = request.get("decision") or "approved"
+    latest_payload = latest_release_record(data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+    if not latest_payload.get("ok"):
+        return service_response(
+            action="aivamax_release_evidence_snapshot",
+            role=caller_role,
+            ok=False,
+            error=latest_payload.get("error", "no_release_record"),
+            warnings=latest_payload.get("warnings", []),
+        )
+    prd_payload = course_factory_prd_status(request, data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+    review_payload = release_review_pack(request, data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+    handoff_payload = release_owner_handoff(request, data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+    dry_run_payload = release_decision_dry_run(
+        {
+            "decision": decision,
+            "signer": request.get("signer") or caller_role,
+            "version": request.get("version") or "course-factory-v1",
+            "notes": request.get("notes") or "Evidence snapshot dry-run.",
+            "confirmation": request.get("confirmation") or "",
+            "require_ready": request_bool(request, "require_ready", True),
+        },
+        data_dir=ctx.data_dir,
+        brand_config_path=ctx.brand_config_path,
+        role=caller_role,
+    )
+    distribution_payload = release_distribution_status(request, data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+    payloads = [prd_payload, review_payload, handoff_payload, dry_run_payload, distribution_payload]
+    failed = [payload.get("action", "unknown") for payload in payloads if not payload.get("ok")]
+    if failed:
+        return service_response(
+            action="aivamax_release_evidence_snapshot",
+            role=caller_role,
+            ok=False,
+            error="snapshot_source_failed",
+            result={"failed_sources": failed},
+            warnings=[str(payload.get("error")) for payload in payloads if not payload.get("ok")],
+        )
+
+    latest = latest_payload.get("result", {})
+    prd = prd_payload.get("result", {})
+    review = review_payload.get("result", {})
+    handoff = handoff_payload.get("result", {})
+    dry_run = dry_run_payload.get("result", {})
+    distribution = distribution_payload.get("result", {})
+    evidence: list[dict[str, Any]] = []
+    seen: set[str] = set()
+
+    for label, file_record in [
+        ("Latest release record JSON", (latest.get("record") or {}).get("json")),
+        ("Latest release record Markdown", (latest.get("record") or {}).get("markdown")),
+        ("PRD status JSON", (prd.get("report") or {}).get("json")),
+        ("PRD status Markdown", (prd.get("report") or {}).get("markdown")),
+        ("Review pack JSON", (review.get("pack") or {}).get("json")),
+        ("Review pack Markdown", (review.get("pack") or {}).get("markdown")),
+        ("Owner handoff JSON", (handoff.get("handoff") or {}).get("json")),
+        ("Owner handoff Markdown", (handoff.get("handoff") or {}).get("markdown")),
+        ("Decision dry-run JSON", (dry_run.get("report") or {}).get("json")),
+        ("Decision dry-run Markdown", (dry_run.get("report") or {}).get("markdown")),
+    ]:
+        release_snapshot_add_file(evidence, seen, label, "release_review", file_record, ctx)
+
+    bundle = distribution.get("bundle", {}) if isinstance(distribution.get("bundle"), dict) else {}
+    for label, key in [
+        ("Final release archive", "archive_path"),
+        ("Final release manifest", "manifest_path"),
+        ("Final signoff checklist", "checklist_path"),
+    ]:
+        release_snapshot_add_file(evidence, seen, label, "final_release_bundle", bundle.get(key), ctx)
+
+    for item in review.get("evidence_files", []):
+        if isinstance(item, dict):
+            release_snapshot_add_file(evidence, seen, str(item.get("label") or "Review evidence"), "review_evidence", item, ctx)
+
+    missing_count = sum(1 for item in evidence if not item.get("exists"))
+    snapshot_status = "ready_for_owner_review" if missing_count == 0 and prd.get("acceptance_status") == "ready_for_owner_review" else "review"
+    snapshot = {
+        "generated_at": cli.now_iso(),
+        "public_brand": ctx.brand_config.get("public_brand", "AIvaMax"),
+        "snapshot_status": snapshot_status,
+        "release": {
+            "release_id": latest.get("release_id") or distribution.get("release_id"),
+            "decision": latest.get("decision") or distribution.get("decision"),
+            "review_status": review.get("review_status"),
+            "distribution_status": distribution.get("distribution_status"),
+            "ready_to_release": bool(distribution.get("ready_to_release") or review.get("ready_to_release")),
+            "can_generate_distribution": bool(distribution.get("can_generate")),
+        },
+        "prd": {
+            "acceptance_status": prd.get("acceptance_status"),
+            "summary": prd.get("summary", {}),
+        },
+        "decision_dry_run": {
+            "requested_decision": dry_run.get("requested_decision"),
+            "dry_run_status": dry_run.get("dry_run_status"),
+            "service_can_record": (dry_run.get("service_channel") or {}).get("can_record"),
+            "console_can_record": (dry_run.get("console_channel") or {}).get("can_record"),
+            "owner_confirmation": dry_run.get("owner_confirmation", {}),
+        },
+        "evidence_file_count": len(evidence),
+        "missing_file_count": missing_count,
+        "evidence_files": evidence,
+        "next_steps": dry_run.get("next_steps") or prd.get("next_actions") or [],
+        "guardrails": [
+            "Snapshot does not change the latest release decision.",
+            "Snapshot does not generate the approved distribution package.",
+            "Snapshot does not record delivery evidence.",
+            "Approved and rejected decisions still require owner_admin.",
+        ],
+    }
+    snapshot["snapshot"] = persist_release_evidence_snapshot(snapshot, ctx)
+    public_paths = [
+        snapshot["snapshot"]["json"]["path"],
+        snapshot["snapshot"]["markdown"]["path"],
+        *[
+            item["path"]
+            for item in evidence
+            if item.get("exists") and item.get("path")
+        ],
+    ]
+    return service_response(
+        action="aivamax_release_evidence_snapshot",
+        role=caller_role,
+        result=snapshot,
+        public_paths=public_paths,
+        audit={"passed": missing_count == 0, "snapshot_status": snapshot_status, "release_id": snapshot["release"]["release_id"]},
+    )
+
+
 def render_distribution_checklist_markdown(manifest: dict[str, Any], brand_config: dict[str, Any]) -> str:
     brand = brand_config.get("public_brand", "AIvaMax")
     gate_rows = "\n".join(
@@ -5411,6 +5650,7 @@ def render_skill(role: str) -> str:
             "aivamax_release_review_pack",
             "aivamax_release_owner_handoff",
             "aivamax_release_decision_dry_run",
+            "aivamax_release_evidence_snapshot",
             "aivamax_release_distribution_status",
             "aivamax_release_distribution_package",
             "aivamax_generate_client_pack",

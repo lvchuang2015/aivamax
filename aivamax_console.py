@@ -40,6 +40,7 @@ from aivamax_services import (
     release_distribution_package,
     release_distribution_status,
     release_decision_dry_run,
+    release_evidence_snapshot,
     release_owner_handoff,
     release_review_pack,
     release_signoff_record,
@@ -148,6 +149,7 @@ def console_html() -> str:
       <button onclick="runAction('release-review-pack')">Review Pack</button>
       <button onclick="runAction('release-owner-handoff')">Owner Handoff</button>
       <button onclick="runAction('release-decision-dry-run')">Decision Dry Run</button>
+      <button onclick="runAction('release-evidence-snapshot')">Evidence Snapshot</button>
       <button onclick="runAction('release-distribution-package')">Distribution Package</button>
       <button onclick="runAction('release-distribution-delivery-record')">Delivery Record</button>
       <button class="primary" onclick="refreshAll()">刷新状态</button>
@@ -881,6 +883,10 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                 payload = release_decision_dry_run({"decision": "approved"}, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.NOT_FOUND, payload)
                 return
+            if route == "/api/release-evidence-snapshot":
+                payload = release_evidence_snapshot({"decision": "approved"}, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.NOT_FOUND, payload)
+                return
             if route == "/api/release-distribution-package":
                 payload = release_distribution_status(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.NOT_FOUND, payload)
@@ -1040,6 +1046,16 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                     return
                 body.setdefault("decision", "approved")
                 payload = release_decision_dry_run(body, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.INTERNAL_SERVER_ERROR, payload)
+                return
+            if route == "/api/actions/release-evidence-snapshot":
+                try:
+                    body = read_json_body(self)
+                except ValueError as exc:
+                    json_response(self, HTTPStatus.BAD_REQUEST, {"ok": False, "error": "invalid_json", "message": str(exc)})
+                    return
+                body.setdefault("decision", "approved")
+                payload = release_evidence_snapshot(body, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.INTERNAL_SERVER_ERROR, payload)
                 return
             if route == "/api/actions/release-distribution-package":

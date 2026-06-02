@@ -268,6 +268,9 @@ class AIvaMaxCLITest(unittest.TestCase):
         release_decision_dry_run_args = parser.parse_args(["release-decision-dry-run"])
         self.assertEqual(release_decision_dry_run_args.role, "owner_admin")
         self.assertEqual(release_decision_dry_run_args.decision, "approved")
+        release_evidence_snapshot_args = parser.parse_args(["release-evidence-snapshot"])
+        self.assertEqual(release_evidence_snapshot_args.role, "owner_admin")
+        self.assertEqual(release_evidence_snapshot_args.decision, "approved")
         prd_status_args = parser.parse_args(["course-factory-prd-status"])
         self.assertEqual(prd_status_args.role, "owner_admin")
         release_distribution_args = parser.parse_args(["release-distribution-package"])
@@ -386,6 +389,7 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("aivamax_release_review_pack", tool_names)
         self.assertIn("aivamax_release_owner_handoff", tool_names)
         self.assertIn("aivamax_release_decision_dry_run", tool_names)
+        self.assertIn("aivamax_release_evidence_snapshot", tool_names)
         self.assertIn("aivamax_release_distribution_status", tool_names)
         self.assertIn("aivamax_release_distribution_package", tool_names)
         self.assertIn("aivamax_release_distribution_delivery_record", tool_names)
@@ -601,6 +605,14 @@ class AIvaMaxCLITest(unittest.TestCase):
         )
         self.assertFalse(blocked_decision_dry_run["ok"])
         self.assertEqual(blocked_decision_dry_run["error"], "permission_denied")
+        blocked_evidence_snapshot = mcp.call_tool(
+            "aivamax_release_evidence_snapshot",
+            {"role": "student_public", "decision": "approved"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_evidence_snapshot["ok"])
+        self.assertEqual(blocked_evidence_snapshot["error"], "permission_denied")
         blocked_distribution = mcp.call_tool(
             "aivamax_release_distribution_package",
             {"role": "student_public"},
@@ -916,6 +928,8 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("aivamax_release_owner_handoff", team_skill)
         self.assertIn("aivamax_release_decision_dry_run", owner_skill)
         self.assertIn("aivamax_release_decision_dry_run", team_skill)
+        self.assertIn("aivamax_release_evidence_snapshot", owner_skill)
+        self.assertIn("aivamax_release_evidence_snapshot", team_skill)
         self.assertIn("aivamax_release_distribution_status", owner_skill)
         self.assertIn("aivamax_release_distribution_package", owner_skill)
         self.assertIn("aivamax_release_distribution_delivery_record", owner_skill)
@@ -2624,6 +2638,42 @@ Module {number} production output
                 latest_after_dry_run = json.loads(response.read().decode("utf-8"))
             self.assertEqual(latest_after_dry_run["result"]["release_id"], signoff["release_id"])
             self.assertEqual(latest_after_dry_run["result"]["decision"], "pending_review")
+
+            snapshot_request = urllib.request.Request(
+                base + "/api/actions/release-evidence-snapshot",
+                data=json.dumps({
+                    "decision": "approved",
+                    "signer": "owner_admin",
+                    "version": "test-course-factory-v1",
+                    "notes": "Evidence snapshot only.",
+                }).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(snapshot_request, timeout=60) as response:
+                snapshot_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(snapshot_payload["ok"], snapshot_payload)
+            snapshot = snapshot_payload["result"]
+            self.assertEqual(snapshot["release"]["release_id"], signoff["release_id"])
+            self.assertEqual(snapshot["release"]["decision"], "pending_review")
+            self.assertGreaterEqual(snapshot["evidence_file_count"], 8)
+            self.assertEqual(snapshot["missing_file_count"], 0)
+            self.assertTrue(any(item.get("sha256") for item in snapshot["evidence_files"]))
+            self.assertFalse(snapshot["release"]["can_generate_distribution"])
+            snapshot_path = core.resolve_reported_path(snapshot["snapshot"]["markdown"]["path"])
+            self.assertTrue(snapshot_path and snapshot_path.exists())
+            snapshot_markdown = snapshot_path.read_text(encoding="utf-8")
+            self.assertIn("Release Evidence Snapshot", snapshot_markdown)
+            self.assertIn("This snapshot freezes release evidence", snapshot_markdown)
+            self.assert_public_clean(snapshot_markdown)
+            with urllib.request.urlopen(base + "/api/release-evidence-snapshot", timeout=60) as response:
+                get_snapshot_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(get_snapshot_payload["ok"], get_snapshot_payload)
+            self.assertEqual(get_snapshot_payload["result"]["release"]["release_id"], signoff["release_id"])
+            with urllib.request.urlopen(base + "/api/release-record/latest", timeout=20) as response:
+                latest_after_snapshot = json.loads(response.read().decode("utf-8"))
+            self.assertEqual(latest_after_snapshot["result"]["release_id"], signoff["release_id"])
+            self.assertEqual(latest_after_snapshot["result"]["decision"], "pending_review")
 
             with urllib.request.urlopen(base + "/api/release-review-pack", timeout=20) as response:
                 get_review_pack_payload = json.loads(response.read().decode("utf-8"))

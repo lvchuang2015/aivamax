@@ -7444,6 +7444,35 @@ def run_release_decision_dry_run(args: argparse.Namespace) -> int:
     return 0 if result.get("ok") else 1
 
 
+def run_release_evidence_snapshot(args: argparse.Namespace) -> int:
+    from aivamax_services import release_evidence_snapshot
+
+    result = release_evidence_snapshot(
+        {
+            "decision": args.decision,
+            "signer": args.signer,
+            "version": args.version,
+            "notes": args.notes,
+            "confirmation": args.confirmation,
+            "require_ready": args.require_ready,
+        },
+        data_dir=Path(args.data_dir),
+        brand_config_path=Path(args.brand_config),
+        role=args.role,
+    )
+    if args.json:
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+    else:
+        payload = result.get("result", {})
+        print(f"Release evidence snapshot: {payload.get('snapshot_status')}")
+        print(f"Release ID: {payload.get('release', {}).get('release_id')} | decision={payload.get('release', {}).get('decision')}")
+        print(f"Evidence files: {payload.get('evidence_file_count')} | missing={payload.get('missing_file_count')}")
+        snapshot = payload.get("snapshot", {})
+        if snapshot.get("markdown"):
+            print(f"Snapshot: {snapshot['markdown'].get('path')}")
+    return 0 if result.get("ok") else 1
+
+
 def run_release_distribution_package(args: argparse.Namespace) -> int:
     from aivamax_services import release_distribution_package
 
@@ -7788,6 +7817,17 @@ def build_parser() -> argparse.ArgumentParser:
     release_decision_dry_run_parser.add_argument("--require-ready", action=argparse.BooleanOptionalAction, default=True)
     release_decision_dry_run_parser.add_argument("--json", action="store_true")
     release_decision_dry_run_parser.set_defaults(func=run_release_decision_dry_run)
+
+    release_evidence_snapshot_parser = sub.add_parser("release-evidence-snapshot", help="Generate a hashed AIvaMax owner release evidence snapshot without approving or distributing.")
+    release_evidence_snapshot_parser.add_argument("--role", default="owner_admin", choices=["owner_admin", "team_operator", "instructor_private", "student_public"])
+    release_evidence_snapshot_parser.add_argument("--decision", default="approved", choices=["pending_review", "approved", "rejected"])
+    release_evidence_snapshot_parser.add_argument("--signer", default="owner_admin")
+    release_evidence_snapshot_parser.add_argument("--version", default="course-factory-v1")
+    release_evidence_snapshot_parser.add_argument("--notes", default="")
+    release_evidence_snapshot_parser.add_argument("--confirmation", default="")
+    release_evidence_snapshot_parser.add_argument("--require-ready", action=argparse.BooleanOptionalAction, default=True)
+    release_evidence_snapshot_parser.add_argument("--json", action="store_true")
+    release_evidence_snapshot_parser.set_defaults(func=run_release_evidence_snapshot)
 
     release_distribution_package_parser = sub.add_parser("release-distribution-package", help="Generate the approved AIvaMax distribution package after approved signoff.")
     release_distribution_package_parser.add_argument("--role", default="owner_admin", choices=["owner_admin", "team_operator", "instructor_private", "student_public"])
