@@ -294,6 +294,23 @@ class AIvaMaxCLITest(unittest.TestCase):
         audit = services.role_audit(role="student_public", data_dir=data_dir, brand_config_path=ROOT / "config" / "brand_config.json")
         self.assertTrue(audit["ok"])
         self.assertNotIn("run_matrix", audit["result"]["permissions"])
+        blocked_approval = services.release_signoff_record(
+            {"decision": "approved", "signer": "team_operator"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="team_operator",
+        )
+        self.assertFalse(blocked_approval["ok"])
+        self.assertEqual(blocked_approval["error"], "owner_approval_required")
+        self.assertEqual(blocked_approval["result"]["required_role"], "owner_admin")
+        blocked_rejection = services.release_signoff_record(
+            {"decision": "rejected", "signer": "team_operator"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="team_operator",
+        )
+        self.assertFalse(blocked_rejection["ok"])
+        self.assertEqual(blocked_rejection["error"], "owner_approval_required")
 
     def test_mcp_tools_enforce_student_boundary(self) -> None:
         data_dir = self.make_console_fixture()
@@ -439,6 +456,22 @@ class AIvaMaxCLITest(unittest.TestCase):
         )
         self.assertFalse(blocked_signoff["ok"])
         self.assertEqual(blocked_signoff["error"], "permission_denied")
+        blocked_team_approval = mcp.call_tool(
+            "aivamax_release_signoff_record",
+            {"role": "team_operator", "decision": "approved"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_team_approval["ok"])
+        self.assertEqual(blocked_team_approval["error"], "owner_approval_required")
+        blocked_team_rejection = mcp.call_tool(
+            "aivamax_release_signoff_record",
+            {"role": "team_operator", "decision": "rejected"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_team_rejection["ok"])
+        self.assertEqual(blocked_team_rejection["error"], "owner_approval_required")
         blocked_history = mcp.call_tool(
             "aivamax_release_history",
             {"role": "student_public"},

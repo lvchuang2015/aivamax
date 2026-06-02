@@ -202,7 +202,7 @@ TOOL_DEFINITIONS = [
     },
     {
         "name": "aivamax_release_signoff_record",
-        "description": "Write a release signoff record with bundle hash, signoff decision, course version, and release gates.",
+        "description": "Write a release signoff record with bundle hash, course version, and release gates; approved/rejected decisions require owner_admin.",
         "allowed_roles": ["owner_admin", "team_operator"],
         "inputSchema": {
             "type": "object",

@@ -2596,6 +2596,12 @@ def normalize_signoff_decision(value: Any) -> str:
     return decision
 
 
+def signoff_decision_allowed_for_role(decision: str, role: str) -> bool:
+    if decision in {"approved", "rejected"}:
+        return role == OWNER_ADMIN
+    return True
+
+
 def render_release_record_markdown(record: dict[str, Any], brand_config: dict[str, Any]) -> str:
     brand = brand_config.get("public_brand", "AIvaMax")
     gate_rows = "\n".join(
@@ -3168,6 +3174,20 @@ def release_signoff_record(
         decision = normalize_signoff_decision(request.get("decision"))
     except ValueError as exc:
         return service_response(action="aivamax_release_signoff_record", role=caller_role, ok=False, error="invalid_decision", warnings=[str(exc)])
+    if not signoff_decision_allowed_for_role(decision, caller_role):
+        return service_response(
+            action="aivamax_release_signoff_record",
+            role=caller_role,
+            ok=False,
+            error="owner_approval_required",
+            result={
+                "decision": decision,
+                "required_role": OWNER_ADMIN,
+                "caller_role": caller_role,
+                "message": "Only owner_admin can record approved or rejected release signoff decisions.",
+            },
+            audit={"passed": False, "decision": decision, "caller_role": caller_role},
+        )
     bundle_payload = final_release_bundle(
         {
             "course": request.get("course"),
