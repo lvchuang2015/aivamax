@@ -138,6 +138,7 @@ Course factory production is also exposed through:
 - `POST /api/actions/course-factory-upsert-scenario`
 - `POST /api/actions/course-factory-delete-scenario`
 - `POST /api/actions/course-factory-reset-scenarios`
+- `POST /api/actions/client-pack-generate`
 - `POST /api/actions/course-factory-run-all`
 - `GET /api/client-packs`
 - `GET /api/client-packs/file?path=<encoded-path>&mode=preview|download`
@@ -196,6 +197,9 @@ aivamax_get_host_integration_status
 aivamax_host_smoke_test
 aivamax_export_mcp_config
 aivamax_student_coach_preview
+aivamax_get_course_factory_status
+aivamax_run_course_factory
+aivamax_generate_client_pack
 ```
 
 The MCP layer never exposes arbitrary shell, arbitrary file reads, raw source mirrors, internal project folders, or internal evidence metadata.

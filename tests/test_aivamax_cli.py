@@ -171,6 +171,7 @@ class AIvaMaxCLITest(unittest.TestCase):
             self.assertIn("MCP", html)
             self.assertIn("Run Course Factory", html)
             self.assertIn("Client Scenario Editor", html)
+            self.assertIn("Generate Pack", html)
             self.assertIn("Client Delivery Packs", html)
         finally:
             server.shutdown()
@@ -286,6 +287,7 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("aivamax_student_coach_preview", tool_names)
         self.assertIn("aivamax_get_course_factory_status", tool_names)
         self.assertIn("aivamax_run_course_factory", tool_names)
+        self.assertIn("aivamax_generate_client_pack", tool_names)
         self.assertIn("inputSchema", tools[0])
         status = mcp.call_tool(
             "aivamax_get_status",
@@ -341,6 +343,14 @@ class AIvaMaxCLITest(unittest.TestCase):
         )
         self.assertFalse(blocked_factory["ok"])
         self.assertEqual(blocked_factory["error"], "permission_denied")
+        blocked_pack = mcp.call_tool(
+            "aivamax_generate_client_pack",
+            {"role": "student_public", "client_code": "AI-SaaS-Pilot"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_pack["ok"])
+        self.assertEqual(blocked_pack["error"], "permission_denied")
 
     def test_mcp_jsonrpc_stdio_protocol_shape(self) -> None:
         data_dir = self.make_console_fixture()
@@ -1535,6 +1545,13 @@ Module {number} production output
                 brand_config_path=ROOT / "config" / "brand_config.json",
                 role="student_public",
             )
+        with self.assertRaises(PermissionError):
+            services.generate_client_pack_from_scenario(
+                {"client_code": "AI-SaaS-Pilot"},
+                data_dir=data_dir,
+                brand_config_path=ROOT / "config" / "brand_config.json",
+                role="student_public",
+            )
         invalid = services.upsert_course_factory_scenario(
             {"client_code": "bad", "industry": "AI SaaS", "product": "Offer", "market": "US", "goal": "lead_generation", "days": 366},
             data_dir=data_dir,
@@ -1590,6 +1607,22 @@ Module {number} production output
                 reset_payload = json.loads(response.read().decode("utf-8"))
             self.assertTrue(reset_payload["ok"], reset_payload)
             self.assertEqual(reset_payload["result"]["scenario_count"], 3)
+
+            request = urllib.request.Request(
+                base + "/api/actions/client-pack-generate",
+                data=json.dumps({"client_code": "AI-SaaS-Pilot"}).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(request, timeout=30) as response:
+                single_pack_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(single_pack_payload["ok"], single_pack_payload)
+            self.assertEqual(single_pack_payload["result"]["client_pack"]["pack_id"], "ai-saas-pilot")
+            self.assertTrue(single_pack_payload["result"]["client_pack"]["brand_audit_passed"])
+            generated_pack = single_pack_payload["result"]["packs"]["packs"][0]
+            generated_names = {item["name"] for item in generated_pack["files"]}
+            self.assertNotIn("08_Delivery-README.md", generated_names)
+            self.assertNotIn("manifest.json", generated_names)
 
             request = urllib.request.Request(base + "/api/actions/course-factory-run-all", method="POST")
             with urllib.request.urlopen(request, timeout=90) as response:

@@ -300,6 +300,7 @@ def get_status(
             "aivamax_student_coach_preview",
             "aivamax_get_course_factory_status",
             "aivamax_run_course_factory",
+            "aivamax_generate_client_pack",
         ],
         "mcp_modes": ["http-json", "stdio-jsonrpc"],
         "skills": [
@@ -908,6 +909,78 @@ def reset_course_factory_scenarios(
         role=caller_role,
         result=scenario_config,
         public_paths=[relpath(path)],
+    )
+
+
+def generate_client_pack_from_scenario(
+    request: dict[str, Any] | None = None,
+    *,
+    force: bool = True,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    request = request or {}
+    scenario: dict[str, Any] | None = None
+    raw_scenario = request.get("scenario") if isinstance(request.get("scenario"), dict) else None
+    if raw_scenario is None and any(key in request for key in ["industry", "product", "market", "goal", "days"]):
+        raw_scenario = request
+    try:
+        if raw_scenario:
+            scenario = normalize_service_course_factory_scenario(ctx, raw_scenario, 1)
+        else:
+            client_code = scrub_text(str(request.get("client_code", "")).strip(), ctx.brand_config)
+            if not client_code:
+                return service_response(action="aivamax_generate_client_pack", role=caller_role, ok=False, error="missing_client_code")
+            scenarios = existing_course_factory_scenarios(ctx)
+            scenario = next((item for item in scenarios if item["client_code"].lower() == client_code.lower()), None)
+            if scenario is None:
+                return service_response(
+                    action="aivamax_generate_client_pack",
+                    role=caller_role,
+                    ok=False,
+                    error="scenario_not_found",
+                    warnings=[client_code],
+                )
+    except ValueError as exc:
+        return service_response(action="aivamax_generate_client_pack", role=caller_role, ok=False, error="invalid_scenario", warnings=[str(exc)])
+
+    command = [
+        "--data-dir", str(ctx.data_dir),
+        "--brand-config", str(ctx.brand_config_path),
+        "client-pack-generate",
+        "--client-code", str(scenario["client_code"]),
+        "--industry", str(scenario["industry"]),
+        "--product", str(scenario["product"]),
+        "--market", str(scenario["market"]),
+        "--goal", str(scenario["goal"]),
+        "--days", str(scenario["days"]),
+        "--json",
+    ]
+    if force:
+        command.append("--force")
+    result = safe_cli(command, timeout=180)
+    parsed = result.get("json") if isinstance(result.get("json"), dict) else {
+        "stdout": result.get("stdout", ""),
+        "stderr": result.get("stderr", ""),
+        "returncode": result.get("returncode"),
+    }
+    packs = list_client_packs(data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+    payload = {
+        "scenario": scenario,
+        "client_pack": parsed,
+        "packs": packs.get("result", {}),
+    }
+    return service_response(
+        action="aivamax_generate_client_pack",
+        role=caller_role,
+        ok=bool(result.get("ok")),
+        result=payload,
+        public_paths=public_paths_from_result(payload),
+        audit={"passed": bool(parsed.get("brand_audit_passed")) if isinstance(parsed, dict) else bool(result.get("ok"))},
+        error=None if result.get("ok") else "client_pack_generate_failed",
     )
 
 
@@ -1583,6 +1656,7 @@ def render_skill(role: str) -> str:
             "aivamax_export_mcp_config",
             "aivamax_get_course_factory_status",
             "aivamax_run_course_factory",
+            "aivamax_generate_client_pack",
         ])
     if role == STUDENT_PUBLIC:
         preferred_tools.append("aivamax_student_coach_preview")

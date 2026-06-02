@@ -13,6 +13,7 @@ from aivamax_services import (
     DEFAULT_DATA_DIR,
     course_factory_status,
     export_course,
+    generate_client_pack_from_scenario,
     get_status,
     host_integration_status,
     host_smoke_test,
@@ -160,6 +161,20 @@ TOOL_DEFINITIONS = [
         },
     },
     {
+        "name": "aivamax_generate_client_pack",
+        "description": "Generate one AIvaMax client delivery pack from an internal course-factory scenario.",
+        "allowed_roles": ["owner_admin", "team_operator"],
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "client_code": {"type": "string"},
+                "scenario": {"type": "object"},
+                "role": {"type": "string"},
+            },
+            "additionalProperties": False,
+        },
+    },
+    {
         "name": "aivamax_get_latest_course",
         "description": "Return the latest public course target.",
         "allowed_roles": ["owner_admin", "team_operator", "instructor_private", "student_public"],
@@ -298,6 +313,8 @@ def call_tool(
                 build=bool(arguments.get("build", False)),
                 **common,
             )
+        if name == "aivamax_generate_client_pack":
+            return generate_client_pack_from_scenario(arguments, **common)
         if name == "aivamax_get_latest_course":
             return latest_course(**common)
         if name == "aivamax_get_runtime_status":

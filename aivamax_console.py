@@ -14,6 +14,7 @@ from aivamax_services import (
     course_factory_status,
     delete_course_factory_scenario,
     export_course,
+    generate_client_pack_from_scenario,
     generate_platform_assets,
     get_status,
     host_integration_status,
@@ -344,6 +345,17 @@ def console_html() -> str:
         log.textContent = `Scenario delete failed: ${err.message}`;
       }
     }
+    async function generateScenarioPack(clientCode) {
+      const log = document.getElementById('actionLog');
+      log.textContent = `Generating client pack for ${clientCode}...`;
+      try {
+        const result = await postJson('/api/actions/client-pack-generate', { client_code: clientCode, force: true });
+        log.textContent = JSON.stringify(result, null, 2);
+        await refreshAll();
+      } catch (err) {
+        log.textContent = `Client pack generation failed: ${err.message}`;
+      }
+    }
     function render(data, extra) {
       document.getElementById('status').textContent = `${data.public_brand} v${data.version} | ${data.generated_at} | ${data.data_dir}`;
       document.getElementById('metrics').innerHTML = [
@@ -403,7 +415,7 @@ def console_html() -> str:
           <td>${esc(item.market)}</td>
           <td>${esc(item.goal)}</td>
           <td>${esc(item.days)}</td>
-          <td><button class="danger" data-client-code="${esc(item.client_code)}" onclick="removeScenario(this.dataset.clientCode)">Delete</button></td>
+          <td><button class="primary" data-client-code="${esc(item.client_code)}" onclick="generateScenarioPack(this.dataset.clientCode)">Generate Pack</button> <button class="danger" data-client-code="${esc(item.client_code)}" onclick="removeScenario(this.dataset.clientCode)">Delete</button></td>
         </tr>`).join('');
       const packs = extra.clientPacks || {};
       document.getElementById('clientPackRows').innerHTML = (packs.packs || []).slice(0, 8).map(pack => `
@@ -625,6 +637,15 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                     json_response(self, HTTPStatus.BAD_REQUEST, {"ok": False, "error": "invalid_json", "message": str(exc)})
                     return
                 payload = delete_course_factory_scenario(str(body.get("client_code", "")), data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.BAD_REQUEST, payload)
+                return
+            if route == "/api/actions/client-pack-generate":
+                try:
+                    body = read_json_body(self)
+                except ValueError as exc:
+                    json_response(self, HTTPStatus.BAD_REQUEST, {"ok": False, "error": "invalid_json", "message": str(exc)})
+                    return
+                payload = generate_client_pack_from_scenario(body, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.BAD_REQUEST, payload)
                 return
             if route == "/api/actions/course-factory-run-all":
