@@ -654,6 +654,18 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertTrue(ready_status["result"]["can_generate"])
         self.assertEqual(ready_status["result"]["actual_sha256"], bundle_sha)
         self.assertFalse((matrix_root / "public_export" / "approved_distribution" / "AIvaMax-Approved-Distribution.zip").exists())
+        status_payload = services.get_status(
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="owner_admin",
+        )
+        self.assertTrue(any("release-distribution-package" in item.get("command", "") for item in status_payload["result"]["next_actions"]))
+        runtime_payload = services.runtime_status(
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="owner_admin",
+        )
+        self.assertTrue(any("release-distribution-package" in item.get("command", "") for item in runtime_payload["result"]["next_actions"]))
 
         approved = services.release_distribution_package(
             data_dir=data_dir,
@@ -678,6 +690,12 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertEqual(generated_status["result"]["distribution_status"], "approved_distribution_exists")
         self.assertTrue(generated_status["result"]["has_existing_distribution"])
         self.assertIn("archive", generated_status["result"]["existing_distribution_files"])
+        generated_status_payload = services.get_status(
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+            role="owner_admin",
+        )
+        self.assertTrue(any("release-distribution-status" in item.get("command", "") for item in generated_status_payload["result"]["next_actions"]))
         with zipfile.ZipFile(distribution_archive) as archive:
             names = archive.namelist()
         self.assertIn("release_bundle/AIvaMax-Course-Factory-Final-Release.zip", names)

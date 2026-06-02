@@ -299,6 +299,55 @@ def release_review_next_actions(ctx: ServiceContext, role: str) -> list[dict[str
     return []
 
 
+def release_distribution_next_actions(ctx: ServiceContext, role: str) -> list[dict[str, Any]]:
+    if "course_factory" not in ROLE_PERMISSIONS.get(role, set()):
+        return []
+    status_payload = release_distribution_status(data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=role)
+    if not status_payload.get("ok"):
+        return []
+    status = status_payload.get("result", {})
+    if status.get("decision") != "approved":
+        return []
+    release_id = status.get("release_id")
+    if status.get("can_generate") and not status.get("has_existing_distribution"):
+        return [{
+            "priority": 1,
+            "title": "Generate approved AIvaMax distribution package",
+            "command": "aivamax.ps1 release-distribution-package",
+            "owner_role": "owner_admin",
+            "release_id": release_id,
+            "status": status.get("distribution_status"),
+        }]
+    if status.get("can_generate") and status.get("has_existing_distribution"):
+        return [{
+            "priority": 2,
+            "title": "Review approved AIvaMax distribution package",
+            "command": "aivamax.ps1 release-distribution-status",
+            "owner_role": "owner_admin",
+            "release_id": release_id,
+            "status": status.get("distribution_status"),
+        }]
+    blockers = status.get("blockers") or []
+    if blockers:
+        return [{
+            "priority": 1,
+            "title": "Repair approved AIvaMax release before distribution",
+            "command": "aivamax.ps1 course-factory-release-status",
+            "owner_role": "owner_admin",
+            "release_id": release_id,
+            "status": status.get("distribution_status"),
+            "blockers": blockers,
+        }]
+    return []
+
+
+def release_next_actions(ctx: ServiceContext, role: str) -> list[dict[str, Any]]:
+    return [
+        *release_review_next_actions(ctx, role),
+        *release_distribution_next_actions(ctx, role),
+    ]
+
+
 def service_response(
     *,
     action: str,
@@ -424,7 +473,7 @@ def get_status(
     if release_overview:
         status["release_review"] = release_overview
     status["next_actions"] = [
-        *release_review_next_actions(ctx, role),
+        *release_next_actions(ctx, role),
         *status.get("next_actions", []),
     ]
     status["service"] = {
@@ -3739,7 +3788,7 @@ def runtime_next_actions(status: dict[str, Any], runs: list[dict[str, Any]], ctx
     latest_course_module = courses.get("latest_course_module")
     latest_project = courses.get("latest_project")
     latest_run = runs[0] if runs else None
-    actions: list[dict[str, Any]] = release_review_next_actions(ctx, role) if ctx else []
+    actions: list[dict[str, Any]] = release_next_actions(ctx, role) if ctx else []
     if latest_course_module and latest_project:
         course_parts = str(latest_course_module).replace("\\", "/").split("/")
         course_name = course_parts[-2] if len(course_parts) >= 2 else "<course>"
