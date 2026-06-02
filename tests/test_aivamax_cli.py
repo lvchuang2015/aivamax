@@ -173,6 +173,7 @@ class AIvaMaxCLITest(unittest.TestCase):
             self.assertIn("MCP", html)
             self.assertIn("Run Course Factory", html)
             self.assertIn("Release Status", html)
+            self.assertIn("Final Bundle", html)
             self.assertIn("Course Factory Release Status", html)
             self.assertIn("Client Scenario Editor", html)
             self.assertIn("Generate Pack", html)
@@ -297,6 +298,7 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("aivamax_get_course_factory_status", tool_names)
         self.assertIn("aivamax_run_course_factory", tool_names)
         self.assertIn("aivamax_course_factory_release_status", tool_names)
+        self.assertIn("aivamax_final_release_bundle", tool_names)
         self.assertIn("aivamax_generate_client_pack", tool_names)
         self.assertIn("aivamax_client_pack_delivery_qa", tool_names)
         self.assertIn("aivamax_client_pack_batch_delivery_qa", tool_names)
@@ -406,6 +408,14 @@ class AIvaMaxCLITest(unittest.TestCase):
         )
         self.assertFalse(blocked_release_status["ok"])
         self.assertEqual(blocked_release_status["error"], "permission_denied")
+        blocked_bundle = mcp.call_tool(
+            "aivamax_final_release_bundle",
+            {"role": "student_public"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_bundle["ok"])
+        self.assertEqual(blocked_bundle["error"], "permission_denied")
         blocked_zip = mcp.call_tool(
             "aivamax_export_client_pack_zip",
             {"role": "student_public", "pack_id": "AI-SaaS-Pilot"},
@@ -1953,6 +1963,41 @@ Module {number} production output
                 release_status_markdown = response.read().decode("utf-8")
             self.assertIn("Course Factory Release Status", release_status_markdown)
             self.assert_public_clean(release_status_markdown)
+
+            request = urllib.request.Request(
+                base + "/api/actions/final-release-bundle",
+                data=json.dumps({"require_ready": False}).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(request, timeout=60) as response:
+                bundle_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(bundle_payload["ok"], bundle_payload)
+            bundle = bundle_payload["result"]
+            self.assertIn("ready_to_release", bundle)
+            self.assertGreaterEqual(bundle["included_file_count"], 20)
+            self.assertIn("client_pack_zip", bundle["asset_group_counts"])
+            self.assertIn("course_full_export", bundle["asset_group_counts"])
+            bundle_manifest_path = core.resolve_reported_path(bundle["files"]["manifest"]["path"])
+            bundle_checklist_path = core.resolve_reported_path(bundle["files"]["checklist"]["path"])
+            bundle_archive_path = core.resolve_reported_path(bundle["files"]["archive"]["path"])
+            self.assertTrue(bundle_manifest_path and bundle_manifest_path.exists())
+            self.assertTrue(bundle_checklist_path and bundle_checklist_path.exists())
+            self.assertTrue(bundle_archive_path and bundle_archive_path.exists())
+            bundle_manifest = json.loads(bundle_manifest_path.read_text(encoding="utf-8"))
+            self.assertNotIn("source_path", json.dumps(bundle_manifest, ensure_ascii=False))
+            self.assertNotIn("raw_path", json.dumps(bundle_manifest, ensure_ascii=False))
+            with urllib.request.urlopen(base + bundle["files"]["checklist"]["preview_url"], timeout=20) as response:
+                checklist_text = response.read().decode("utf-8")
+            self.assertIn("Final Release Signoff Checklist", checklist_text)
+            self.assert_public_clean(checklist_text)
+            with zipfile.ZipFile(bundle_archive_path) as archive:
+                names = archive.namelist()
+            self.assertTrue(any(name.startswith("course/full_export/") for name in names))
+            self.assertTrue(any(name.startswith("course/sales_preview/") for name in names))
+            self.assertTrue(any(name.startswith("client_packs/") and name.endswith(".zip") for name in names))
+            self.assertFalse(any("08_Delivery-README.md" in name for name in names))
+            self.assertFalse(any("/manifest.json" in name for name in names))
 
             with urllib.request.urlopen(base + "/api/course-factory", timeout=20) as response:
                 factory_payload = json.loads(response.read().decode("utf-8"))

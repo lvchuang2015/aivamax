@@ -18,6 +18,7 @@ from aivamax_services import (
     delete_course_factory_scenario,
     export_course,
     export_client_pack_zip,
+    final_release_bundle,
     generate_client_pack_from_scenario,
     generate_platform_assets,
     get_status,
@@ -45,6 +46,7 @@ from aivamax_services import (
     resolve_client_pack_file,
     resolve_client_pack_report_file,
     resolve_dashboard_report_file,
+    resolve_release_bundle_file,
     upsert_course_factory_scenario,
 )
 
@@ -125,6 +127,7 @@ def console_html() -> str:
       <button onclick="runAction('course-factory-init-scenarios')">Init Client Scenarios</button>
       <button class="primary" onclick="runAction('course-factory-run-all')">Run Course Factory</button>
       <button onclick="runAction('course-factory-release-status')">Release Status</button>
+      <button class="primary" onclick="runAction('final-release-bundle')">Final Bundle</button>
       <button class="primary" onclick="refreshAll()">刷新状态</button>
       <button onclick="runAction('refresh-audits')">刷新审计</button>
       <button onclick="runAction('refresh-platform-assets')">重建平台库</button>
@@ -657,6 +660,23 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                 content_type = "application/json; charset=utf-8" if file_path.suffix.lower() == ".json" else "text/markdown; charset=utf-8"
                 binary_file_response(self, file_path, content_type, download=mode == "download")
                 return
+            if route == "/api/release-bundle/file":
+                query = parse_qs(parsed.query)
+                requested_path = (query.get("path") or [""])[0]
+                mode = (query.get("mode") or ["download"])[0]
+                try:
+                    file_path = resolve_release_bundle_file(requested_path, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                except (PermissionError, FileNotFoundError) as exc:
+                    json_response(self, HTTPStatus.FORBIDDEN, {"ok": False, "error": "blocked_release_bundle_file", "message": str(exc)})
+                    return
+                if file_path.suffix.lower() == ".zip":
+                    content_type = "application/zip"
+                elif file_path.suffix.lower() == ".json":
+                    content_type = "application/json; charset=utf-8"
+                else:
+                    content_type = "text/markdown; charset=utf-8"
+                binary_file_response(self, file_path, content_type, download=mode == "download")
+                return
             if route == "/api/client-packs/file":
                 query = parse_qs(parsed.query)
                 requested_path = (query.get("path") or [""])[0]
@@ -844,6 +864,15 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                 return
             if route == "/api/actions/course-factory-release-status":
                 payload = course_factory_release_status(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.INTERNAL_SERVER_ERROR, payload)
+                return
+            if route == "/api/actions/final-release-bundle":
+                try:
+                    body = read_json_body(self)
+                except ValueError as exc:
+                    json_response(self, HTTPStatus.BAD_REQUEST, {"ok": False, "error": "invalid_json", "message": str(exc)})
+                    return
+                payload = final_release_bundle(body, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
                 json_response(self, HTTPStatus.OK if payload.get("ok") else HTTPStatus.INTERNAL_SERVER_ERROR, payload)
                 return
             if route == "/api/actions/export-mcp-config":

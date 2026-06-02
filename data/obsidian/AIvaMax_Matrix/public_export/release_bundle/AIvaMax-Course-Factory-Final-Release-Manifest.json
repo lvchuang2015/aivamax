@@ -1,0 +1,411 @@
+{
+  "generated_at": "2026-06-02T06:08:51+00:00",
+  "public_brand": "AIvaMax",
+  "readiness": "ready",
+  "ready_to_release": true,
+  "course": {
+    "name": "AIvaMax社媒自动化增长系统课",
+    "path": "data/obsidian/AIvaMax_Matrix/70_Courses/AIvaMax社媒自动化增长系统课",
+    "module_count": 12,
+    "audit_passed": true
+  },
+  "release_status": {
+    "report": {
+      "json": {
+        "name": "Course-Factory-Release-Status.json",
+        "path": "data/obsidian/AIvaMax_Matrix/00_Dashboards/Course-Factory-Release-Status.json",
+        "size": 3487,
+        "visibility": "internal_dashboard",
+        "preview_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-Release-Status.json&mode=preview",
+        "download_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-Release-Status.json&mode=download"
+      },
+      "markdown": {
+        "name": "Course-Factory-Release-Status.md",
+        "path": "data/obsidian/AIvaMax_Matrix/00_Dashboards/Course-Factory-Release-Status.md",
+        "size": 1664,
+        "visibility": "internal_dashboard",
+        "preview_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-Release-Status.md&mode=preview",
+        "download_url": "/api/dashboard/report?path=data%2Fobsidian%2FAIvaMax_Matrix%2F00_Dashboards%2FCourse-Factory-Release-Status.md&mode=download"
+      }
+    },
+    "gates": {
+      "course_factory": {
+        "status": "passed",
+        "detail": "12 modules audited"
+      },
+      "scenario_config": {
+        "status": "passed",
+        "detail": "3 client scenarios"
+      },
+      "production_report": {
+        "status": "passed",
+        "detail": "data/obsidian/AIvaMax_Matrix/00_Dashboards/course_factory_run_20260602011534.json"
+      },
+      "release_gate": {
+        "status": "passed",
+        "detail": "5/5 audits passed"
+      },
+      "client_delivery_qa": {
+        "status": "passed",
+        "detail": "7/7 deliverable, 0 needs revision"
+      },
+      "zip_exports": {
+        "status": "passed",
+        "detail": "7/7 ZIP exports"
+      },
+      "repair_status": {
+        "status": "passed",
+        "detail": "0 repaired in latest batch repair"
+      }
+    },
+    "client_packs": {
+      "root": "data/obsidian/AIvaMax_Matrix/50_Projects/Samples",
+      "pack_count": 7,
+      "deliverable_count": 7,
+      "needs_revision_count": 0,
+      "zip_count": 7,
+      "average_score": 97,
+      "batch_qa_report": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/Delivery-QA-Summary.md",
+      "batch_repair_report": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/Delivery-Repair-Summary.md"
+    }
+  },
+  "included_file_count": 51,
+  "asset_group_counts": {
+    "course_full_export": 10,
+    "course_sales_preview": 10,
+    "release_status": 2,
+    "production_report": 2,
+    "batch_delivery_qa": 2,
+    "batch_repair": 2,
+    "client_pack_zip": 7,
+    "client_pack_qa": 14
+  },
+  "assets": [
+    {
+      "group": "course_full_export",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/AIvaMax社媒自动化增长系统课/course_factory_full_export/00_Course-Index.html",
+      "bundle_path": "course/full_export/00_Course-Index.html",
+      "size": 1864
+    },
+    {
+      "group": "course_full_export",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/AIvaMax社媒自动化增长系统课/course_factory_full_export/00_Course-Index.md",
+      "bundle_path": "course/full_export/00_Course-Index.md",
+      "size": 1348
+    },
+    {
+      "group": "course_full_export",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/AIvaMax社媒自动化增长系统课/course_factory_full_export/01_Student-Manual.html",
+      "bundle_path": "course/full_export/01_Student-Manual.html",
+      "size": 42110
+    },
+    {
+      "group": "course_full_export",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/AIvaMax社媒自动化增长系统课/course_factory_full_export/01_Student-Manual.md",
+      "bundle_path": "course/full_export/01_Student-Manual.md",
+      "size": 37691
+    },
+    {
+      "group": "course_full_export",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/AIvaMax社媒自动化增长系统课/course_factory_full_export/02_Instructor-Manual.html",
+      "bundle_path": "course/full_export/02_Instructor-Manual.html",
+      "size": 31115
+    },
+    {
+      "group": "course_full_export",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/AIvaMax社媒自动化增长系统课/course_factory_full_export/02_Instructor-Manual.md",
+      "bundle_path": "course/full_export/02_Instructor-Manual.md",
+      "size": 27785
+    },
+    {
+      "group": "course_full_export",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/AIvaMax社媒自动化增长系统课/course_factory_full_export/03_Assessment-Pack.html",
+      "bundle_path": "course/full_export/03_Assessment-Pack.html",
+      "size": 12637
+    },
+    {
+      "group": "course_full_export",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/AIvaMax社媒自动化增长系统课/course_factory_full_export/03_Assessment-Pack.md",
+      "bundle_path": "course/full_export/03_Assessment-Pack.md",
+      "size": 11037
+    },
+    {
+      "group": "course_full_export",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/AIvaMax社媒自动化增长系统课/course_factory_full_export/04_Sales-Overview.html",
+      "bundle_path": "course/full_export/04_Sales-Overview.html",
+      "size": 1589
+    },
+    {
+      "group": "course_full_export",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/AIvaMax社媒自动化增长系统课/course_factory_full_export/04_Sales-Overview.md",
+      "bundle_path": "course/full_export/04_Sales-Overview.md",
+      "size": 1096
+    },
+    {
+      "group": "course_sales_preview",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/AIvaMax社媒自动化增长系统课/course_factory_sales_preview/01_Course-Offer.html",
+      "bundle_path": "course/sales_preview/01_Course-Offer.html",
+      "size": 1660
+    },
+    {
+      "group": "course_sales_preview",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/AIvaMax社媒自动化增长系统课/course_factory_sales_preview/01_Course-Offer.md",
+      "bundle_path": "course/sales_preview/01_Course-Offer.md",
+      "size": 1136
+    },
+    {
+      "group": "course_sales_preview",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/AIvaMax社媒自动化增长系统课/course_factory_sales_preview/02_Trial-Lesson.html",
+      "bundle_path": "course/sales_preview/02_Trial-Lesson.html",
+      "size": 879
+    },
+    {
+      "group": "course_sales_preview",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/AIvaMax社媒自动化增长系统课/course_factory_sales_preview/02_Trial-Lesson.md",
+      "bundle_path": "course/sales_preview/02_Trial-Lesson.md",
+      "size": 479
+    },
+    {
+      "group": "course_sales_preview",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/AIvaMax社媒自动化增长系统课/course_factory_sales_preview/03_Workbook-Sample.html",
+      "bundle_path": "course/sales_preview/03_Workbook-Sample.html",
+      "size": 731
+    },
+    {
+      "group": "course_sales_preview",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/AIvaMax社媒自动化增长系统课/course_factory_sales_preview/03_Workbook-Sample.md",
+      "bundle_path": "course/sales_preview/03_Workbook-Sample.md",
+      "size": 301
+    },
+    {
+      "group": "course_sales_preview",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/AIvaMax社媒自动化增长系统课/course_factory_sales_preview/04_FAQ.html",
+      "bundle_path": "course/sales_preview/04_FAQ.html",
+      "size": 1022
+    },
+    {
+      "group": "course_sales_preview",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/AIvaMax社媒自动化增长系统课/course_factory_sales_preview/04_FAQ.md",
+      "bundle_path": "course/sales_preview/04_FAQ.md",
+      "size": 631
+    },
+    {
+      "group": "course_sales_preview",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/AIvaMax社媒自动化增长系统课/course_factory_sales_preview/05_Delivery-Checklist.html",
+      "bundle_path": "course/sales_preview/05_Delivery-Checklist.html",
+      "size": 748
+    },
+    {
+      "group": "course_sales_preview",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/AIvaMax社媒自动化增长系统课/course_factory_sales_preview/05_Delivery-Checklist.md",
+      "bundle_path": "course/sales_preview/05_Delivery-Checklist.md",
+      "size": 316
+    },
+    {
+      "group": "release_status",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/00_Dashboards/Course-Factory-Release-Status.json",
+      "bundle_path": "reports/release_status/Course-Factory-Release-Status.json",
+      "size": 3487
+    },
+    {
+      "group": "release_status",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/00_Dashboards/Course-Factory-Release-Status.md",
+      "bundle_path": "reports/release_status/Course-Factory-Release-Status.md",
+      "size": 1664
+    },
+    {
+      "group": "production_report",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/00_Dashboards/course_factory_run_20260602011534.json",
+      "bundle_path": "reports/production/course_factory_run_20260602011534.json",
+      "size": 2664
+    },
+    {
+      "group": "production_report",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/00_Dashboards/course_factory_run_20260602011534.md",
+      "bundle_path": "reports/production/course_factory_run_20260602011534.md",
+      "size": 1922
+    },
+    {
+      "group": "batch_delivery_qa",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/Delivery-QA-Summary.md",
+      "bundle_path": "reports/batch_delivery_qa/Delivery-QA-Summary.md",
+      "size": 1133
+    },
+    {
+      "group": "batch_delivery_qa",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/Delivery-QA-Summary.json",
+      "bundle_path": "reports/batch_delivery_qa/Delivery-QA-Summary.json",
+      "size": 14736
+    },
+    {
+      "group": "batch_repair",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/Delivery-Repair-Summary.md",
+      "bundle_path": "reports/batch_repair/Delivery-Repair-Summary.md",
+      "size": 1089
+    },
+    {
+      "group": "batch_repair",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/Delivery-Repair-Summary.json",
+      "bundle_path": "reports/batch_repair/Delivery-Repair-Summary.json",
+      "size": 1059
+    },
+    {
+      "group": "client_pack_zip",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/ai-saas-leadgen-30d/ai-saas-leadgen-30d-client-delivery.zip",
+      "bundle_path": "client_packs/ai-saas-leadgen-30d/ai-saas-leadgen-30d-client-delivery.zip",
+      "size": 7956
+    },
+    {
+      "group": "client_pack_qa",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/ai-saas-leadgen-30d/Delivery-QA-Report.json",
+      "bundle_path": "reports/client_pack_qa/ai-saas-leadgen-30d/Delivery-QA-Report.json",
+      "size": 2803
+    },
+    {
+      "group": "client_pack_qa",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/ai-saas-leadgen-30d/Delivery-QA-Report.md",
+      "bundle_path": "reports/client_pack_qa/ai-saas-leadgen-30d/Delivery-QA-Report.md",
+      "size": 1737
+    },
+    {
+      "group": "client_pack_zip",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/education-course-pilot/education-course-pilot-client-delivery.zip",
+      "bundle_path": "client_packs/education-course-pilot/education-course-pilot-client-delivery.zip",
+      "size": 4007
+    },
+    {
+      "group": "client_pack_qa",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/education-course-pilot/Delivery-QA-Report.json",
+      "bundle_path": "reports/client_pack_qa/education-course-pilot/Delivery-QA-Report.json",
+      "size": 2730
+    },
+    {
+      "group": "client_pack_qa",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/education-course-pilot/Delivery-QA-Report.md",
+      "bundle_path": "reports/client_pack_qa/education-course-pilot/Delivery-QA-Report.md",
+      "size": 1700
+    },
+    {
+      "group": "client_pack_zip",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/local-service-pilot/local-service-pilot-client-delivery.zip",
+      "bundle_path": "client_packs/local-service-pilot/local-service-pilot-client-delivery.zip",
+      "size": 4005
+    },
+    {
+      "group": "client_pack_qa",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/local-service-pilot/Delivery-QA-Report.json",
+      "bundle_path": "reports/client_pack_qa/local-service-pilot/Delivery-QA-Report.json",
+      "size": 2737
+    },
+    {
+      "group": "client_pack_qa",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/local-service-pilot/Delivery-QA-Report.md",
+      "bundle_path": "reports/client_pack_qa/local-service-pilot/Delivery-QA-Report.md",
+      "size": 1704
+    },
+    {
+      "group": "client_pack_zip",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/ai-saas-pilot/ai-saas-pilot-client-delivery.zip",
+      "bundle_path": "client_packs/ai-saas-pilot/ai-saas-pilot-client-delivery.zip",
+      "size": 3990
+    },
+    {
+      "group": "client_pack_qa",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/ai-saas-pilot/Delivery-QA-Report.json",
+      "bundle_path": "reports/client_pack_qa/ai-saas-pilot/Delivery-QA-Report.json",
+      "size": 2724
+    },
+    {
+      "group": "client_pack_qa",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/ai-saas-pilot/Delivery-QA-Report.md",
+      "bundle_path": "reports/client_pack_qa/ai-saas-pilot/Delivery-QA-Report.md",
+      "size": 1685
+    },
+    {
+      "group": "client_pack_zip",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/local-service-leadgen-30d/local-service-leadgen-30d-client-delivery.zip",
+      "bundle_path": "client_packs/local-service-leadgen-30d/local-service-leadgen-30d-client-delivery.zip",
+      "size": 4012
+    },
+    {
+      "group": "client_pack_qa",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/local-service-leadgen-30d/Delivery-QA-Report.json",
+      "bundle_path": "reports/client_pack_qa/local-service-leadgen-30d/Delivery-QA-Report.json",
+      "size": 2736
+    },
+    {
+      "group": "client_pack_qa",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/local-service-leadgen-30d/Delivery-QA-Report.md",
+      "bundle_path": "reports/client_pack_qa/local-service-leadgen-30d/Delivery-QA-Report.md",
+      "size": 1709
+    },
+    {
+      "group": "client_pack_zip",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/edu-course-trial-30d/edu-course-trial-30d-client-delivery.zip",
+      "bundle_path": "client_packs/edu-course-trial-30d/edu-course-trial-30d-client-delivery.zip",
+      "size": 3990
+    },
+    {
+      "group": "client_pack_qa",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/edu-course-trial-30d/Delivery-QA-Report.json",
+      "bundle_path": "reports/client_pack_qa/edu-course-trial-30d/Delivery-QA-Report.json",
+      "size": 2734
+    },
+    {
+      "group": "client_pack_qa",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/edu-course-trial-30d/Delivery-QA-Report.md",
+      "bundle_path": "reports/client_pack_qa/edu-course-trial-30d/Delivery-QA-Report.md",
+      "size": 1702
+    },
+    {
+      "group": "client_pack_zip",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/xbe-ecom-30d/xbe-ecom-30d-client-delivery.zip",
+      "bundle_path": "client_packs/xbe-ecom-30d/xbe-ecom-30d-client-delivery.zip",
+      "size": 4019
+    },
+    {
+      "group": "client_pack_qa",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/xbe-ecom-30d/Delivery-QA-Report.json",
+      "bundle_path": "reports/client_pack_qa/xbe-ecom-30d/Delivery-QA-Report.json",
+      "size": 2725
+    },
+    {
+      "group": "client_pack_qa",
+      "asset_path": "data/obsidian/AIvaMax_Matrix/public_export/client_packs/xbe-ecom-30d/Delivery-QA-Report.md",
+      "bundle_path": "reports/client_pack_qa/xbe-ecom-30d/Delivery-QA-Report.md",
+      "size": 1685
+    }
+  ],
+  "warnings": [],
+  "files": {
+    "root": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle",
+    "manifest": {
+      "name": "AIvaMax-Course-Factory-Final-Release-Manifest.json",
+      "path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release-Manifest.json",
+      "visibility": "final_release_bundle",
+      "preview_url": "/api/release-bundle/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Frelease_bundle%2FAIvaMax-Course-Factory-Final-Release-Manifest.json&mode=preview",
+      "download_url": "/api/release-bundle/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Frelease_bundle%2FAIvaMax-Course-Factory-Final-Release-Manifest.json&mode=download"
+    },
+    "checklist": {
+      "name": "AIvaMax-Course-Factory-Final-Release-Signoff-Checklist.md",
+      "path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release-Signoff-Checklist.md",
+      "visibility": "final_release_bundle",
+      "preview_url": "/api/release-bundle/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Frelease_bundle%2FAIvaMax-Course-Factory-Final-Release-Signoff-Checklist.md&mode=preview",
+      "download_url": "/api/release-bundle/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Frelease_bundle%2FAIvaMax-Course-Factory-Final-Release-Signoff-Checklist.md&mode=download"
+    },
+    "archive": {
+      "name": "AIvaMax-Course-Factory-Final-Release.zip",
+      "path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release.zip",
+      "visibility": "final_release_bundle",
+      "preview_url": null,
+      "download_url": "/api/release-bundle/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Frelease_bundle%2FAIvaMax-Course-Factory-Final-Release.zip&mode=download"
+    }
+  },
+  "archive": {
+    "name": "AIvaMax-Course-Factory-Final-Release.zip",
+    "path": "data/obsidian/AIvaMax_Matrix/public_export/release_bundle/AIvaMax-Course-Factory-Final-Release.zip",
+    "visibility": "final_release_bundle",
+    "preview_url": null,
+    "download_url": "/api/release-bundle/file?path=data%2Fobsidian%2FAIvaMax_Matrix%2Fpublic_export%2Frelease_bundle%2FAIvaMax-Course-Factory-Final-Release.zip&mode=download"
+  }
+}

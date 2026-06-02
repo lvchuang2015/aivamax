@@ -7276,6 +7276,34 @@ def run_course_factory_release_status(args: argparse.Namespace) -> int:
     return 0 if result.get("ok") else 1
 
 
+def run_final_release_bundle(args: argparse.Namespace) -> int:
+    from aivamax_services import final_release_bundle
+
+    result = final_release_bundle(
+        {
+            "course": args.course,
+            "course_dir": args.course_dir,
+            "require_ready": args.require_ready,
+        },
+        data_dir=Path(args.data_dir),
+        brand_config_path=Path(args.brand_config),
+        role=args.role,
+    )
+    if args.json:
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+    else:
+        payload = result.get("result", {})
+        files = payload.get("files", {})
+        print(f"Final release bundle: {'ready' if result.get('ok') else 'failed'}")
+        print(f"Ready to release: {payload.get('ready_to_release')}")
+        print(f"Included files: {payload.get('included_file_count')}")
+        if files.get("archive"):
+            print(f"Archive: {files['archive'].get('path')}")
+        if files.get("checklist"):
+            print(f"Checklist: {files['checklist'].get('path')}")
+    return 0 if result.get("ok") else 1
+
+
 def run_material_review(args: argparse.Namespace) -> int:
     from aivamax_services import material_review
 
@@ -7504,6 +7532,14 @@ def build_parser() -> argparse.ArgumentParser:
     course_factory_release_status_parser.add_argument("--role", default="owner_admin", choices=["owner_admin", "team_operator", "instructor_private", "student_public"])
     course_factory_release_status_parser.add_argument("--json", action="store_true")
     course_factory_release_status_parser.set_defaults(func=run_course_factory_release_status)
+
+    final_release_bundle_parser = sub.add_parser("final-release-bundle", help="Assemble the final AIvaMax release bundle ZIP, manifest, and signoff checklist.")
+    final_release_bundle_parser.add_argument("--course")
+    final_release_bundle_parser.add_argument("--course-dir")
+    final_release_bundle_parser.add_argument("--role", default="owner_admin", choices=["owner_admin", "team_operator", "instructor_private", "student_public"])
+    final_release_bundle_parser.add_argument("--require-ready", action=argparse.BooleanOptionalAction, default=True)
+    final_release_bundle_parser.add_argument("--json", action="store_true")
+    final_release_bundle_parser.set_defaults(func=run_final_release_bundle)
 
     material_review = sub.add_parser("material-review", help="Review AIvaMax media and case material readiness.")
     material_review.add_argument("--path")

@@ -130,6 +130,7 @@ HOST_TARGETS = {"claude-code", "work-buddy", "codex", "generic-agent"}
 DEFAULT_COURSE_FACTORY_COURSE = "AIvaMax社媒自动化增长系统课"
 COURSE_FACTORY_SCENARIO_CONFIG = "90_Templates/Tables/course_factory_client_scenarios.json"
 COURSE_FACTORY_RELEASE_STATUS_BASENAME = "Course-Factory-Release-Status"
+FINAL_RELEASE_BUNDLE_BASENAME = "AIvaMax-Course-Factory-Final-Release"
 
 
 @dataclass(frozen=True)
@@ -304,6 +305,7 @@ def get_status(
             "aivamax_get_course_factory_status",
             "aivamax_run_course_factory",
             "aivamax_course_factory_release_status",
+            "aivamax_final_release_bundle",
             "aivamax_generate_client_pack",
             "aivamax_client_pack_delivery_qa",
             "aivamax_client_pack_batch_delivery_qa",
@@ -483,12 +485,59 @@ def dashboard_report_record(path: Path) -> dict[str, Any]:
     }
 
 
+def release_bundle_file_record(path: Path) -> dict[str, Any]:
+    relative = relpath(path)
+    quoted = quote(relative, safe="")
+    is_archive = path.suffix.lower() == ".zip"
+    return {
+        "name": path.name,
+        "path": relative,
+        "size": path.stat().st_size,
+        "visibility": "final_release_bundle",
+        "preview_url": None if is_archive else f"/api/release-bundle/file?path={quoted}&mode=preview",
+        "download_url": f"/api/release-bundle/file?path={quoted}&mode=download",
+    }
+
+
 def course_factory_release_status_report_paths(ctx: ServiceContext) -> tuple[Path, Path]:
     dashboard = ctx.matrix_root / "00_Dashboards"
     return (
         dashboard / f"{COURSE_FACTORY_RELEASE_STATUS_BASENAME}.json",
         dashboard / f"{COURSE_FACTORY_RELEASE_STATUS_BASENAME}.md",
     )
+
+
+def final_release_bundle_root(ctx: ServiceContext) -> Path:
+    return ctx.matrix_root / "public_export" / "release_bundle"
+
+
+def final_release_bundle_paths(ctx: ServiceContext) -> dict[str, Path]:
+    root = final_release_bundle_root(ctx)
+    return {
+        "root": root,
+        "manifest": root / f"{FINAL_RELEASE_BUNDLE_BASENAME}-Manifest.json",
+        "checklist": root / f"{FINAL_RELEASE_BUNDLE_BASENAME}-Signoff-Checklist.md",
+        "archive": root / f"{FINAL_RELEASE_BUNDLE_BASENAME}.zip",
+    }
+
+
+def resolve_release_bundle_file(
+    requested_path: str,
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> Path:
+    require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    paths = final_release_bundle_paths(ctx)
+    allowed = {paths["manifest"].resolve(), paths["checklist"].resolve(), paths["archive"].resolve()}
+    candidate = core.resolve_reported_path(requested_path)
+    if not candidate or candidate.resolve() not in allowed:
+        raise PermissionError("Final release bundle file is not allowlisted.")
+    if not candidate.exists():
+        raise FileNotFoundError(str(candidate))
+    return candidate
 
 
 def resolve_dashboard_report_file(
@@ -2119,6 +2168,257 @@ def course_factory_release_status(
     )
 
 
+def resolve_release_asset_path(ctx: ServiceContext, value: str | None) -> Path | None:
+    if not value:
+        return None
+    candidate = Path(value)
+    if candidate.is_absolute():
+        return candidate
+    normalized = value.replace("\\", "/")
+    if normalized.startswith("obsidian/"):
+        return ctx.data_dir / normalized
+    return core.resolve_reported_path(value)
+
+
+def release_bundle_asset_record(path: Path, arcname: str, group: str) -> dict[str, Any]:
+    return {
+        "group": group,
+        "asset_path": relpath(path),
+        "bundle_path": arcname.replace("\\", "/"),
+        "size": path.stat().st_size,
+    }
+
+
+def collect_release_bundle_assets(status: dict[str, Any], packs: dict[str, Any], ctx: ServiceContext) -> tuple[list[tuple[Path, str, str]], list[str]]:
+    assets: list[tuple[Path, str, str]] = []
+    warnings: list[str] = []
+
+    def add_file(path: Path | None, arcname: str, group: str) -> None:
+        if not path or not path.exists() or not path.is_file():
+            warnings.append(f"Missing release asset: {arcname}")
+            return
+        if is_blocked_path(path):
+            warnings.append(f"Blocked release asset skipped: {relpath(path)}")
+            return
+        assets.append((path, arcname.replace("\\", "/"), group))
+
+    def add_dir(path: Path | None, arc_prefix: str, group: str) -> None:
+        if not path or not path.exists() or not path.is_dir():
+            warnings.append(f"Missing release asset directory: {arc_prefix}")
+            return
+        for file_path in sorted(path.rglob("*")):
+            if file_path.is_file():
+                add_file(file_path, f"{arc_prefix}/{file_path.relative_to(path).as_posix()}", group)
+
+    production = status.get("production", {}) if isinstance(status.get("production"), dict) else {}
+    full_export = production.get("full_export", {}) if isinstance(production.get("full_export"), dict) else {}
+    sales_preview = production.get("sales_preview", {}) if isinstance(production.get("sales_preview"), dict) else {}
+    add_dir(resolve_release_asset_path(ctx, full_export.get("out_dir")), "course/full_export", "course_full_export")
+    add_dir(resolve_release_asset_path(ctx, sales_preview.get("out_dir")), "course/sales_preview", "course_sales_preview")
+
+    status_report = status.get("report", {}) if isinstance(status.get("report"), dict) else {}
+    for record in [status_report.get("json"), status_report.get("markdown")]:
+        if isinstance(record, dict):
+            add_file(resolve_release_asset_path(ctx, record.get("path")), f"reports/release_status/{record.get('name')}", "release_status")
+
+    production_report = resolve_release_asset_path(ctx, production.get("report_path"))
+    if production_report:
+        add_file(production_report, f"reports/production/{production_report.name}", "production_report")
+        production_md = production_report.with_suffix(".md")
+        add_file(production_md, f"reports/production/{production_md.name}", "production_report")
+
+    client_packs = status.get("client_packs", {}) if isinstance(status.get("client_packs"), dict) else {}
+    for key, group in [("batch_qa_report", "batch_delivery_qa"), ("batch_repair_report", "batch_repair")]:
+        md_path = resolve_release_asset_path(ctx, client_packs.get(key))
+        if md_path:
+            add_file(md_path, f"reports/{group}/{md_path.name}", group)
+            json_path = md_path.with_suffix(".json")
+            add_file(json_path, f"reports/{group}/{json_path.name}", group)
+
+    for pack in packs.get("packs", []) if isinstance(packs.get("packs"), list) else []:
+        pack_id = str(pack.get("pack_id") or "client-pack")
+        archive = pack.get("archive") or {}
+        if isinstance(archive, dict):
+            add_file(resolve_release_asset_path(ctx, archive.get("path")), f"client_packs/{cli.slugify(pack_id, fallback='client-pack', max_len=72)}/{archive.get('name')}", "client_pack_zip")
+        qa_report = pack.get("qa_report") or {}
+        for record in [qa_report.get("json"), qa_report.get("markdown")]:
+            if isinstance(record, dict):
+                add_file(resolve_release_asset_path(ctx, record.get("path")), f"reports/client_pack_qa/{cli.slugify(pack_id, fallback='client-pack', max_len=72)}/{record.get('name')}", "client_pack_qa")
+        repair_report = pack.get("repair_report") or {}
+        for record in [repair_report.get("json"), repair_report.get("markdown")]:
+            if isinstance(record, dict):
+                add_file(resolve_release_asset_path(ctx, record.get("path")), f"reports/client_pack_repair/{cli.slugify(pack_id, fallback='client-pack', max_len=72)}/{record.get('name')}", "client_pack_repair")
+
+    return assets, warnings
+
+
+def render_final_release_signoff_markdown(manifest: dict[str, Any], brand_config: dict[str, Any]) -> str:
+    brand = brand_config.get("public_brand", "AIvaMax")
+    gate_rows = "\n".join(
+        f"| {name} | {item.get('status')} | {item.get('detail')} |"
+        for name, item in manifest.get("release_status", {}).get("gates", {}).items()
+    ) or "| - | - | - |"
+    group_rows = "\n".join(
+        f"| {name} | {count} |"
+        for name, count in sorted(manifest.get("asset_group_counts", {}).items())
+    ) or "| - | 0 |"
+    return scrub_text(f"""---
+type: final_release_signoff_checklist
+public_brand: {brand}
+visibility: final_release_bundle
+status: {manifest.get("readiness")}
+---
+
+# {brand} Final Release Signoff Checklist
+
+| Field | Value |
+| --- | --- |
+| Generated at | {manifest.get("generated_at")} |
+| Readiness | {manifest.get("readiness")} |
+| Ready to release | {manifest.get("ready_to_release")} |
+| Bundle archive | {manifest.get("archive", {}).get("path")} |
+| Included files | {manifest.get("included_file_count")} |
+
+## Required Signoff
+
+- [ ] Sales preview opened and reviewed.
+- [ ] Full course export opened and reviewed.
+- [ ] All client ZIP packages downloaded and sampled.
+- [ ] Delivery QA summary reviewed.
+- [ ] Repair summary reviewed.
+- [ ] Course-factory release status reviewed.
+- [ ] Final human approval recorded before external distribution.
+
+## Gates
+
+| Gate | Status | Detail |
+| --- | --- | --- |
+{gate_rows}
+
+## Asset Groups
+
+| Group | Files |
+| --- | --- |
+{group_rows}
+
+## Boundary
+
+This bundle is assembled from AIvaMax public exports, client ZIP exports, and dashboard reports only. It excludes vendor documents, raw crawl storage, private source mirrors, and internal client-pack draft files.
+""", brand_config)
+
+
+def persist_final_release_bundle(manifest: dict[str, Any], assets: list[tuple[Path, str, str]], ctx: ServiceContext) -> dict[str, Any]:
+    paths = final_release_bundle_paths(ctx)
+    root = paths["root"]
+    root.mkdir(parents=True, exist_ok=True)
+
+    def output_record(path: Path) -> dict[str, Any]:
+        relative = relpath(path)
+        quoted = quote(relative, safe="")
+        is_archive = path.suffix.lower() == ".zip"
+        return {
+            "name": path.name,
+            "path": relative,
+            "visibility": "final_release_bundle",
+            "preview_url": None if is_archive else f"/api/release-bundle/file?path={quoted}&mode=preview",
+            "download_url": f"/api/release-bundle/file?path={quoted}&mode=download",
+        }
+
+    def write_bundle_files() -> None:
+        paths["manifest"].write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+        paths["checklist"].write_text(render_final_release_signoff_markdown(manifest, ctx.brand_config), encoding="utf-8")
+        with zipfile.ZipFile(paths["archive"], "w", compression=zipfile.ZIP_DEFLATED) as archive:
+            archive.write(paths["manifest"], arcname=paths["manifest"].name)
+            archive.write(paths["checklist"], arcname=paths["checklist"].name)
+            seen: set[str] = {paths["manifest"].name, paths["checklist"].name}
+            for path, arcname, _group in assets:
+                if arcname in seen:
+                    continue
+                seen.add(arcname)
+                archive.write(path, arcname=arcname)
+
+    manifest["files"] = {
+        "root": relpath(root),
+        "manifest": output_record(paths["manifest"]),
+        "checklist": output_record(paths["checklist"]),
+        "archive": output_record(paths["archive"]),
+    }
+    manifest["archive"] = manifest["files"]["archive"]
+    write_bundle_files()
+    return {
+        "root": relpath(root),
+        "manifest": release_bundle_file_record(paths["manifest"]),
+        "checklist": release_bundle_file_record(paths["checklist"]),
+        "archive": release_bundle_file_record(paths["archive"]),
+    }
+
+
+def final_release_bundle(
+    request: dict[str, Any] | None = None,
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    request = request or {}
+    require_ready = request_bool(request, "require_ready", True)
+    status_payload = course_factory_release_status(request, data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+    if not status_payload.get("ok"):
+        return service_response(
+            action="aivamax_final_release_bundle",
+            role=caller_role,
+            ok=False,
+            error=status_payload.get("error", "release_status_failed"),
+            warnings=status_payload.get("warnings", []),
+        )
+    status = status_payload.get("result", {})
+    if require_ready and not status.get("ready_to_release"):
+        return service_response(
+            action="aivamax_final_release_bundle",
+            role=caller_role,
+            ok=False,
+            error="release_not_ready",
+            result={"readiness": status.get("readiness"), "gates": status.get("gates", {})},
+            audit={"passed": False, "readiness": status.get("readiness")},
+        )
+    packs_payload = list_client_packs(data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role).get("result", {})
+    assets, warnings = collect_release_bundle_assets(status, packs_payload, ctx)
+    group_counts: dict[str, int] = {}
+    asset_records = []
+    for path, arcname, group in assets:
+        group_counts[group] = group_counts.get(group, 0) + 1
+        asset_records.append(release_bundle_asset_record(path, arcname, group))
+    manifest = {
+        "generated_at": cli.now_iso(),
+        "public_brand": ctx.brand_config.get("public_brand", "AIvaMax"),
+        "readiness": status.get("readiness"),
+        "ready_to_release": bool(status.get("ready_to_release")),
+        "course": status.get("course", {}),
+        "release_status": {
+            "report": status.get("report", {}),
+            "gates": status.get("gates", {}),
+            "client_packs": status.get("client_packs", {}),
+        },
+        "included_file_count": len(asset_records) + 2,
+        "asset_group_counts": group_counts,
+        "assets": asset_records,
+        "warnings": warnings,
+    }
+    manifest["files"] = persist_final_release_bundle(manifest, assets, ctx)
+    manifest["archive"] = manifest["files"]["archive"]
+    paths = [manifest["files"]["manifest"]["path"], manifest["files"]["checklist"]["path"], manifest["files"]["archive"]["path"]]
+    return service_response(
+        action="aivamax_final_release_bundle",
+        role=caller_role,
+        result=manifest,
+        public_paths=paths,
+        warnings=warnings,
+        audit={"passed": bool(status.get("ready_to_release")), "included_file_count": manifest["included_file_count"]},
+    )
+
+
 def init_course_factory_scenarios(
     *,
     force: bool = False,
@@ -2959,6 +3259,7 @@ def render_skill(role: str) -> str:
             "aivamax_get_course_factory_status",
             "aivamax_run_course_factory",
             "aivamax_course_factory_release_status",
+            "aivamax_final_release_bundle",
             "aivamax_generate_client_pack",
             "aivamax_client_pack_delivery_qa",
             "aivamax_client_pack_batch_delivery_qa",

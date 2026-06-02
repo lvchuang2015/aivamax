@@ -17,6 +17,7 @@ from aivamax_services import (
     course_factory_status,
     export_course,
     export_client_pack_zip,
+    final_release_bundle,
     generate_client_pack_from_scenario,
     get_status,
     host_integration_status,
@@ -175,6 +176,21 @@ TOOL_DEFINITIONS = [
             "properties": {
                 "course": {"type": "string"},
                 "course_dir": {"type": "string"},
+                "role": {"type": "string"},
+            },
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "aivamax_final_release_bundle",
+        "description": "Assemble the final AIvaMax release bundle ZIP, manifest, and signoff checklist from public-safe exports.",
+        "allowed_roles": ["owner_admin", "team_operator"],
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "course": {"type": "string"},
+                "course_dir": {"type": "string"},
+                "require_ready": {"type": "boolean", "default": True},
                 "role": {"type": "string"},
             },
             "additionalProperties": False,
@@ -407,6 +423,8 @@ def call_tool(
             )
         if name == "aivamax_course_factory_release_status":
             return course_factory_release_status(arguments, **common)
+        if name == "aivamax_final_release_bundle":
+            return final_release_bundle(arguments, **common)
         if name == "aivamax_generate_client_pack":
             return generate_client_pack_from_scenario(arguments, **common)
         if name == "aivamax_export_client_pack_zip":
