@@ -7353,6 +7353,26 @@ def run_release_history(args: argparse.Namespace) -> int:
     return 0 if result.get("ok") else 1
 
 
+def run_release_review_pack(args: argparse.Namespace) -> int:
+    from aivamax_services import release_review_pack
+
+    result = release_review_pack(
+        data_dir=Path(args.data_dir),
+        brand_config_path=Path(args.brand_config),
+        role=args.role,
+    )
+    if args.json:
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+    else:
+        payload = result.get("result", {})
+        pack = payload.get("pack", {})
+        print(f"Release review pack: {payload.get('review_status')}")
+        print(f"Release ID: {payload.get('release_id')} | decision={payload.get('latest_decision')}")
+        if pack.get("markdown"):
+            print(f"Review pack: {pack['markdown'].get('path')}")
+    return 0 if result.get("ok") else 1
+
+
 def run_material_review(args: argparse.Namespace) -> int:
     from aivamax_services import material_review
 
@@ -7604,6 +7624,11 @@ def build_parser() -> argparse.ArgumentParser:
     release_history_parser.add_argument("--role", default="owner_admin", choices=["owner_admin", "team_operator", "instructor_private", "student_public"])
     release_history_parser.add_argument("--json", action="store_true")
     release_history_parser.set_defaults(func=run_release_history)
+
+    release_review_pack_parser = sub.add_parser("release-review-pack", help="Generate the AIvaMax owner release review pack.")
+    release_review_pack_parser.add_argument("--role", default="owner_admin", choices=["owner_admin", "team_operator", "instructor_private", "student_public"])
+    release_review_pack_parser.add_argument("--json", action="store_true")
+    release_review_pack_parser.set_defaults(func=run_release_review_pack)
 
     material_review = sub.add_parser("material-review", help="Review AIvaMax media and case material readiness.")
     material_review.add_argument("--path")

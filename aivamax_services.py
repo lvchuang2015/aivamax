@@ -309,6 +309,7 @@ def get_status(
             "aivamax_final_release_bundle",
             "aivamax_release_signoff_record",
             "aivamax_release_history",
+            "aivamax_release_review_pack",
             "aivamax_generate_client_pack",
             "aivamax_client_pack_delivery_qa",
             "aivamax_client_pack_batch_delivery_qa",
@@ -563,6 +564,7 @@ def resolve_release_record_file(
         candidate.name.startswith("AIvaMax-Release-Record-")
         or candidate.name.startswith("Latest-Release-Record")
         or candidate.name.startswith("Release-History-Dashboard")
+        or candidate.name.startswith("Release-Review-Pack")
     )
     if candidate.suffix.lower() not in {".json", ".md"} or not allowed_name:
         raise PermissionError("Release record file is not allowlisted.")
@@ -2714,6 +2716,167 @@ def release_history(
     )
 
 
+def release_review_status(record: dict[str, Any]) -> str:
+    decision = str(record.get("decision") or "pending_review")
+    ready = bool(record.get("ready_to_release"))
+    if decision == "approved" and ready:
+        return "approved_recorded"
+    if decision == "rejected":
+        return "rejected_needs_remediation"
+    if ready:
+        return "awaiting_owner_approval"
+    return "blocked_before_approval"
+
+
+def release_review_decision_options(record: dict[str, Any]) -> list[dict[str, str]]:
+    version = str(record.get("version") or "course-factory-v1")
+    return [
+        {
+            "decision": "approved",
+            "label": "Approve release",
+            "cli_command": f".\\aivamax.ps1 release-signoff-record --decision approved --signer owner_admin --version {version!r} --notes \"Owner approved after review.\"",
+        },
+        {
+            "decision": "rejected",
+            "label": "Reject release",
+            "cli_command": f".\\aivamax.ps1 release-signoff-record --decision rejected --signer owner_admin --version {version!r} --notes \"Owner rejected; remediation required.\"",
+        },
+    ]
+
+
+def render_release_review_pack_markdown(review: dict[str, Any], brand_config: dict[str, Any]) -> str:
+    brand = brand_config.get("public_brand", "AIvaMax")
+    gate_rows = "\n".join(
+        f"| {name} | {item.get('status')} | {item.get('detail')} |"
+        for name, item in review.get("gates", {}).items()
+    ) or "| - | - | - |"
+    command_lines = "\n\n".join(
+        f"### {item.get('label')}\n\n```powershell\n{item.get('cli_command')}\n```"
+        for item in review.get("decision_options", [])
+    )
+    return scrub_text(f"""---
+type: release_review_pack
+public_brand: {brand}
+visibility: internal_release_record
+status: {review.get("review_status")}
+---
+
+# {brand} Owner Release Review Pack
+
+| Field | Value |
+| --- | --- |
+| Generated at | {review.get("generated_at")} |
+| Review status | {review.get("review_status")} |
+| Human decision required | {review.get("human_decision_required")} |
+| Release ID | {review.get("release_id")} |
+| Latest decision | {review.get("latest_decision")} |
+| Ready to release | {review.get("ready_to_release")} |
+| Version | {review.get("version")} |
+| Bundle SHA256 | {review.get("bundle", {}).get("sha256")} |
+| Bundle files | {review.get("bundle", {}).get("included_file_count")} |
+| Client packs | {review.get("client_packs", {}).get("pack_count")} |
+| Deliverable packs | {review.get("client_packs", {}).get("deliverable_count")} |
+| ZIP exports | {review.get("client_packs", {}).get("zip_count")} |
+
+## Owner Checklist
+
+- [ ] Open the final release bundle and sample the course export.
+- [ ] Open at least one client ZIP package and confirm client-facing language.
+- [ ] Review the release status report and release history dashboard.
+- [ ] Confirm the bundle SHA256 matches the signoff record.
+- [ ] Record an approved or rejected signoff decision after review.
+
+## Gates
+
+| Gate | Status | Detail |
+| --- | --- | --- |
+{gate_rows}
+
+## Decision Commands
+
+{command_lines}
+
+## Boundary
+
+This review pack prepares a human release decision. It does not approve, reject, publish, or distribute the release automatically.
+""", brand_config)
+
+
+def persist_release_review_pack(review: dict[str, Any], ctx: ServiceContext) -> dict[str, Any]:
+    root = release_record_root(ctx)
+    root.mkdir(parents=True, exist_ok=True)
+    json_path = root / "Release-Review-Pack.json"
+    md_path = root / "Release-Review-Pack.md"
+    json_path.write_text(json.dumps(review, ensure_ascii=False, indent=2), encoding="utf-8")
+    md_path.write_text(render_release_review_pack_markdown(review, ctx.brand_config), encoding="utf-8")
+    return {
+        "json": release_record_file_record(json_path),
+        "markdown": release_record_file_record(md_path),
+    }
+
+
+def release_review_pack(
+    request: dict[str, Any] | None = None,
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "course_factory")
+    ctx = make_context(data_dir, brand_config_path)
+    request = request or {}
+    latest_payload = latest_release_record(data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+    if not latest_payload.get("ok"):
+        return service_response(
+            action="aivamax_release_review_pack",
+            role=caller_role,
+            ok=False,
+            error=latest_payload.get("error", "no_release_record"),
+            warnings=latest_payload.get("warnings", []),
+        )
+    record = latest_payload.get("result", {})
+    status_payload = course_factory_release_status(request, data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+    history_payload = release_history(data_dir=ctx.data_dir, brand_config_path=ctx.brand_config_path, role=caller_role)
+    status = status_payload.get("result", {}) if status_payload.get("ok") else {}
+    history = history_payload.get("result", {}) if history_payload.get("ok") else {}
+    review_status = release_review_status(record)
+    blockers: list[str] = []
+    if not record.get("ready_to_release"):
+        blockers.append("latest_release_record_not_ready")
+    if not status.get("ready_to_release"):
+        blockers.append("release_status_not_ready")
+    if record.get("decision") == "rejected":
+        blockers.append("latest_release_record_rejected")
+    review = {
+        "generated_at": cli.now_iso(),
+        "public_brand": ctx.brand_config.get("public_brand", "AIvaMax"),
+        "review_status": review_status,
+        "human_decision_required": record.get("decision") == "pending_review",
+        "approval_blockers": blockers,
+        "release_id": record.get("release_id"),
+        "latest_decision": record.get("decision"),
+        "ready_to_release": bool(record.get("ready_to_release")) and bool(status.get("ready_to_release", True)),
+        "version": record.get("version"),
+        "signer": record.get("signer"),
+        "course": record.get("course", {}),
+        "bundle": record.get("bundle", {}),
+        "client_packs": record.get("client_packs", {}),
+        "gates": record.get("gates", {}),
+        "release_record": record.get("record", {}),
+        "release_status_report": status.get("report", {}),
+        "release_history_dashboard": history.get("dashboard", {}),
+        "decision_options": release_review_decision_options(record),
+    }
+    review["pack"] = persist_release_review_pack(review, ctx)
+    return service_response(
+        action="aivamax_release_review_pack",
+        role=caller_role,
+        result=review,
+        public_paths=[review["pack"]["json"]["path"], review["pack"]["markdown"]["path"]],
+        audit={"passed": review_status in {"awaiting_owner_approval", "approved_recorded"}, "review_status": review_status, "release_id": record.get("release_id")},
+    )
+
+
 def release_signoff_record(
     request: dict[str, Any] | None = None,
     *,
@@ -3633,6 +3796,7 @@ def render_skill(role: str) -> str:
             "aivamax_final_release_bundle",
             "aivamax_release_signoff_record",
             "aivamax_release_history",
+            "aivamax_release_review_pack",
             "aivamax_generate_client_pack",
             "aivamax_client_pack_delivery_qa",
             "aivamax_client_pack_batch_delivery_qa",

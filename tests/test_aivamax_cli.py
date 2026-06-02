@@ -177,6 +177,7 @@ class AIvaMaxCLITest(unittest.TestCase):
             self.assertIn("Final Bundle", html)
             self.assertIn("Release Record", html)
             self.assertIn("Release History", html)
+            self.assertIn("Review Pack", html)
             self.assertIn("Course Factory Release Status", html)
             self.assertIn("Client Scenario Editor", html)
             self.assertIn("Generate Pack", html)
@@ -256,6 +257,8 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertEqual(host_status_args.role, "owner_admin")
         release_history_args = parser.parse_args(["release-history"])
         self.assertEqual(release_history_args.role, "owner_admin")
+        release_review_pack_args = parser.parse_args(["release-review-pack"])
+        self.assertEqual(release_review_pack_args.role, "owner_admin")
         coach_args = parser.parse_args(["student-coach-preview", "--question", "账号安全怎么检查？"])
         self.assertEqual(coach_args.role, "student_public")
 
@@ -306,6 +309,7 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("aivamax_final_release_bundle", tool_names)
         self.assertIn("aivamax_release_signoff_record", tool_names)
         self.assertIn("aivamax_release_history", tool_names)
+        self.assertIn("aivamax_release_review_pack", tool_names)
         self.assertIn("aivamax_generate_client_pack", tool_names)
         self.assertIn("aivamax_client_pack_delivery_qa", tool_names)
         self.assertIn("aivamax_client_pack_batch_delivery_qa", tool_names)
@@ -439,6 +443,14 @@ class AIvaMaxCLITest(unittest.TestCase):
         )
         self.assertFalse(blocked_history["ok"])
         self.assertEqual(blocked_history["error"], "permission_denied")
+        blocked_review_pack = mcp.call_tool(
+            "aivamax_release_review_pack",
+            {"role": "student_public"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_review_pack["ok"])
+        self.assertEqual(blocked_review_pack["error"], "permission_denied")
         blocked_zip = mcp.call_tool(
             "aivamax_export_client_pack_zip",
             {"role": "student_public", "pack_id": "AI-SaaS-Pilot"},
@@ -2079,6 +2091,35 @@ Module {number} production output
                 get_history_payload = json.loads(response.read().decode("utf-8"))
             self.assertTrue(get_history_payload["ok"], get_history_payload)
             self.assertEqual(get_history_payload["result"]["latest_release_id"], signoff["release_id"])
+
+            request = urllib.request.Request(base + "/api/actions/release-review-pack", method="POST")
+            with urllib.request.urlopen(request, timeout=60) as response:
+                review_pack_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(review_pack_payload["ok"], review_pack_payload)
+            review_pack = review_pack_payload["result"]
+            self.assertEqual(review_pack["release_id"], signoff["release_id"])
+            self.assertEqual(review_pack["latest_decision"], "pending_review")
+            self.assertIn(review_pack["review_status"], {"awaiting_owner_approval", "blocked_before_approval"})
+            self.assertTrue(review_pack["human_decision_required"])
+            if review_pack["review_status"] == "awaiting_owner_approval":
+                self.assertFalse(review_pack["approval_blockers"])
+            else:
+                self.assertTrue(review_pack["approval_blockers"])
+            review_pack_path = core.resolve_reported_path(review_pack["pack"]["json"]["path"])
+            self.assertTrue(review_pack_path and review_pack_path.exists())
+            review_pack_data = json.loads(review_pack_path.read_text(encoding="utf-8"))
+            self.assertNotIn("source_path", json.dumps(review_pack_data, ensure_ascii=False))
+            self.assertNotIn("raw_path", json.dumps(review_pack_data, ensure_ascii=False))
+            with urllib.request.urlopen(base + review_pack["pack"]["markdown"]["preview_url"], timeout=20) as response:
+                review_pack_markdown = response.read().decode("utf-8")
+            self.assertIn("Owner Release Review Pack", review_pack_markdown)
+            self.assertIn("This review pack prepares a human release decision", review_pack_markdown)
+            self.assert_public_clean(review_pack_markdown)
+
+            with urllib.request.urlopen(base + "/api/release-review-pack", timeout=20) as response:
+                get_review_pack_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(get_review_pack_payload["ok"], get_review_pack_payload)
+            self.assertEqual(get_review_pack_payload["result"]["release_id"], signoff["release_id"])
 
             with urllib.request.urlopen(base + "/api/course-factory", timeout=20) as response:
                 factory_payload = json.loads(response.read().decode("utf-8"))
