@@ -7,6 +7,7 @@ import sys
 import threading
 import unittest
 import urllib.error
+import urllib.parse
 import urllib.request
 import uuid
 from pathlib import Path
@@ -143,6 +144,7 @@ class AIvaMaxCLITest(unittest.TestCase):
                 "/api/host-integration",
                 "/api/student-coach-preview",
                 "/api/mcp/tools",
+                "/api/client-packs",
             ]:
                 with urllib.request.urlopen(base + route, timeout=15) as response:
                     payload = json.loads(response.read().decode("utf-8"))
@@ -169,6 +171,7 @@ class AIvaMaxCLITest(unittest.TestCase):
             self.assertIn("MCP", html)
             self.assertIn("Run Course Factory", html)
             self.assertIn("Client Scenario Editor", html)
+            self.assertIn("Client Delivery Packs", html)
         finally:
             server.shutdown()
             server.server_close()
@@ -256,6 +259,12 @@ class AIvaMaxCLITest(unittest.TestCase):
         with self.assertRaises(PermissionError):
             services.run_matrix_job(
                 goal="Instagram SOP",
+                data_dir=data_dir,
+                brand_config_path=ROOT / "config" / "brand_config.json",
+                role="student_public",
+            )
+        with self.assertRaises(PermissionError):
+            services.list_client_packs(
                 data_dir=data_dir,
                 brand_config_path=ROOT / "config" / "brand_config.json",
                 role="student_public",
@@ -1594,6 +1603,28 @@ Module {number} production output
                 factory_payload = json.loads(response.read().decode("utf-8"))
             self.assertTrue(factory_payload["ok"], factory_payload)
             self.assertTrue(factory_payload["result"]["latest_report"]["exists"])
+
+            with urllib.request.urlopen(base + "/api/client-packs", timeout=20) as response:
+                packs_payload = json.loads(response.read().decode("utf-8"))
+            self.assertTrue(packs_payload["ok"], packs_payload)
+            self.assertGreaterEqual(packs_payload["result"]["pack_count"], 3)
+            first_pack = packs_payload["result"]["packs"][0]
+            public_files = [item for item in first_pack["files"] if item["visibility"] == "client_delivery"]
+            self.assertTrue(public_files)
+            exposed_names = {item["name"] for item in first_pack["files"]}
+            self.assertNotIn("08_Delivery-README.md", exposed_names)
+            self.assertNotIn("manifest.json", exposed_names)
+            with urllib.request.urlopen(base + public_files[0]["preview_url"], timeout=20) as response:
+                preview_text = response.read().decode("utf-8")
+            self.assertIn("AIvaMax", preview_text)
+            self.assert_public_clean(preview_text)
+
+            internal_path = first_pack["path"] + "/08_Delivery-README.md"
+            blocked_url = base + "/api/client-packs/file?path=" + urllib.parse.quote(internal_path, safe="")
+            with self.assertRaises(urllib.error.HTTPError) as blocked_ctx:
+                urllib.request.urlopen(blocked_url, timeout=20)
+            self.assertEqual(blocked_ctx.exception.code, 403)
+            blocked_ctx.exception.close()
         finally:
             server.shutdown()
             server.server_close()

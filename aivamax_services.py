@@ -7,6 +7,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 import aivamax_core as core
 import jarveepro_cli as cli
@@ -56,6 +57,7 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
         "host_smoke_test",
         "student_coach_preview",
         "course_factory",
+        "client_packs",
     },
     TEAM_OPERATOR: {
         "status",
@@ -75,6 +77,7 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
         "host_smoke_test",
         "student_coach_preview",
         "course_factory",
+        "client_packs",
     },
     INSTRUCTOR_PRIVATE: {
         "status",
@@ -89,6 +92,7 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
         "release_gate",
         "host_smoke_test",
         "student_coach_preview",
+        "client_packs",
     },
     STUDENT_PUBLIC: {
         "status",
@@ -377,6 +381,107 @@ def list_public_exports(
         result={"root": relpath(root), "files": exports, "file_count": len(exports)},
         public_paths=[item["path"] for item in exports],
     )
+
+
+CLIENT_PACK_PUBLIC_FILE_RE = re.compile(r"^(0[0-7])_.+\.md$", re.I)
+
+
+def client_pack_root(ctx: ServiceContext) -> Path:
+    return ctx.matrix_root / "50_Projects" / "Samples"
+
+
+def is_client_pack_public_file(path: Path) -> bool:
+    return path.is_file() and bool(CLIENT_PACK_PUBLIC_FILE_RE.match(path.name))
+
+
+def client_pack_file_record(path: Path) -> dict[str, Any]:
+    relative = relpath(path)
+    visibility = "client_delivery" if is_client_pack_public_file(path) else "internal"
+    record = {
+        "name": path.name,
+        "path": relative,
+        "size": path.stat().st_size,
+        "visibility": visibility,
+    }
+    if visibility == "client_delivery":
+        quoted = quote(relative, safe="")
+        record["preview_url"] = f"/api/client-packs/file?path={quoted}&mode=preview"
+        record["download_url"] = f"/api/client-packs/file?path={quoted}&mode=download"
+    return record
+
+
+def read_client_pack_manifest(pack_dir: Path) -> dict[str, Any]:
+    manifest_path = pack_dir / "manifest.json"
+    if not manifest_path.exists():
+        return {}
+    try:
+        data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def list_client_packs(
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> dict[str, Any]:
+    caller_role = require_permission(role, "client_packs")
+    ctx = make_context(data_dir, brand_config_path)
+    root = client_pack_root(ctx)
+    packs: list[dict[str, Any]] = []
+    if root.exists():
+        pack_dirs = sorted([path for path in root.iterdir() if path.is_dir()], key=lambda path: path.stat().st_mtime, reverse=True)
+        for pack_dir in pack_dirs:
+            files = sorted([path for path in pack_dir.iterdir() if path.is_file()])
+            manifest = read_client_pack_manifest(pack_dir)
+            public_files = [path for path in files if is_client_pack_public_file(path)]
+            file_records = [client_pack_file_record(path) for path in public_files]
+            packs.append({
+                "pack_id": manifest.get("pack_id") or pack_dir.name,
+                "path": relpath(pack_dir),
+                "generated_at": manifest.get("generated_at"),
+                "industry": manifest.get("industry", ""),
+                "product": manifest.get("product", ""),
+                "market": manifest.get("market", ""),
+                "goal": manifest.get("goal", ""),
+                "days": manifest.get("days"),
+                "file_count": len(files),
+                "client_file_count": len(file_records),
+                "internal_file_count": len(files) - len(file_records),
+                "files": file_records,
+            })
+    result = {"root": relpath(root), "pack_count": len(packs), "packs": packs}
+    return service_response(
+        action="aivamax_list_client_packs",
+        role=caller_role,
+        result=result,
+        public_paths=[item["path"] for pack in packs for item in pack["files"] if item["visibility"] == "client_delivery"],
+    )
+
+
+def resolve_client_pack_file(
+    requested_path: str,
+    *,
+    data_dir: Path | str | None = None,
+    brand_config_path: Path | str | None = None,
+    role: str | None = None,
+) -> Path:
+    require_permission(role, "client_packs")
+    ctx = make_context(data_dir, brand_config_path)
+    root = client_pack_root(ctx).resolve()
+    candidate = core.resolve_reported_path(requested_path)
+    if candidate is None:
+        candidate = Path(requested_path)
+    candidate = candidate.resolve()
+    try:
+        candidate.relative_to(root)
+    except ValueError as exc:
+        raise PermissionError("Client pack file must be under AIvaMax_Matrix/50_Projects/Samples.") from exc
+    if not is_client_pack_public_file(candidate):
+        raise PermissionError("Only client-facing package files 00-07_*.md can be previewed or downloaded.")
+    return candidate
 
 
 def search_public_knowledge(

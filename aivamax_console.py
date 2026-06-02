@@ -5,7 +5,7 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Callable
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 from aivamax_core import DEFAULT_BRAND_CONFIG, DEFAULT_DATA_DIR
 from aivamax_mcp_server import list_tools
@@ -20,6 +20,7 @@ from aivamax_services import (
     host_smoke_test,
     latest_course,
     list_courses,
+    list_client_packs,
     list_platforms,
     list_public_exports,
     material_review,
@@ -33,6 +34,7 @@ from aivamax_services import (
     student_coach_preview,
     init_course_factory_scenarios,
     reset_course_factory_scenarios,
+    resolve_client_pack_file,
     upsert_course_factory_scenario,
 )
 
@@ -228,6 +230,10 @@ def console_html() -> str:
         </table>
       </div>
       <div class="panel wide">
+        <h2>Client Delivery Packs</h2>
+        <div id="clientPackRows"></div>
+      </div>
+      <div class="panel wide">
         <h2>发布门禁</h2>
         <div id="releaseGateRows"></div>
       </div>
@@ -271,7 +277,7 @@ def console_html() -> str:
       });
     }
     async function refreshAll() {
-      const [status, roles, mcp, skills, runtime, hostIntegration, coachPreview, releaseGate, material, courseFactory] = await Promise.all([
+      const [status, roles, mcp, skills, runtime, hostIntegration, coachPreview, releaseGate, material, courseFactory, clientPacks] = await Promise.all([
         getJson('/api/status'),
         getJson('/api/roles'),
         getJson('/api/mcp/tools'),
@@ -281,7 +287,8 @@ def console_html() -> str:
         getJson('/api/student-coach-preview'),
         getJson('/api/release-gate'),
         getJson('/api/material-review'),
-        getJson('/api/course-factory')
+        getJson('/api/course-factory'),
+        getJson('/api/client-packs')
       ]);
       render(status.result || status, {
         roles: roles.result || {},
@@ -292,7 +299,8 @@ def console_html() -> str:
         coachPreview: coachPreview.result || {},
         releaseGate,
         material,
-        courseFactory: courseFactory.result || {}
+        courseFactory: courseFactory.result || {},
+        clientPacks: clientPacks.result || {}
       });
     }
     async function runAction(action) {
@@ -397,6 +405,18 @@ def console_html() -> str:
           <td>${esc(item.days)}</td>
           <td><button class="danger" data-client-code="${esc(item.client_code)}" onclick="removeScenario(this.dataset.clientCode)">Delete</button></td>
         </tr>`).join('');
+      const packs = extra.clientPacks || {};
+      document.getElementById('clientPackRows').innerHTML = (packs.packs || []).slice(0, 8).map(pack => `
+        <div class="card">
+          <div class="row"><div><strong>${esc(pack.pack_id)}</strong><div class="path">${esc(pack.path)}</div></div><span class="pill">${esc(pack.client_file_count || 0)} files</span></div>
+          <table>
+            <thead><tr><th>File</th><th>Size</th><th>Links</th></tr></thead>
+            <tbody>${(pack.files || []).filter(file => file.visibility === 'client_delivery').map(file => `
+              <tr><td>${esc(file.name)}</td><td>${esc(file.size)}</td><td><a href="${esc(file.preview_url)}" target="_blank">Preview</a> / <a href="${esc(file.download_url)}" target="_blank">Download</a></td></tr>
+            `).join('')}</tbody>
+          </table>
+        </div>
+      `).join('') || '<p>No client delivery packs yet.</p>';
       document.getElementById('releaseGateRows').innerHTML = extra.releaseGate.result ? Object.entries(extra.releaseGate.result.audits || {}).map(([name, item]) => `
         <div class="row"><div><strong>${name}</strong><div class="path">${extra.releaseGate.result.course || ''}</div></div>${pill(item.passed, item.score ? `score ${item.score}` : (item.passed ? 'passed' : 'review'))}</div>`).join('') : '';
       document.getElementById('materialRows').innerHTML = extra.material.result ? [
@@ -431,6 +451,17 @@ def text_response(handler: BaseHTTPRequestHandler, status: HTTPStatus, body: str
     handler.send_response(status)
     handler.send_header("Content-Type", content_type)
     handler.send_header("Content-Length", str(len(raw)))
+    handler.end_headers()
+    handler.wfile.write(raw)
+
+
+def markdown_file_response(handler: BaseHTTPRequestHandler, path: Path, *, download: bool = False) -> None:
+    raw = path.read_bytes()
+    handler.send_response(HTTPStatus.OK)
+    handler.send_header("Content-Type", "text/markdown; charset=utf-8")
+    handler.send_header("Content-Length", str(len(raw)))
+    if download:
+        handler.send_header("Content-Disposition", f'attachment; filename="{path.name}"')
     handler.end_headers()
     handler.wfile.write(raw)
 
@@ -472,7 +503,8 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
             return
 
         def do_GET(self) -> None:  # noqa: N802
-            route = urlparse(self.path).path
+            parsed = urlparse(self.path)
+            route = parsed.path
             if route in {"/", "/index.html"}:
                 text_response(self, HTTPStatus.OK, console_html(), "text/html; charset=utf-8")
                 return
@@ -491,6 +523,20 @@ def make_console_handler(data_dir: Path = DEFAULT_DATA_DIR, brand_config_path: P
                 return
             if route == "/api/public-exports":
                 json_response(self, HTTPStatus.OK, list_public_exports(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN))
+                return
+            if route == "/api/client-packs":
+                json_response(self, HTTPStatus.OK, list_client_packs(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN))
+                return
+            if route == "/api/client-packs/file":
+                query = parse_qs(parsed.query)
+                requested_path = (query.get("path") or [""])[0]
+                mode = (query.get("mode") or ["preview"])[0]
+                try:
+                    file_path = resolve_client_pack_file(requested_path, data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)
+                except (PermissionError, FileNotFoundError) as exc:
+                    json_response(self, HTTPStatus.FORBIDDEN, {"ok": False, "error": "blocked_client_pack_file", "message": str(exc)})
+                    return
+                markdown_file_response(self, file_path, download=mode == "download")
                 return
             if route == "/api/audits":
                 payload = get_status(data_dir=data_dir, brand_config_path=brand_config_path, role=OWNER_ADMIN)

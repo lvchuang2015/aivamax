@@ -139,8 +139,11 @@ Course factory production is also exposed through:
 - `POST /api/actions/course-factory-delete-scenario`
 - `POST /api/actions/course-factory-reset-scenarios`
 - `POST /api/actions/course-factory-run-all`
+- `GET /api/client-packs`
+- `GET /api/client-packs/file?path=<encoded-path>&mode=preview|download`
 
 The scenario file is internal production configuration. The Console editor can add, replace, delete, and reset scenarios by `client_code`; public exports and sales previews are generated separately under `AIvaMax_Matrix/public_export`.
+Client-pack file links are restricted to `AIvaMax_Matrix/50_Projects/Samples/<pack>/00-07_*.md`; internal README and manifest files are not exposed through the preview/download route.
 
 ## MCP and Skill Layer
 
