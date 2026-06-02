@@ -23,6 +23,7 @@ from aivamax_services import (
     host_integration_status,
     host_smoke_test,
     latest_course,
+    list_client_packs,
     list_courses,
     list_platforms,
     mcp_config_export,
@@ -241,6 +242,16 @@ TOOL_DEFINITIONS = [
         "name": "aivamax_release_distribution_package",
         "description": "Generate the approved AIvaMax distribution package only after an approved release signoff.",
         "allowed_roles": ["owner_admin", "team_operator"],
+        "inputSchema": {
+            "type": "object",
+            "properties": {"role": {"type": "string"}},
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "aivamax_list_client_packs",
+        "description": "List governed AIvaMax client delivery packs and public-safe file/report links.",
+        "allowed_roles": ["owner_admin", "team_operator", "instructor_private"],
         "inputSchema": {
             "type": "object",
             "properties": {"role": {"type": "string"}},
@@ -484,6 +495,8 @@ def call_tool(
             return release_review_pack(arguments, **common)
         if name == "aivamax_release_distribution_package":
             return release_distribution_package(arguments, **common)
+        if name == "aivamax_list_client_packs":
+            return list_client_packs(**common)
         if name == "aivamax_generate_client_pack":
             return generate_client_pack_from_scenario(arguments, **common)
         if name == "aivamax_export_client_pack_zip":

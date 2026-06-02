@@ -57,6 +57,7 @@ Instructors review private course quality and client-facing outputs, but do not 
 - `aivamax_export_course`
 - `aivamax_get_runtime_status`
 - `aivamax_host_smoke_test`
+- `aivamax_list_client_packs`
 - `aivamax_student_coach_preview`
 
 Owner and team roles may also use `aivamax_run_matrix` when generating new project/course assets. Student-facing hosts should prefer `aivamax_student_coach_preview` for learner-safe answers.

@@ -370,6 +370,7 @@ class AIvaMaxCLITest(unittest.TestCase):
         self.assertIn("aivamax_release_history", tool_names)
         self.assertIn("aivamax_release_review_pack", tool_names)
         self.assertIn("aivamax_release_distribution_package", tool_names)
+        self.assertIn("aivamax_list_client_packs", tool_names)
         self.assertIn("aivamax_generate_client_pack", tool_names)
         self.assertIn("aivamax_client_pack_delivery_qa", tool_names)
         self.assertIn("aivamax_client_pack_batch_delivery_qa", tool_names)
@@ -384,6 +385,22 @@ class AIvaMaxCLITest(unittest.TestCase):
             brand_config_path=ROOT / "config" / "brand_config.json",
         )
         self.assertTrue(status["ok"])
+        instructor_client_packs = mcp.call_tool(
+            "aivamax_list_client_packs",
+            {"role": "instructor_private"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertTrue(instructor_client_packs["ok"], instructor_client_packs)
+        self.assertIn("pack_count", instructor_client_packs["result"])
+        blocked_client_packs = mcp.call_tool(
+            "aivamax_list_client_packs",
+            {"role": "student_public"},
+            data_dir=data_dir,
+            brand_config_path=ROOT / "config" / "brand_config.json",
+        )
+        self.assertFalse(blocked_client_packs["ok"])
+        self.assertEqual(blocked_client_packs["error"], "permission_denied")
         blocked = mcp.call_tool(
             "aivamax_run_matrix",
             {"role": "student_public", "goal": "Instagram SOP"},

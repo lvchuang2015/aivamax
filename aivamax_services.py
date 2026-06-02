@@ -412,6 +412,7 @@ def get_status(
             "aivamax_release_history",
             "aivamax_release_review_pack",
             "aivamax_release_distribution_package",
+            "aivamax_list_client_packs",
             "aivamax_generate_client_pack",
             "aivamax_client_pack_delivery_qa",
             "aivamax_client_pack_batch_delivery_qa",
@@ -4185,6 +4186,8 @@ def render_skill(role: str) -> str:
             "aivamax_get_runtime_status",
             "aivamax_host_smoke_test",
         ])
+    if "client_packs" in ROLE_PERMISSIONS[role]:
+        preferred_tools.append("aivamax_list_client_packs")
     if role in {OWNER_ADMIN, TEAM_OPERATOR}:
         preferred_tools.extend([
             "aivamax_run_matrix",

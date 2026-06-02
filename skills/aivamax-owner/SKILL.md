@@ -57,6 +57,7 @@ Owner admins make the final release decision after reviewing the release review 
 - `aivamax_export_course`
 - `aivamax_get_runtime_status`
 - `aivamax_host_smoke_test`
+- `aivamax_list_client_packs`
 - `aivamax_run_matrix`
 - `aivamax_export_mcp_config`
 - `aivamax_get_course_factory_status`
